@@ -260,7 +260,7 @@ type ClientOnlyProps = {
 };
 
 export const ClientOnly: React.FC<ClientOnlyProps> = ({ loader }) => {
-  const [isMounted, setIsMounted] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -423,6 +423,7 @@ export function Layout({ children }: { children: ReactNode }) {
   useEffect(() => {
     setIsMobile(window.innerWidth < 768);
   }, []);
+  
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
@@ -449,6 +450,7 @@ export function Layout({ children }: { children: ReactNode }) {
       '*'
     );
   }, [pathname]);
+  
   return (
     <html lang="en">
       <head>
@@ -460,8 +462,10 @@ export function Layout({ children }: { children: ReactNode }) {
         {LoadFontsSSR ? <LoadFontsSSR /> : null}
       </head>
       <body>
-        <ClientOnly loader={() => children} />
-        <Toaster position={isMobile ? 'top-center' : 'bottom-right'} />
+        <SessionProvider>
+          <ClientOnly loader={() => children} />
+          <Toaster position={isMobile ? 'top-center' : 'bottom-right'} />
+        </SessionProvider>
         <ScrollRestoration />
         <Scripts />
         <link rel="preconnect" href="https://ka-p.fontawesome.com" crossOrigin="anonymous" />
@@ -475,8 +479,6 @@ export const ErrorBoundary = InternalErrorBoundary;
 
 export default function App() {
   return (
-    <SessionProvider>
-      <Outlet />
-    </SessionProvider>
+    <Outlet />
   );
 }
