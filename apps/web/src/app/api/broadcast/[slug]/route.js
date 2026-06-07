@@ -6,7 +6,15 @@ export async function POST(request, context) {
   if (!hasDb()) return new Response(null, { status: 204 }); // مؤقتًا
   try {
     const { slug } = context.params;
-    const body = context.parsedBody || await request.json();
+    let body;
+    try {
+      body = await Promise.race([
+        request.json(),
+        new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), 3000))
+      ]);
+    } catch(err) {
+      return Response.json({ error: "Body parse timeout" }, { status: 400 });
+    }
     const { session_id, message } = body;
 
     if (!session_id) {

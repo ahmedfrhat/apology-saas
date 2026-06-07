@@ -104,7 +104,7 @@ function getGirlNickname(name) {
   return name + "تي"; // e.g. منار -> منارتي
 }
 
-export async function POST(request, context) {
+export async function POST(request, context, c) {
   try {
     console.log("[sites/POST] 1. Starting request processing...");
 
@@ -112,10 +112,16 @@ export async function POST(request, context) {
     let body;
     console.log("[sites/POST] 2. Before parsing body...");
     try {
-      body = await Promise.race([
-        context?.parsedBody ? Promise.resolve(context.parsedBody) : request.json(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Body parsing timeout")), 5000))
-      ]);
+      const nodeReq = c?.env?.incoming || {};
+      if (nodeReq.body) {
+        console.log("[sites/POST] Found pre-parsed body from Vercel Node runtime!");
+        body = typeof nodeReq.body === "string" ? JSON.parse(nodeReq.body) : nodeReq.body;
+      } else {
+        body = await Promise.race([
+          request.json(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Body parsing timeout")), 5000))
+        ]);
+      }
       console.log("[sites/POST] 3. Body parsed successfully. Keys:", Object.keys(body || {}));
     } catch (parseError) {
       console.error("[sites/POST] ERROR: Failed to parse body or timeout:", parseError);
