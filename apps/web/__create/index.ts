@@ -12,6 +12,9 @@ import { proxy } from 'hono/proxy';
 import { bodyLimit } from 'hono/body-limit';
 import { requestId } from 'hono/request-id';
 import { createHonoServer } from 'react-router-hono-server/node';
+import { createRequestHandler } from 'react-router';
+import { serveStatic } from '@hono/node-server/serve-static';
+import { createMiddleware } from 'hono/factory';
 import { serializeError } from 'serialize-error';
 import ws from 'ws';
 import NeonAdapter from './adapter';
@@ -297,9 +300,46 @@ app.use('/api/auth/*', async (c, next) => {
 });
 app.route(API_BASENAME, api);
 
-export default isBuild
-  ? app
-  : await createHonoServer({
-      app,
-      defaultLogger: false,
-    });
+// Build the fully configured Hono app for production / Vercel.
+// We intentionally avoid `createHonoServer` in production because it calls
+// `@hono/node-server`'s `serve()`, which starts a TCP listener — a problem
+// inside Vercel's serverless environment.
+//
+// Instead, we:
+//  1. Dynamically import the React Router server build (routes manifest)
+//  2. Add the React Router request handler directly onto our existing `app`
+//  3. Export `app` — api/index.js wraps it with @hono/node-server/vercel
+
+if (!isBuild) {
+  // Dynamically import the React Router build virtual module.
+  // The `import.meta.env.REACT_ROUTER_HONO_SERVER_BUILD_DIRECTORY` env var
+  // is set by the reactRouterHonoServer() Vite plugin and resolves to 'build'.
+  const build = await import(
+    // @ts-expect-error Virtual module
+    'virtual:react-router/server-build'
+  );
+
+  const clientBuildPath = 'build/client';
+
+  // Serve client assets with long-lived cache
+  app.use(
+    '/assets/*',
+    // @ts-expect-error type mismatch between hono versions
+    serveStatic({ root: clientBuildPath })
+  );
+
+  // Serve public directory files (favicon.ico, etc.)
+  app.use(
+    '*',
+    // @ts-expect-error type mismatch between hono versions
+    serveStatic({ root: clientBuildPath })
+  );
+
+  // Add the React Router SSR handler as the catch-all
+  app.use('*', createMiddleware(async (c) => {
+    const requestHandler = createRequestHandler(build, 'production');
+    return requestHandler(c.req.raw);
+  }));
+}
+
+export default app;
