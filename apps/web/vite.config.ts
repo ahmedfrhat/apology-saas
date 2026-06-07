@@ -81,6 +81,9 @@ export default defineConfig({
     },
     dedupe: ['react', 'react-dom'],
   },
+  build: {
+    target: 'esnext',
+  },
   clearScreen: false,
   server: {
     allowedHosts: true,
