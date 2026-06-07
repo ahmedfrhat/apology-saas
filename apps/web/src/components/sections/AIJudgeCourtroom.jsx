@@ -97,7 +97,6 @@ export default function AIJudgeCourtroom({ onNext }) {
     setIsJudging(false);
     setVerdict(true);
     updateState({ batteryLevel: 70, lastAction: "verdict" });
-    setTimeout(onNext, 7000);
   }, [text, onNext, updateState, siteSlug, config]);
 
   return (
@@ -133,9 +132,16 @@ export default function AIJudgeCourtroom({ onNext }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1 }}
-              className="mt-4 flex justify-center"
+              className="mt-6 flex flex-col items-center gap-4"
             >
               <Gavel size={32} className="text-[#DFBA73]" />
+              <button
+                type="button"
+                onClick={onNext}
+                className="inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-8 py-3 text-sm font-medium text-[#F4F3EF] hover:bg-[#DFBA73] transition-colors"
+              >
+                {t("قرأت الحكم، استمرار")} <Gavel size={16} />
+              </button>
             </motion.div>
           </motion.div>
         ) : (
