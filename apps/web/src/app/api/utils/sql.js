@@ -1,5 +1,10 @@
 import { neon } from '@neondatabase/serverless';
 
-const sql = neon(process.env.DATABASE_URL);
-
-export default sql;
+export default function sql(strings, ...values) {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error("DATABASE_URL is not defined in environment variables");
+  }
+  const connector = neon(url);
+  return connector(strings, ...values);
+}
