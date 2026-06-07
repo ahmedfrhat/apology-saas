@@ -127,8 +127,7 @@ Follow these instructions strictly:
       theme = "no_reason";
     }
 
-    let config = {};
-
+    // config was declared earlier, we will reassign it or use it
     switch (theme) {
       case "neglect_attention":
         config = {
