@@ -105,7 +105,8 @@ function getGirlNickname(name) {
 
 export async function POST(request) {
   try {
-    await ensureTable();
+    // تشغيل إنشاء الجداول في الخلفية عشان ما يعطلش الـ Request
+    ensureTable().catch(err => console.error("Background ensureTable error", err));
     const body = await request.json();
     const { slug, password, boyName, girlName } = body || {};
 
