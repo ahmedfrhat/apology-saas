@@ -215,6 +215,14 @@ export default function MohamedDashboard() {
       if (!parsedConfig.giftCoupons) parsedConfig.giftCoupons = [];
       if (!parsedConfig.finalLetter) parsedConfig.finalLetter = { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
       if (!parsedConfig.finalLetter.body) parsedConfig.finalLetter.body = [""];
+      if (!parsedConfig.judgeText) parsedConfig.judgeText = { title: "المحكمة تحكم لصالحك!", details: "كل كلامك صح" };
+      if (!parsedConfig.feedbackTexts) parsedConfig.feedbackTexts = {
+        oneStar: "تنبيه: نجمة واحدة!",
+        twoStar: "نجمتين!",
+        threeStar: "3 نجوم",
+        fourStar: "4 نجوم",
+        fiveStar: "5 نجوم شكرا"
+      };
       setFormData(parsedConfig);
     }
   }, [config, formData]);

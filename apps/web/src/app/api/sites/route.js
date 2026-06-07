@@ -91,6 +91,8 @@ async function ensureTable() {
         updated_at TIMESTAMP DEFAULT now()
       )
     `;
+    await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_detected BOOLEAN DEFAULT false`;
+    await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_seconds FLOAT DEFAULT 0`;
     dbInitialized = true;
   } catch (err) {
     console.error("Failed to create tables", err);

@@ -42,23 +42,34 @@ Follow these instructions strictly:
    - Reward coupons must compensate for the mistake (e.g. "كوبون اعتزال الببجي لمدة أسبوع كامل").
 4. Schema Constraint:
    - Exclusively return a raw, clean JSON object matching this schema (do not wrap in markdown \`\`\`json code blocks, do not include trailing commas):
-     {
-       "landingText": "...",
-       "triviaQuestions": [
-         {
-           "q": "...",
-           "options": ["...", "...", "..."],
-           "correct": "..." or ["...", "..."],
-           "trap": { "option": "...", "msg": "..." } or null
-         }
-       ],
-       "finalLetter": {
-         "title": "...",
-         "body": ["...", "...", "..."],
-         "loveSignature": "...",
-         "boySignature": "..."
-       }
-     }
+      {
+        "landingText": "...",
+        "triviaQuestions": [
+          {
+            "q": "...",
+            "options": ["...", "...", "..."],
+            "correct": "..." or ["...", "..."],
+            "trap": { "option": "...", "msg": "..." } or null
+          }
+        ],
+        "finalLetter": {
+          "title": "...",
+          "body": ["...", "...", "..."],
+          "loveSignature": "...",
+          "boySignature": "..."
+        },
+        "judgeText": {
+          "title": "...",
+          "details": "..."
+        },
+        "feedbackTexts": {
+          "oneStar": "...",
+          "twoStar": "...",
+          "threeStar": "...",
+          "fourStar": "...",
+          "fiveStar": "..."
+        }
+      }
 `;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
@@ -77,7 +88,7 @@ Follow these instructions strictly:
           const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (jsonText) {
             const parsed = JSON.parse(jsonText.replace(/```json/g, "").replace(/```/g, "").trim());
-            if (parsed.landingText && parsed.triviaQuestions && parsed.finalLetter) {
+            if (parsed.landingText && parsed.triviaQuestions && parsed.finalLetter && parsed.judgeText && parsed.feedbackTexts) {
               return Response.json(parsed);
             }
           }
@@ -354,6 +365,17 @@ Follow these instructions strictly:
             ],
             loveSignature: "بحبك للأبد يا ملكتي ❤️",
             boySignature: "- حبيبك"
+          },
+          judgeText: {
+            title: "المحكمة تحكم لصالحك!",
+            details: "أنا المعترف بكل أخطائي وقرارات المحكمة نافذة."
+          },
+          feedbackTexts: {
+            oneStar: "تنبيه: نجمة واحدة!",
+            twoStar: "نجمتين!",
+            threeStar: "3 نجوم",
+            fourStar: "4 نجوم",
+            fiveStar: "5 نجوم شكرا"
           }
         };
         break;

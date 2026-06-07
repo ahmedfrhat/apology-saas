@@ -3,7 +3,6 @@ import { motion } from "motion/react";
 import { Headphones } from "lucide-react";
 import TiltWrapper from "@/components/TiltWrapper";
 import { useApp } from "@/context/AppContext";
-import { playMusic } from "@/utils/audio";
 
 const CARD =
   "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
@@ -27,7 +26,6 @@ export default function LandingSection({ onNext }) {
   }, [landingText]);
 
   const handleStart = useCallback(() => {
-    playMusic();
     updateState({
       batteryLevel: 10,
       lastAction: "started",
