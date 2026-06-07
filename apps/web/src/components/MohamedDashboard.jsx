@@ -209,7 +209,13 @@ export default function MohamedDashboard() {
   // Sync formData from context configuration once loaded
   useEffect(() => {
     if (config && !formData) {
-      setFormData(JSON.parse(JSON.stringify(config)));
+      const parsedConfig = JSON.parse(JSON.stringify(config));
+      if (!parsedConfig.loaderTexts) parsedConfig.loaderTexts = ["جار التحميل..."];
+      if (!parsedConfig.triviaQuestions) parsedConfig.triviaQuestions = [];
+      if (!parsedConfig.giftCoupons) parsedConfig.giftCoupons = [];
+      if (!parsedConfig.finalLetter) parsedConfig.finalLetter = { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
+      if (!parsedConfig.finalLetter.body) parsedConfig.finalLetter.body = [""];
+      setFormData(parsedConfig);
     }
   }, [config, formData]);
 
