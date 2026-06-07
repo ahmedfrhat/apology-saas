@@ -38,6 +38,14 @@ export async function GET(request, context) {
   try {
     const { slug } = context.params;
 
+    // Run migration safely to ensure tracking columns exist
+    try {
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_detected BOOLEAN DEFAULT false`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_seconds FLOAT DEFAULT 0`;
+    } catch (migErr) {
+      // Ignore if it fails
+    }
+
     // 1. Look up site id by slug
     const siteRows = await sql`
       SELECT id FROM apology_sites WHERE slug = ${slug}
@@ -78,6 +86,14 @@ export async function POST(request, context, c) {
       ]);
     }
     const { session_id } = body;
+
+    // Run migration safely to ensure tracking columns exist
+    try {
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_detected BOOLEAN DEFAULT false`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_seconds FLOAT DEFAULT 0`;
+    } catch (migErr) {
+      // Ignore
+    }
 
     if (!session_id) {
       return Response.json({ error: "session_id is required" }, { status: 400 });

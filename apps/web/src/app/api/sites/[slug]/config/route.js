@@ -13,9 +13,10 @@ export async function POST(request, context, c) {
         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
       ]);
     }
-    const { edit_password, config } = body || {};
+    const { edit_password, password, config } = body || {};
+    const finalPassword = edit_password || password;
 
-    if (!edit_password || !config) {
+    if (!finalPassword || !config) {
       return Response.json({ error: "بيانات ناقصة" }, { status: 400 });
     }
 
@@ -27,7 +28,7 @@ export async function POST(request, context, c) {
       return Response.json({ error: "الموقع غير موجود" }, { status: 404 });
     }
 
-    if (rows[0].edit_password !== edit_password) {
+    if (rows[0].edit_password !== finalPassword) {
       return Response.json({ error: "كلمة المرور غير صحيحة" }, { status: 401 });
     }
 
