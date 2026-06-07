@@ -106,7 +106,8 @@ function getGirlNickname(name) {
 export async function POST(request) {
   try {
     // تشغيل إنشاء الجداول في الخلفية عشان ما يعطلش الـ Request
-    ensureTable().catch(err => console.error("Background ensureTable error", err));
+    // تم التعطيل بناءً على طلبك لأن الجداول موجودة مسبقاً في Neon لتفادي الـ Timeout
+    // ensureTable().catch(err => console.error("Background ensureTable error", err));
     const body = await request.json();
     const { slug, password, boyName, girlName } = body || {};
 

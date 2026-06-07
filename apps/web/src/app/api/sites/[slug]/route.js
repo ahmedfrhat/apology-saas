@@ -1,18 +1,19 @@
 import sql from "@/app/api/utils/sql";
 
-export async function GET(request, context) {
+export async function GET(request, { params }) {
+  const { slug } = params;
   try {
-    const { slug } = context.params;
-    const rows = await sql`
-      SELECT config FROM apology_sites WHERE slug = ${slug}
+    const sites = await sql`
+      SELECT * FROM apology_sites WHERE slug = ${slug}
     `;
-    if (rows.length === 0) {
+
+    if (sites.length === 0) {
       return Response.json({ error: "الموقع غير موجود" }, { status: 404 });
     }
-    const config = typeof rows[0].config === 'string' ? JSON.parse(rows[0].config) : rows[0].config;
-    return Response.json(config);
+
+    return Response.json(sites[0]);
   } catch (error) {
-    console.error("[sites/[slug]/GET] error", error);
-    return Response.json({ error: "Failed to load configuration" }, { status: 500 });
+    console.error("Dashboard API Error:", error);
+    return Response.json({ error: "فشل تحميل البيانات" }, { status: 500 });
   }
 }
