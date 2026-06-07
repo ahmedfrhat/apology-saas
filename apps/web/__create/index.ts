@@ -35,10 +35,12 @@ for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
   };
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-const adapter = NeonAdapter(pool);
+const pool = process.env.DATABASE_URL
+  ? new Pool({
+      connectionString: process.env.DATABASE_URL,
+    })
+  : null;
+const adapter = pool ? NeonAdapter(pool) : null;
 
 const app = new Hono();
 
@@ -84,7 +86,7 @@ for (const method of ['post', 'put', 'patch'] as const) {
   );
 }
 
-if (process.env.AUTH_SECRET) {
+if (process.env.AUTH_SECRET && adapter) {
   app.use(
     '*',
     initAuthConfig((c) => ({

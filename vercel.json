@@ -2,5 +2,5 @@
   "framework": null,
   "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "npm run build",
-  "outputDirectory": "build/client"
+  "outputDirectory": "apps/web/build/client"
 }

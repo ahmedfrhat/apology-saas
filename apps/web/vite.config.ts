@@ -66,7 +66,7 @@ export default defineConfig({
     loadFontsFromTailwindSource(),
     addRenderIds(),
     reactRouter(),
-    tsconfigPaths(),
+    tsconfigPaths({ ignoreConfigErrors: true }),
     aliases(),
     layoutWrapperPlugin(),
   ],

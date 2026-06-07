@@ -1,0 +1,8 @@
+{
+  "name": "manar",
+  "private": true,
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "build": "npm run build --workspace=apps/web"
+  }
+}
