@@ -104,7 +104,14 @@ export function AppProvider({ children }) {
       const res = await fetch(`/api/sites/${encodeURIComponent(slug)}`);
       if (res.ok) {
         const data = await res.json();
-        setConfig(data);
+        let actualConfig = data.config || data;
+        
+        // UN-NEST if corrupted from previous saves
+        while (actualConfig && actualConfig.config && typeof actualConfig.config === "object" && !Array.isArray(actualConfig.config)) {
+          actualConfig = actualConfig.config;
+        }
+        
+        setConfig(actualConfig);
       } else {
         console.error("Failed to load config from server, status:", res.status);
       }

@@ -139,8 +139,15 @@ export default function MohamedDashboard() {
   const [activeSection, setActiveSection] = useState("basic");
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
+  const [showShareLink, setShowShareLink] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState("");
 
-  const [incidentReason, setIncidentReason] = useState("");
+  const copyToClipboard = () => {
+    const url = window.location.origin + "/" + siteSlug;
+    navigator.clipboard.writeText(url);
+    setCopyFeedback("تم النسخ بنجاح! 📋");
+    setTimeout(() => setCopyFeedback(""), 2000);
+  };  const [incidentReason, setIncidentReason] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiSuccessMsg, setAiSuccessMsg] = useState("");
 
@@ -210,19 +217,37 @@ export default function MohamedDashboard() {
   useEffect(() => {
     if (config && !formData) {
       const parsedConfig = JSON.parse(JSON.stringify(config));
+      
+      // Ensure all objects exist to prevent crashes
+      if (!parsedConfig.boyName) parsedConfig.boyName = "";
+      if (!parsedConfig.girlName) parsedConfig.girlName = "";
+      if (!parsedConfig.girlNickname) parsedConfig.girlNickname = "";
+      if (!parsedConfig.landingText) parsedConfig.landingText = "";
+      if (!parsedConfig.voidText) parsedConfig.voidText = "";
+      if (!parsedConfig.audioUrl) parsedConfig.audioUrl = "";
+
       if (!parsedConfig.loaderTexts) parsedConfig.loaderTexts = ["جار التحميل..."];
       if (!parsedConfig.triviaQuestions) parsedConfig.triviaQuestions = [];
       if (!parsedConfig.giftCoupons) parsedConfig.giftCoupons = [];
-      if (!parsedConfig.finalLetter) parsedConfig.finalLetter = { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
+      
+      if (!parsedConfig.finalLetter) {
+        parsedConfig.finalLetter = { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
+      }
       if (!parsedConfig.finalLetter.body) parsedConfig.finalLetter.body = [""];
-      if (!parsedConfig.judgeText) parsedConfig.judgeText = { title: "المحكمة تحكم لصالحك!", details: "كل كلامك صح" };
-      if (!parsedConfig.feedbackTexts) parsedConfig.feedbackTexts = {
-        oneStar: "تنبيه: نجمة واحدة!",
-        twoStar: "نجمتين!",
-        threeStar: "3 نجوم",
-        fourStar: "4 نجوم",
-        fiveStar: "5 نجوم شكرا"
-      };
+      
+      if (!parsedConfig.judgeText) {
+        parsedConfig.judgeText = { title: "المحكمة تحكم لصالحك!", details: "كل كلامك صح" };
+      }
+      if (!parsedConfig.feedbackTexts) {
+        parsedConfig.feedbackTexts = {
+          oneStar: "تنبيه: نجمة واحدة!",
+          twoStar: "نجمتين!",
+          threeStar: "3 نجوم",
+          fourStar: "4 نجوم",
+          fiveStar: "5 نجوم شكرا"
+        };
+      }
+      
       setFormData(parsedConfig);
     }
   }, [config, formData]);
@@ -305,6 +330,7 @@ export default function MohamedDashboard() {
       });
       if (res.ok) {
         setSaveStatus({ success: true, msg: "تم حفظ الإعدادات بنجاح!" });
+        setShowShareLink(true); // Show the share link box when they save
         await refetchConfig();
       } else {
         const errData = await res.json();
@@ -666,6 +692,30 @@ export default function MohamedDashboard() {
         {/* Tab Content: Settings */}
         {activeTab === "settings" && formData && (
           <form onSubmit={handleSave} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            {showShareLink && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex flex-col items-center text-center">
+                <CheckCircle size={24} className="text-green-600 mb-2" />
+                <h4 className="text-green-800 font-bold mb-1">الموقع جاهز الآن! 🎉</h4>
+                <p className="text-sm text-green-700 mb-4">انسخ الرابط ده وابعتهولها علشان تشوف المصالحة اللي عملتهالها:</p>
+                <div className="flex w-full items-center gap-2">
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={`${typeof window !== "undefined" ? window.location.origin : ""}/${siteSlug}`}
+                    className="flex-1 bg-white border border-green-300 rounded-lg py-2 px-3 text-sm text-gray-700 outline-none"
+                    dir="ltr"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={copyToClipboard}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap"
+                  >
+                    {copyFeedback || "نسخ الرابط"}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               {/* Category selector */}
               <div className="md:col-span-1 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 border-b md:border-b-0 md:border-l border-gray-100 md:pl-4">
