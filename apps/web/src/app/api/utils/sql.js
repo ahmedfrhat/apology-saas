@@ -140,6 +140,16 @@ mockSql.transaction = (callback) => {
   return callback(mockSql);
 };
 
-const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : mockSql;
+function getCleanDbUrl() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    u.searchParams.delete('channel_binding');
+    return u.toString();
+  } catch { return url; }
+}
+const cleanUrl = getCleanDbUrl();
+const sql = cleanUrl ? neon(cleanUrl) : mockSql;
 
 export default sql;
