@@ -1,8 +1,9 @@
-import sql from "@/app/api/utils/sql";
+import sql, { hasDb } from "@/app/api/utils/sql";
 
 // POST: Set a broadcast message targeting a session.
 // Body: { session_id, message }
 export async function POST(request, context) {
+  if (!hasDb()) return new Response(null, { status: 204 }); // مؤقتًا
   try {
     const { slug } = context.params;
     const body = await request.json();
@@ -43,6 +44,7 @@ export async function POST(request, context) {
 // GET: Poll for a pending broadcast message for a session, then clear it.
 // Query params: ?session_id=...
 export async function GET(request, context) {
+  if (!hasDb()) return new Response(null, { status: 204 }); // مؤقتًا
   try {
     const { slug } = context.params;
     const url = new URL(request.url);
