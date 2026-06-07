@@ -25,10 +25,11 @@ const routeModules: Record<string, Record<string, unknown>> = import.meta.glob(
 // Helper: convert a glob key like "../src/app/api/sites/[slug]/route.js"
 // into a Hono-compatible path like "/sites/:slug".
 function globKeyToHonoPath(key: string): string {
-  // Strip the leading prefix and trailing "/route.js"
-  const stripped = key
-    .replace(/^\.\.\/src\/app\/api/, '')
-    .replace(/\/route\.js$/, '');
+  // Strip everything before /api/ to make it robust on Vercel/Production
+  const parts = key.split('/api/');
+  if (parts.length < 2) return '/';
+  
+  const stripped = parts[1].replace(/\/route\.js$/, '');
 
   if (!stripped || stripped === '/') return '/';
 
