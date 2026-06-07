@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+.react-router/
+.vitest/
+build/
+.output/
+dist/
+.env.local
+.DS_Store
+.npm/
+.yarn/
+*.log
