@@ -10,7 +10,7 @@ const CARD =
   "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
 
 const BODY = [
-  "منورتي الجميلة اللي ماليش غيرها،",
+  "{girlNickname} الجميلة اللي ماليش غيرها،",
   "عارف إني ممكن أكون بزعلك أحياناً، وعارف إن الموقف الأخير ضايقك.. بس يعلم ربنا إنك عندي بالدنيا وما فيها. إنتي مش بس حبيبتي، إنتي الروح اللي بتنور أيامي والضحكة اللي بتمسح كل تعبي.",
   "عملتلك الموقع ده مخصوص عشان أثبتلك إن مفيش خناقة تقدر تبعدني عنك، وإنك تستاهلي كل حاجة حلوة في الدنيا وتستاهلي إني أتعب وأبرمج مخصوص عشان أشوف ضحكتك دي.",
   "أسف على كل لحظة زعل، وأوعدك إني دايماً هفضل جنبك وسندك. يا رب دايماً مع بعض، ويا رب دايماً مالية حياتي فرحة.",
@@ -23,8 +23,8 @@ export default function FinalLetter({ onNext }) {
   const letterConfig = config?.finalLetter || {
     title: "إلى أغلى ما أملك.. 🤍",
     body: BODY,
-    loveSignature: "بحبك يا منار ❤️",
-    boySignature: "- محمد",
+    loveSignature: "بحبك يا {girlName} ❤️",
+    boySignature: "- {boyName}",
   };
 
   const title = t(letterConfig.title);

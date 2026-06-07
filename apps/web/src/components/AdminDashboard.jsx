@@ -119,7 +119,7 @@ function SessionRow({ row, onBroadcast }) {
   );
 }
 
-export default function MohamedDashboard() {
+export default function AdminDashboard() {
   const { config, refetchConfig, siteSlug } = useApp();
 
   const [activeTab, setActiveTab] = useState("live");

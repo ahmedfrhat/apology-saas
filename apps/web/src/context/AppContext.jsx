@@ -26,7 +26,7 @@ function getSlugFromPath() {
   const parts = window.location.pathname.split("/").filter(Boolean);
   if (parts.length === 0) return "";
   const first = parts[0];
-  if (first === "api" || first === "errors" || first === "mohamed-dashboard" || first === "__create") {
+  if (first === "api" || first === "errors" || first === "__create") {
     return "";
   }
   return first;
@@ -130,9 +130,9 @@ export function AppProvider({ children }) {
     if (typeof str !== "string") return str;
     if (!config) return str;
     return str
-      .replace(/{boyName}/g, config.boyName || "محمد")
-      .replace(/{girlName}/g, config.girlName || "منار")
-      .replace(/{girlNickname}/g, config.girlNickname || "منورتي");
+      .replace(/{boyName}/g, config.boyName || "حبيبك")
+      .replace(/{girlName}/g, config.girlName || "حبيبتك")
+      .replace(/{girlNickname}/g, config.girlNickname || "يا روحي");
   }, [config]);
 
   // Debounced sync of tracking-relevant fields to the backend.
