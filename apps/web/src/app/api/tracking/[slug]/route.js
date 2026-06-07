@@ -64,10 +64,19 @@ export async function GET(request, context) {
 }
 
 // POST: Upsert a live tracking row for a specific session linked to a tenant site slug
-export async function POST(request, context) {
+export async function POST(request, context, c) {
   try {
     const { slug } = context.params;
-    const body = await request.json();
+    let body;
+    const nodeReq = c?.env?.incoming || {};
+    if (nodeReq.body) {
+      body = typeof nodeReq.body === "string" ? JSON.parse(nodeReq.body) : nodeReq.body;
+    } else {
+      body = await Promise.race([
+        request.json(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
+      ]);
+    }
     const { session_id } = body;
 
     if (!session_id) {
