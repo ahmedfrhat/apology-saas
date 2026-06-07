@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import postgres from 'postgres';
 
 // In-memory database mocks for local development when DATABASE_URL is not provided
 const apologySitesDb = new Map();
@@ -140,6 +140,12 @@ mockSql.transaction = (callback) => {
   return callback(mockSql);
 };
 
-const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : mockSql;
+const sqlConnection = process.env.DATABASE_URL
+  ? postgres(process.env.DATABASE_URL, {
+      ssl: { rejectUnauthorized: false },
+    })
+  : null;
+
+const sql = sqlConnection || mockSql;
 
 export default sql;
