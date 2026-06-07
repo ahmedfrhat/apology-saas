@@ -291,6 +291,11 @@ export default function AdminDashboard() {
       if (!parsedConfig.audioUrl) parsedConfig.audioUrl = "";
       if (typeof parsedConfig.enableFunnyText === "undefined") parsedConfig.enableFunnyText = true;
       if (!parsedConfig.funnyText) parsedConfig.funnyText = "احا انتي لسه هنا يلا انطري ابلكاش 😂";
+      
+      // Integrations
+      if (!parsedConfig.telegramBotToken) parsedConfig.telegramBotToken = "";
+      if (!parsedConfig.telegramChatId) parsedConfig.telegramChatId = "";
+      if (!parsedConfig.geminiApiKey) parsedConfig.geminiApiKey = "";
 
       if (!parsedConfig.loaderTexts) parsedConfig.loaderTexts = ["جار التحميل..."];
       if (!parsedConfig.triviaQuestions) parsedConfig.triviaQuestions = [];
@@ -1400,6 +1405,57 @@ export default function AdminDashboard() {
                   />
                 </div>
               )}
+              </div>
+
+              {/* Integrations (Telegram + Gemini) */}
+              <div className="mb-6 rounded-2xl border border-gray-100 bg-blue-50/50 p-5">
+                <label className="mb-4 block text-sm font-semibold text-gray-800 border-b border-gray-200 pb-2 flex items-center gap-2">
+                  <Activity size={18} className="text-blue-600" />
+                  الربط والذكاء الاصطناعي (Integrations)
+                </label>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Telegram Bot Token
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.telegramBotToken || ""}
+                      onChange={(e) => updateField("telegramBotToken", e.target.value)}
+                      placeholder="مثال: 123456789:ABCdefGHIjklmnoPQRstuvWXYZ"
+                      className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Telegram Chat ID
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.telegramChatId || ""}
+                      onChange={(e) => updateField("telegramChatId", e.target.value)}
+                      placeholder="مثال: 987654321"
+                      className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">ستصلك إشعارات فورية على تيليجرام عند دخول الفتاة للموقع وفي كل مرحلة تمر بها.</p>
+                  </div>
+
+                  <div className="border-t border-blue-100 pt-4 mt-4">
+                    <label className="mb-1 block text-xs font-medium text-gray-600">
+                      Gemini API Key
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.geminiApiKey || ""}
+                      onChange={(e) => updateField("geminiApiKey", e.target.value)}
+                      placeholder="AIzaSyB..."
+                      className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1">مطلوب لتفعيل نظام "المحكمة الذكية" للرد تلقائياً على دفاع الفتاة، ولتوليد النصوص بضغطة زر.</p>
+                  </div>
+                </div>
               </div>
 
               {/* Love Timeline Images & Texts */}

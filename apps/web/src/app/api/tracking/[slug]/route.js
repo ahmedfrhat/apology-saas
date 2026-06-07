@@ -13,9 +13,22 @@ async function triggerNotification(slug, eventType, sessionId) {
   // Print locally to server logs
   console.log(`[TELEGRAM NOTIFICATION MOCK] [Site: ${slug}] [Session: ${sessionId}] ${message}`);
 
-  // Dispatches to Telegram API if configured in environments
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  // Fetch site config to get custom Telegram tokens
+  let config = {};
+  try {
+    const result = await sql`
+      SELECT config FROM apology_sites WHERE slug = ${slug}
+    `;
+    if (result && result.length > 0 && result[0].config) {
+      config = result[0].config;
+    }
+  } catch (dbErr) {
+    console.error("Failed to fetch site config for Telegram notification", dbErr);
+  }
+
+  // Dispatches to Telegram API if configured in environments or custom site config
+  const botToken = config.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = config.telegramChatId || process.env.TELEGRAM_CHAT_ID;
   if (botToken && chatId) {
     try {
       const url = `https://api.telegram.org/bot${botToken}/sendMessage`;

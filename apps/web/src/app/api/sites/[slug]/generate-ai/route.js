@@ -22,8 +22,21 @@ export async function POST(request, context, c) {
     const reason = incident_reason.trim();
     const reasonLower = reason.toLowerCase();
 
+    // Fetch site config to get custom API key
+    let config = {};
+    try {
+      const result = await sql`
+        SELECT config FROM apology_sites WHERE slug = ${slug}
+      `;
+      if (result && result.length > 0 && result[0].config) {
+        config = result[0].config;
+      }
+    } catch (dbErr) {
+      console.error("Failed to fetch site config for AI generation", dbErr);
+    }
+
     // 1. Check for API key (Gemini / OpenAI)
-    const geminiApiKey = process.env.GEMINI_API_KEY;
+    const geminiApiKey = config.geminiApiKey || process.env.GEMINI_API_KEY;
     if (geminiApiKey) {
       try {
         const systemPrompt = `You are an expert in Emotional Intelligence, Psychological Subtext, and Egyptian/Arab Cultural Nuance.

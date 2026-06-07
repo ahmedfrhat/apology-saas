@@ -8,24 +8,19 @@ const CARD =
   "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
 
 export default function AIJudgeCourtroom({ onNext }) {
-  const { updateState, config, t } = useApp();
+  const { updateState, config, t, siteSlug } = useApp();
   const [text, setText] = useState("");
   const [slam, setSlam] = useState(false);
   const [verdict, setVerdict] = useState(false);
+  
+  const [dynamicTitle, setDynamicTitle] = useState("");
+  const [dynamicDetails, setDynamicDetails] = useState("");
+  const [isJudging, setIsJudging] = useState(false);
   
   const cardRef = useRef(null);
   const courtRunBtnRef = useRef(null);
   const [courtRunPos, setCourtRunPos] = useState({ x: 0, y: 0 });
   const firstNoHoverTime = useRef(null);
-
-  const title = t(
-    config?.judgeText?.title ||
-      "بعد دراسة الأدلة والمرافعات... المحكمة تحكم لصالح {girlName}! ⚖️❤️"
-  );
-  const details = t(
-    config?.judgeText?.details ||
-      "القاضي: كل اللي عملته {girlName} صح والباقي كلامه فارغ 😂"
-  );
 
   useEffect(() => {
     updateState({ currentSection: "judge", lastAction: "courtroom" });
@@ -52,8 +47,9 @@ export default function AIJudgeCourtroom({ onNext }) {
     });
   }, []);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     setSlam(true);
+    setIsJudging(true);
 
     // Track hesitation
     if (firstNoHoverTime.current) {
@@ -67,12 +63,42 @@ export default function AIJudgeCourtroom({ onNext }) {
     }
 
     updateState({ pleaText: text, lastAction: "plea-submitted" });
-    setTimeout(() => {
-      setVerdict(true);
-      updateState({ batteryLevel: 70, lastAction: "verdict" });
-      setTimeout(onNext, 5000);
-    }, 600);
-  }, [text, onNext, updateState]);
+
+    // AI Live Verdict
+    let finalTitle = config?.judgeText?.title || "بعد دراسة الأدلة والمرافعات... المحكمة تحكم لصالح {girlName}! ⚖️❤️";
+    let finalDetails = config?.judgeText?.details || "القاضي: كل اللي عملته {girlName} صح والباقي كلامه فارغ 😂";
+
+    if (siteSlug) {
+      try {
+        const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/judge`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pleaText: text,
+            girlName: config?.girlName,
+            boyName: config?.boyName
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.title && data.details) {
+            finalTitle = data.title;
+            finalDetails = data.details;
+          }
+        }
+      } catch (err) {
+        console.error("AI Judge Error:", err);
+      }
+    }
+
+    setDynamicTitle(finalTitle);
+    setDynamicDetails(finalDetails);
+    
+    setIsJudging(false);
+    setVerdict(true);
+    updateState({ batteryLevel: 70, lastAction: "verdict" });
+    setTimeout(onNext, 7000);
+  }, [text, onNext, updateState, siteSlug, config]);
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-5">
@@ -98,11 +124,19 @@ export default function AIJudgeCourtroom({ onNext }) {
             className="rounded-3xl border border-[#DFBA73]/40 bg-[#DFBA73]/10 p-6"
           >
             <p className="text-lg font-semibold leading-relaxed text-[#1A1A1A]">
-              {title}
+              {t(dynamicTitle)}
             </p>
-            <p className="mt-3 text-sm font-medium text-[#5A5955]">
-              {details}
+            <p className="mt-3 text-sm leading-relaxed text-[#5A5955]">
+              {t(dynamicDetails)}
             </p>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="mt-4 flex justify-center"
+            >
+              <Gavel size={32} className="text-[#DFBA73]" />
+            </motion.div>
           </motion.div>
         ) : (
           <>
@@ -112,18 +146,24 @@ export default function AIJudgeCourtroom({ onNext }) {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
+              placeholder={t("اكتب دفاعك هنا... (خليك رومانسي)")}
+              className="w-full resize-none rounded-2xl border border-[#E5E0D8] bg-white/50 p-5 text-sm text-[#1A1A1A] placeholder-[#8A7E72] outline-none transition-all focus:border-[#1A1A1A] focus:bg-white"
               rows={4}
-              className="mb-5 w-full resize-none rounded-2xl border border-[#1A1A1A]/10 bg-white px-4 py-3 text-sm text-[#1A1A1A] outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73]"
-              placeholder={t("قولي اللي في قلبك...")}
+              disabled={isJudging}
             />
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-8 py-3 text-sm font-medium text-[#F4F3EF] transition-colors hover:bg-[#DFBA73] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
+                disabled={!text.trim() || isJudging}
+                className={`inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-8 py-3 text-sm font-medium text-[#F4F3EF] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2 ${
+                  !text.trim() || isJudging
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-[#DFBA73]"
+                }`}
               >
-                <Gavel size={18} /> {t("إرسال حكم المحكمة")}
+                <Gavel size={18} /> {isJudging ? t("جاري النطق بالحكم...") : t("إرسال حكم المحكمة")}
               </button>
 
               <motion.button
@@ -139,6 +179,7 @@ export default function AIJudgeCourtroom({ onNext }) {
                 transition={{ type: "spring", stiffness: 200, damping: 15 }}
                 className="rounded-full border border-red-300 bg-white px-6 py-3 text-sm font-medium text-red-500 cursor-pointer"
                 style={{ willChange: "transform" }}
+                disabled={isJudging}
               >
                 {t("رفض الصلح 😡")}
               </motion.button>
