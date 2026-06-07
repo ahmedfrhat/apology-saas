@@ -1,6 +1,9 @@
-import * as helpers from './helpers';
+// Error demo page: intentionally references a "missing component" pattern.
+// Both the stub and the page are self-contained to avoid cross-module
+// resolution issues during the server bundle phase.
+
+const DoesNotExist = () => null;
 
 export default function Page() {
-  const Widget = helpers.DoesNotExist;
-  return <div>{Widget()}</div>;
+  return <div>{DoesNotExist()}</div>;
 }
