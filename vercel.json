@@ -1,6 +1,30 @@
 {
-  "framework": null,
-  "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "npm run build",
-  "outputDirectory": "apps/web/build/client"
+  "builds": [
+    {
+      "src": "apps/web/build/client/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "apps/web/api/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "apps/web/build/server/**"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "dest": "/apps/web/build/client/assets/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/apps/web/build/client/favicon.ico"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/apps/web/api/index.js"
+    }
+  ]
 }
