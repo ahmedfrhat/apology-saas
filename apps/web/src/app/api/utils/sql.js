@@ -1,4 +1,4 @@
-import postgres from 'postgres';
+import { neon } from '@neondatabase/serverless';
 
 // In-memory database mocks for local development when DATABASE_URL is not provided
 const apologySitesDb = new Map();
@@ -140,27 +140,6 @@ mockSql.transaction = (callback) => {
   return callback(mockSql);
 };
 
-function sanitizeDatabaseUrl(urlStr) {
-  if (!urlStr) return urlStr;
-  try {
-    const url = new URL(urlStr);
-    url.searchParams.delete('channel_binding');
-    return url.toString();
-  } catch (e) {
-    console.error('Failed to parse DATABASE_URL', e);
-    return urlStr.replace(/([?&])channel_binding=[^&]*/, '$1').replace(/\?$/, '');
-  }
-}
-
-const cleanedUrl = sanitizeDatabaseUrl(process.env.DATABASE_URL);
-
-const sqlConnection = cleanedUrl
-  ? postgres(cleanedUrl, {
-      ssl: { rejectUnauthorized: false },
-      connect_timeout: 5,
-    })
-  : null;
-
-const sql = sqlConnection || mockSql;
+const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : mockSql;
 
 export default sql;
