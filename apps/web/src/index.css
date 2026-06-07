@@ -11,3 +11,17 @@
     scrollbar-width: none;
   }
 }
+
+@layer base {
+  /* Prevent iOS Safari auto-zoom on focus by enforcing 16px minimum font size */
+  @media (max-width: 640px) {
+    input, textarea, select {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Improve touch interaction on mobile */
+  button, input, select, textarea, a {
+    touch-action: manipulation;
+  }
+}
