@@ -1,4 +1,5 @@
 import sql from "@/app/api/utils/sql";
+import { neon } from "@neondatabase/serverless";
 
 const DEFAULT_CONFIG_TEMPLATE = {
   boyName: "",
@@ -105,37 +106,51 @@ function getGirlNickname(name) {
 
 export async function POST(request, context) {
   try {
-    // تشغيل إنشاء الجداول في الخلفية عشان ما يعطلش الـ Request
-    // تم التعطيل بناءً على طلبك لأن الجداول موجودة مسبقاً في Neon لتفادي الـ Timeout
-    // ensureTable().catch(err => console.error("Background ensureTable error", err));
-    console.log("[sites/POST] Starting request processing...");
-    const body = context?.parsedBody || await request.json();
-    console.log("[sites/POST] Body parsed successfully:", Object.keys(body));
+    console.log("[sites/POST] 1. Starting request processing...");
+
+    // 1. Wrap Body Parsing Safely with a fallback timeout
+    let body;
+    console.log("[sites/POST] 2. Before parsing body...");
+    try {
+      body = await Promise.race([
+        context?.parsedBody ? Promise.resolve(context.parsedBody) : request.json(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Body parsing timeout")), 5000))
+      ]);
+      console.log("[sites/POST] 3. Body parsed successfully. Keys:", Object.keys(body || {}));
+    } catch (parseError) {
+      console.error("[sites/POST] ERROR: Failed to parse body or timeout:", parseError);
+      return Response.json({ error: "فشل قراءة البيانات. قد يكون الاتصال بطيئاً." }, { status: 400 });
+    }
+
     const { slug, password, boyName, girlName } = body || {};
 
     if (!slug || !password || !boyName || !girlName) {
+      console.log("[sites/POST] 4. Missing fields validation failed.");
       return Response.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
     }
 
-    // Validate slug format
+    console.log("[sites/POST] 5. Validating slug format...");
     const slugRegex = /^[a-z0-9-]+$/;
     if (!slugRegex.test(slug)) {
       return Response.json({ error: "يجب أن يكون الرابط باللغة الإنجليزية ويحتوي على أحرف وأرقام وشرطة فقط" }, { status: 400 });
     }
 
-    // Check if slug is already taken
-    console.log(`[sites/POST] Checking if slug exists: ${slug}`);
-    const existing = await sql`
-      SELECT id FROM apology_sites WHERE slug = ${slug}
-    `;
-    console.log(`[sites/POST] Check complete. Found: ${existing.length}`);
+    // Enforce Neon HTTP Client explicitly for this route to avoid any pool hangs
+    console.log("[sites/POST] 6. Initializing explicit Neon HTTP client...");
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+    if (!dbUrl) throw new Error("DB URL missing in route");
+    const safeSql = neon(dbUrl);
+
+    console.log(`[sites/POST] 7. Before duplicate slug check query for: ${slug}`);
+    const existing = await safeSql`SELECT id FROM apology_sites WHERE slug = ${slug}`;
+    console.log(`[sites/POST] 8. After duplicate slug check query. Found: ${existing.length}`);
+    
     if (existing.length > 0) {
       return Response.json({ error: "الرابط ده محجوز يا هندسة ❌" }, { status: 409 });
     }
 
     const girlNickname = getGirlNickname(girlName);
 
-    // Build default customized config
     const config = {
       ...DEFAULT_CONFIG_TEMPLATE,
       boyName,
@@ -145,16 +160,16 @@ export async function POST(request, context) {
 
     const configStr = JSON.stringify(config);
 
-    console.log(`[sites/POST] Executing INSERT for slug: ${slug}`);
-    await sql`
+    console.log(`[sites/POST] 9. Before INSERT query for: ${slug}`);
+    await safeSql`
       INSERT INTO apology_sites (slug, edit_password, config)
       VALUES (${slug}, ${password}, ${configStr}::jsonb)
     `;
-    console.log(`[sites/POST] INSERT completed successfully.`);
+    console.log(`[sites/POST] 10. After INSERT query. Success!`);
 
     return Response.json({ success: true, slug });
   } catch (error) {
-    console.error("[sites/POST] error", error);
-    return Response.json({ error: "فشل إنشاء الموقع" }, { status: 500 });
+    console.error("[sites/POST] FATAL ERROR during POST:", error);
+    return Response.json({ error: "فشل إنشاء الموقع بسبب خطأ داخلي" }, { status: 500 });
   }
 }
