@@ -1417,19 +1417,6 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-600">
-                      Telegram Bot Token
-                    </label>
-                    <input
-                      type="password"
-                      value={formData.telegramBotToken || ""}
-                      onChange={(e) => updateField("telegramBotToken", e.target.value)}
-                      placeholder="مثال: 123456789:ABCdefGHIjklmnoPQRstuvWXYZ"
-                      className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-600">
                       Telegram Chat ID
                     </label>
                     <input
@@ -1439,21 +1426,9 @@ export default function AdminDashboard() {
                       placeholder="مثال: 987654321"
                       className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
-                    <p className="text-[10px] text-gray-400 mt-1">ستصلك إشعارات فورية على تيليجرام عند دخول الفتاة للموقع وفي كل مرحلة تمر بها.</p>
-                  </div>
-
-                  <div className="border-t border-blue-100 pt-4 mt-4">
-                    <label className="mb-1 block text-xs font-medium text-gray-600">
-                      Gemini API Key
-                    </label>
-                    <input
-                      type="password"
-                      value={formData.geminiApiKey || ""}
-                      onChange={(e) => updateField("geminiApiKey", e.target.value)}
-                      placeholder="AIzaSyB..."
-                      className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                    <p className="text-[10px] text-gray-400 mt-1">مطلوب لتفعيل نظام "المحكمة الذكية" للرد تلقائياً على دفاع الفتاة، ولتوليد النصوص بضغطة زر.</p>
+                    <p className="text-[10px] text-gray-400 mt-1">
+                      أرسل رسالة للبوت الخاص بنا على تيليجرام للحصول على الـ Chat ID الخاص بك. ستصلك إشعارات فورية عند دخول الفتاة للموقع وفي كل مرحلة تمر بها.
+                    </p>
                   </div>
                 </div>
               </div>

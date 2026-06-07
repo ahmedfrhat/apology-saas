@@ -27,8 +27,8 @@ async function triggerNotification(slug, eventType, sessionId) {
   }
 
   // Dispatches to Telegram API if configured in environments or custom site config
-  const botToken = config.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = config.telegramChatId || process.env.TELEGRAM_CHAT_ID;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = config.telegramChatId;
   if (botToken && chatId) {
     try {
       const url = `https://api.telegram.org/bot${botToken}/sendMessage`;

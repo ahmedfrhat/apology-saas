@@ -19,21 +19,7 @@ export async function POST(request, context, c) {
       return Response.json({ error: "الرجاء إدخال نص الدفاع" }, { status: 400 });
     }
 
-    // Fetch site config to get custom API key
-    let config = {};
-    try {
-      const result = await sql`
-        SELECT config FROM apology_sites WHERE slug = ${slug}
-      `;
-      if (result && result.length > 0 && result[0].config) {
-        config = result[0].config;
-      }
-    } catch (dbErr) {
-      console.error("Failed to fetch site config for AI Judge", dbErr);
-    }
-
-    const geminiApiKey = config.geminiApiKey || process.env.GEMINI_API_KEY;
-    
+    const geminiApiKey = process.env.GEMINI_API_KEY;
     if (!geminiApiKey) {
       return Response.json({ error: "Gemini API Key is not configured." }, { status: 400 });
     }

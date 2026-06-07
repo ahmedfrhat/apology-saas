@@ -36,7 +36,7 @@ export async function POST(request, context, c) {
     }
 
     // 1. Check for API key (Gemini / OpenAI)
-    const geminiApiKey = config.geminiApiKey || process.env.GEMINI_API_KEY;
+    const geminiApiKey = process.env.GEMINI_API_KEY;
     if (geminiApiKey) {
       try {
         const systemPrompt = `You are an expert in Emotional Intelligence, Psychological Subtext, and Egyptian/Arab Cultural Nuance.
