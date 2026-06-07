@@ -35,7 +35,9 @@ for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
   };
 }
 
-const pool = process.env.DATABASE_URL
+const isBuild = process.env.npm_lifecycle_event === 'build' || process.argv.some(arg => arg.includes('build'));
+
+const pool = process.env.DATABASE_URL && !isBuild
   ? new Pool({
       connectionString: process.env.DATABASE_URL,
     })
@@ -295,7 +297,9 @@ app.use('/api/auth/*', async (c, next) => {
 });
 app.route(API_BASENAME, api);
 
-export default await createHonoServer({
-  app,
-  defaultLogger: false,
-});
+export default isBuild
+  ? app
+  : await createHonoServer({
+      app,
+      defaultLogger: false,
+    });
