@@ -99,5 +99,6 @@
 	},
 	"overrides": {
 		"next-themes": "^0.3.0"
-	}
+	},
+	"description": "Apology SaaS web application"
 }
