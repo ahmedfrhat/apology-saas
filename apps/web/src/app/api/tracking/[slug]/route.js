@@ -1,11 +1,15 @@
 import sql from "@/app/api/utils/sql";
 
-async function triggerNotification(slug, eventType, sessionId) {
+async function triggerNotification(slug, eventType, sessionId, data = {}) {
   let message = "";
   if (eventType === "init") {
     message = `🚨 طباختك فتحت اللينك حالاً وهي في سكشن الـ Terminal! (الموقع: ${slug})`;
   } else if (eventType === "complete") {
     message = `🎉 تم الصلح بنجاح! طباختك سامحتك ووصلت لللانهاية (الموقع: ${slug})`;
+  } else if (eventType === "rating") {
+    message = `⭐ طباختك قيمتك في المحكمة بـ ${data.starRating} نجوم! (الموقع: ${slug})`;
+  } else if (eventType === "plea") {
+    message = `⚖️ طباختك كتبت مرافعة/دفاع في المحكمة: "${data.pleaText}" (الموقع: ${slug})`;
   } else {
     return;
   }
@@ -138,7 +142,7 @@ export async function POST(request, context, c) {
 
     // 2. Intercept for session initialization and completion alerts
     const existingTracking = await sql`
-      SELECT id, current_section FROM live_tracking WHERE session_id = ${session_id}
+      SELECT id, current_section, plea_text, star_rating FROM live_tracking WHERE session_id = ${session_id}
     `;
     const isNewSession = existingTracking.length === 0;
 
@@ -164,11 +168,19 @@ export async function POST(request, context, c) {
     if (isNewSession) {
       triggerNotification(slug, "init", session_id).catch(err => console.error("Init notification fail", err));
     } else {
-      const prevSection = existingTracking[0].current_section;
+      const prevTracking = existingTracking[0];
+      const prevSection = prevTracking.current_section;
       const reachedEnd = currentSection === "eternal-void" || lastAction === "forgiven";
       const previouslyEnd = prevSection === "eternal-void" || prevSection === "forgiven";
+      
       if (reachedEnd && !previouslyEnd) {
         triggerNotification(slug, "complete", session_id).catch(err => console.error("Complete notification fail", err));
+      }
+      if (starRating !== null && starRating !== prevTracking.star_rating) {
+        triggerNotification(slug, "rating", session_id, { starRating }).catch(err => console.error("Rating notification fail", err));
+      }
+      if (pleaText && pleaText !== prevTracking.plea_text) {
+        triggerNotification(slug, "plea", session_id, { pleaText }).catch(err => console.error("Plea notification fail", err));
       }
     }
 
