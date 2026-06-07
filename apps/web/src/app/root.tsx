@@ -65,7 +65,12 @@ function InternalErrorBoundary({ error: errorArg }: Route.ErrorBoundaryProps) {
   const asyncError = useAsyncError();
   const error = errorArg ?? asyncError ?? routeError;
   const [isOpen, setIsOpen] = useState(false);
-  const shouldScale = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+  const [shouldScale, setShouldScale] = useState(false);
+  
+  useEffect(() => {
+    setShouldScale(window.innerWidth < 768);
+  }, []);
+  
   const scaleFactor = shouldScale ? 1.02 : 1;
   const copyButtonTextClass = shouldScale ? 'text-sm' : 'text-xs';
   const copyButtonPaddingClass = shouldScale ? 'px-[10px] py-[5px]' : 'px-[6px] py-[3px]';
@@ -255,7 +260,7 @@ type ClientOnlyProps = {
 };
 
 export const ClientOnly: React.FC<ClientOnlyProps> = ({ loader }) => {
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
@@ -314,6 +319,8 @@ const healthyResponseType = 'sandbox:web:healthcheck:response';
 const useHandshakeParent = () => {
   const isHmrConnected = useHmrConnection();
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const healthyResponse = {
       type: healthyResponseType,
       healthy: isHmrConnected,
@@ -360,6 +367,8 @@ const waitForScreenshotReady = async () => {
 
 export const useHandleScreenshotRequest = () => {
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleMessage = async (event: MessageEvent) => {
       if (event.data.type === 'sandbox:web:screenshot:request') {
         try {
@@ -409,8 +418,14 @@ export function Layout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location?.pathname;
-  const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+  const [isMobile, setIsMobile] = useState(false);
+  
   useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'sandbox:navigation') {
         navigate(event.data.pathname);
@@ -424,15 +439,15 @@ export function Layout({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   useEffect(() => {
-    if (pathname) {
-      window.parent.postMessage(
-        {
-          type: 'sandbox:web:navigation',
-          pathname,
-        },
-        '*'
-      );
-    }
+    if (typeof window === 'undefined' || !pathname) return;
+    
+    window.parent.postMessage(
+      {
+        type: 'sandbox:web:navigation',
+        pathname,
+      },
+      '*'
+    );
   }, [pathname]);
   return (
     <html lang="en">
