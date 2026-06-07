@@ -13,9 +13,11 @@ export default function SaaSOnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [origin, setOrigin] = useState("site/");
+  const [origin, setOrigin] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     if (typeof window !== "undefined") {
       setOrigin(window.location.host + "/");
     }
@@ -167,7 +169,7 @@ export default function SaaSOnboardingPage() {
                 dir="ltr"
               >
                 <span className="px-3.5 py-2.5 text-xs text-gray-500 bg-gray-50 border-r border-gray-200 select-none font-mono">
-                  {origin}
+                  {isMounted ? origin : "loading..."}
                 </span>
                 <input
                   type="text"
