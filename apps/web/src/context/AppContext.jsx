@@ -35,14 +35,13 @@ function getSlugFromPath() {
 const INITIAL_STATE = {
   batteryLevel: 0,
   currentSection: "loader",
-  lastAction: "",
-  starRating: 0,
-  finalComment: "",
-  judgeText: "",
-  isEternalVoid: false,
-  broadcastMsg: null,
+  lastAction: null,
   hesitationDetected: false,
   hesitationSeconds: 0,
+  broadcastMsg: null,
+  pleaText: null,
+  starRating: null,
+  finalComment: null,
 };
 
 export function AppProvider({ children }) {
@@ -143,6 +142,9 @@ export function AppProvider({ children }) {
       last_action: next.lastAction,
       hesitation_detected: next.hesitationDetected,
       hesitation_seconds: next.hesitationSeconds,
+      plea_text: next.pleaText,
+      star_rating: next.starRating,
+      final_comment: next.finalComment,
     };
     if (syncTimerRef.current) return;
     syncTimerRef.current = setTimeout(async () => {
@@ -232,6 +234,9 @@ export function AppProvider({ children }) {
             last_action: "session_start",
             hesitation_detected: state.hesitationDetected || false,
             hesitation_seconds: state.hesitationSeconds || 0,
+            plea_text: state.pleaText || null,
+            star_rating: state.starRating || null,
+            final_comment: state.finalComment || null,
           }),
         });
       } catch (err) {

@@ -21,7 +21,7 @@ export default function BroadcastToast() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -40, scale: 0.9 }}
           transition={{ type: "spring", stiffness: 220, damping: 22 }}
-          className="fixed inset-x-0 top-16 z-[130] mx-auto flex w-fit max-w-[90vw] items-center gap-3 rounded-full border border-[#DFBA73]/50 bg-[#F4F3EF]/80 px-5 py-3 backdrop-blur-2xl"
+          className="fixed inset-x-0 top-16 z-[9999] mx-auto flex w-fit max-w-[90vw] items-center gap-3 rounded-full border border-[#DFBA73]/50 bg-[#F4F3EF]/80 px-5 py-3 backdrop-blur-2xl"
           style={{ boxShadow: "0 20px 50px rgba(223,186,115,0.35)" }}
         >
           <Sparkles size={18} className="shrink-0 text-[#DFBA73]" />

@@ -46,6 +46,11 @@ function timeAgo(iso) {
 function SessionRow({ row, onBroadcast }) {
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const d = new Date(row.updated_at);
+  const timeStr = d.toLocaleTimeString("ar-EG", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   const send = useCallback(async () => {
     if (!msg.trim()) return;
@@ -54,6 +59,41 @@ function SessionRow({ row, onBroadcast }) {
     setMsg("");
     setSending(false);
   }, [msg, row.session_id, onBroadcast]);
+
+  // Translator for sections and actions
+  const actionMap = {
+    "session_start": "بدأت التصفح",
+    "plea-submitted": "قدمت الدفاع في المحكمة",
+    "rated-1": "قيمت بـ 1 نجمة 😡",
+    "rated-2": "قيمت بـ 2 نجمة 😟",
+    "rated-3": "قيمت بـ 3 نجوم 😐",
+    "rated-4": "قيمت بـ 4 نجوم 🙂",
+    "rated-5": "قيمت بـ 5 نجوم 😍",
+    "eternal-void": "وصلت للنهاية",
+  };
+  const sectionMap = {
+    loader: "شاشة التحميل",
+    landing: "البداية",
+    terminal: "الهاكر",
+    smile: "كاشف الابتسامة",
+    mood: "مؤشر الزعل",
+    timeline: "ذكرياتنا",
+    trivia: "اختبار الذاكرة",
+    court: "المحكمة",
+    gifts: "الهدايا",
+    fingerprint: "البصمة",
+    trap: "سؤال الفخ",
+    letter: "رسالة النهاية",
+    void: "شاشة الفضاء",
+  };
+
+  const getActionStr = (action) => {
+    if (!action) return "غير معروف";
+    if (action.startsWith("wrong:")) return `ضغطت زر خطأ: ${action.replace("wrong:", "")}`;
+    return actionMap[action] || action;
+  };
+
+  const getSectionStr = (section) => sectionMap[section] || section || "غير معروف";
 
   const battery = row.battery_level ?? 0;
   const batteryColor =
@@ -66,53 +106,76 @@ function SessionRow({ row, onBroadcast }) {
           : "#22C55E";
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 text-sm shadow-sm">
+      <div className="flex items-center justify-between border-b border-gray-50 pb-3">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-700">
-            <Activity size={12} className="text-amber-800" />
-            {SECTION_LABELS[row.current_section] || row.current_section || "—"}
+          <span className="font-mono text-xs text-gray-400">
+            {row.session_id.slice(0, 8)}...
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700">
-            <BatteryCharging size={12} style={{ color: batteryColor }} />
-            <span style={{ color: batteryColor }} className="font-semibold">
-              {battery}%
-            </span>
+          <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
+            {timeStr}
           </span>
-          {row.hesitation_detected && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 animate-pulse">
-              ⚠️ مترددة! (فكرت في الرفض لمدة {Math.round(row.hesitation_seconds)} ثوانٍ قبل القبول)
-            </span>
-          )}
         </div>
-        <span className="text-xs font-medium text-gray-500">
-          {timeAgo(row.updated_at)}
-        </span>
+        <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+          <Battery size={12} style={{ color: batteryColor }} />
+          <span style={{ color: batteryColor }}>{battery}%</span>
+        </div>
       </div>
 
-      <div className="mt-3 font-mono text-xs text-gray-500" dir="ltr">
-        {row.session_id}
-      </div>
-      <div className="mt-1 text-sm text-gray-600">
-        <span className="text-gray-400 mr-2">-</span>
-        آخر حركة: {row.last_action || "لا يوجد"}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded-md">
+          <span className="text-gray-500 text-xs font-medium">القسم الحالي:</span>
+          <span className="font-bold text-gray-800 text-xs">{getSectionStr(row.current_section)}</span>
+        </div>
+        <div className="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded-md">
+          <span className="text-gray-500 text-xs font-medium">آخر حركة:</span>
+          <span className="font-bold text-blue-700 text-xs text-left" dir="ltr">{getActionStr(row.last_action)}</span>
+        </div>
+
+        {row.hesitation_detected && (
+          <div className="mt-1 flex items-center gap-1.5 rounded bg-orange-50 p-2 text-xs font-medium text-orange-700 border border-orange-100">
+            <AlertCircle size={14} className="animate-pulse" />
+            ترددت لمدة {Math.round(row.hesitation_seconds)} ثانية!
+          </div>
+        )}
+        
+        {/* User Inputs Display */}
+        {row.plea_text && (
+          <div className="mt-2 rounded-lg bg-indigo-50 p-3 border border-indigo-100">
+            <span className="text-indigo-800 text-xs font-bold flex items-center gap-1 mb-1.5">
+              ⚖️ دفاعها في المحكمة:
+            </span>
+            <p className="text-indigo-900 text-sm font-medium leading-relaxed">"{row.plea_text}"</p>
+          </div>
+        )}
+        {row.final_comment && (
+          <div className="mt-2 rounded-lg bg-pink-50 p-3 border border-pink-100">
+            <span className="text-pink-800 text-xs font-bold flex items-center gap-1 mb-1.5">
+              💌 رسالتها النهائية (التقييم {row.star_rating} نجوم):
+            </span>
+            <p className="text-pink-900 text-sm font-medium leading-relaxed">"{row.final_comment}"</p>
+          </div>
+        )}
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2 border-t border-gray-50 pt-3">
         <input
+          type="text"
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
-          placeholder="ابعت رسالة لشاشة الشريك..."
-          className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus-visible:ring-2 focus-visible:ring-amber-800"
+          placeholder="ابعث رسالة تظهر على شاشتها فوراً..."
+          className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-800 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") send();
+          }}
         />
         <button
           type="button"
+          disabled={!msg.trim() || sending}
           onClick={send}
-          disabled={sending || !msg.trim()}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-800 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-900 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-800 focus-visible:ring-offset-2"
+          className="rounded-lg bg-blue-600 px-3 py-2 text-white font-medium text-xs transition-all hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 shadow-sm disabled:shadow-none flex items-center gap-1.5"
         >
-          <Send size={15} /> بث
+          {sending ? "جاري..." : "إرسال"} <Send size={14} />
         </button>
       </div>
     </div>
@@ -139,7 +202,6 @@ export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState("basic");
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
-  const [showShareLink, setShowShareLink] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState("");
 
   const copyToClipboard = () => {
@@ -225,10 +287,23 @@ export default function AdminDashboard() {
       if (!parsedConfig.landingText) parsedConfig.landingText = "";
       if (!parsedConfig.voidText) parsedConfig.voidText = "";
       if (!parsedConfig.audioUrl) parsedConfig.audioUrl = "";
+      if (typeof parsedConfig.enableFunnyText === "undefined") parsedConfig.enableFunnyText = true;
+      if (!parsedConfig.funnyText) parsedConfig.funnyText = "احا انتي لسه هنا يلا انطري ابلكاش 😂";
 
       if (!parsedConfig.loaderTexts) parsedConfig.loaderTexts = ["جار التحميل..."];
       if (!parsedConfig.triviaQuestions) parsedConfig.triviaQuestions = [];
       if (!parsedConfig.giftCoupons) parsedConfig.giftCoupons = [];
+      if (!parsedConfig.timeline || !Array.isArray(parsedConfig.timeline) || parsedConfig.timeline.length === 0) {
+        parsedConfig.timeline = [
+          { text: "أول يوم اتكلمنا فيه كان بداية أحلى حاجة في حياتي", image: "" },
+          { text: "ضحكتك بتخليني أنسى أي حاجة وحشة في الدنيا", image: "" },
+          { text: "مهما حصل بينا، بتفضلي أقرب حد لقلبي", image: "" },
+          { text: "دعمك ليا في أصعب أوقاتي مش هنساه أبداً", image: "" },
+          { text: "إنتي مش بس حبيبتي، إنتي صاحبتي وسندي", image: "" },
+          { text: "كل تفصيلة فيكي بتخليني أحبك أكتر", image: "" },
+          { text: "مفيش حاجة في الدنيا تعوضني عنك لحظة", image: "" },
+        ];
+      }
       
       if (!parsedConfig.finalLetter) {
         parsedConfig.finalLetter = { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
@@ -329,8 +404,7 @@ export default function AdminDashboard() {
         }),
       });
       if (res.ok) {
-        setSaveStatus({ success: true, msg: "تم حفظ الإعدادات بنجاح!" });
-        setShowShareLink(true); // Show the share link box when they save
+        setSaveStatus({ success: true, msg: "تم حفظ التغييرات بنجاح!" });
         await refetchConfig();
       } else {
         const errData = await res.json();
@@ -363,6 +437,65 @@ export default function AdminDashboard() {
         current = current[parts[i]];
       }
       current[parts[parts.length - 1]] = value;
+      return next;
+    });
+  };
+
+  const handleTimelineImageUpload = (e, index) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        const MAX_DIM = 600;
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height *= MAX_DIM / width;
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width *= MAX_DIM / height;
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+
+        setFormData((prev) => {
+          const next = { ...prev };
+          const nextTimeline = [...(next.timeline || [])];
+          if (nextTimeline[index]) {
+            nextTimeline[index] = { ...nextTimeline[index], image: dataUrl };
+          }
+          next.timeline = nextTimeline;
+          return next;
+        });
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveTimelineImage = (index) => {
+    setFormData((prev) => {
+      const next = { ...prev };
+      const nextTimeline = [...(next.timeline || [])];
+      if (nextTimeline[index]) {
+        nextTimeline[index] = { ...nextTimeline[index], image: "" };
+      }
+      next.timeline = nextTimeline;
       return next;
     });
   };
@@ -662,6 +795,28 @@ export default function AdminDashboard() {
           </button>
         </div>
 
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3 mb-3 sm:mb-0">
+            <CheckCircle size={24} className="text-green-600" />
+            <div>
+              <h4 className="text-green-800 font-bold">رابط الموقع الخاص بك جاهز</h4>
+              <p className="text-xs text-green-700">هذا هو الرابط الذي سترسله لها بعد حفظ جميع الإعدادات:</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-mono text-gray-500 bg-white px-2 py-1 rounded border border-green-100 select-all">
+              {typeof window !== "undefined" ? window.location.origin : ""}/{siteSlug}
+            </span>
+            <button
+              onClick={copyToClipboard}
+              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+            >
+              <Copy size={16} />
+              {copyFeedback ? "تم النسخ!" : "نسخ الرابط"}
+            </button>
+          </div>
+        </div>
+
         {/* Tab Content: Live Tracking */}
         {activeTab === "live" && (
           <div className="flex flex-col gap-4">
@@ -692,30 +847,6 @@ export default function AdminDashboard() {
         {/* Tab Content: Settings */}
         {activeTab === "settings" && formData && (
           <form onSubmit={handleSave} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            {showShareLink && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex flex-col items-center text-center">
-                <CheckCircle size={24} className="text-green-600 mb-2" />
-                <h4 className="text-green-800 font-bold mb-1">الموقع جاهز الآن! 🎉</h4>
-                <p className="text-sm text-green-700 mb-4">انسخ الرابط ده وابعتهولها علشان تشوف المصالحة اللي عملتهالها:</p>
-                <div className="flex w-full items-center gap-2">
-                  <input 
-                    type="text" 
-                    readOnly 
-                    value={`${typeof window !== "undefined" ? window.location.origin : ""}/${siteSlug}`}
-                    className="flex-1 bg-white border border-green-300 rounded-lg py-2 px-3 text-sm text-gray-700 outline-none"
-                    dir="ltr"
-                  />
-                  <button 
-                    type="button" 
-                    onClick={copyToClipboard}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors whitespace-nowrap"
-                  >
-                    {copyFeedback || "نسخ الرابط"}
-                  </button>
-                </div>
-              </div>
-            )}
-
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               {/* Category selector */}
               <div className="md:col-span-1 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-3 md:pb-0 border-b md:border-b-0 md:border-l border-gray-100 md:pl-4">
@@ -1239,6 +1370,100 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            <div className="mb-6 rounded-2xl border border-gray-100 bg-gray-50 p-5">
+              <label className="mb-3 block text-sm font-semibold text-gray-800">
+                إعدادات الجملة الساخرة في النهاية
+              </label>
+              
+              <label className="mb-4 flex items-center cursor-pointer gap-3">
+                <input
+                  type="checkbox"
+                  checked={formData.enableFunnyText}
+                  onChange={(e) => updateField("enableFunnyText", e.target.checked)}
+                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">تفعيل الكلمة الساخرة بعد النهاية الرومانسية</span>
+              </label>
+
+              {formData.enableFunnyText && (
+                <div className="mt-3">
+                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                    النص الساخر
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.funnyText}
+                    onChange={(e) => updateField("funnyText", e.target.value)}
+                    className="w-full rounded-xl border border-gray-200 p-3 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              )}
+              </div>
+
+              {/* Love Timeline Images & Texts */}
+              <div className="mb-6 rounded-2xl border border-gray-100 bg-gray-50 p-5">
+                <label className="mb-4 block text-sm font-semibold text-gray-800 border-b border-gray-200 pb-2">
+                  صور وذكريات خط الزمن (Love Timeline)
+                </label>
+                <div className="space-y-4">
+                  {formData.timeline?.map((item, idx) => (
+                    <div key={idx} className="flex flex-col gap-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-amber-800">ذكرى رقم {idx + 1}</span>
+                      </div>
+                      
+                      {/* Image Preview & Upload */}
+                      <div className="flex items-center gap-4">
+                        <div className="shrink-0 w-16 h-16 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center bg-gray-50">
+                          {item.image ? (
+                            <img src={item.image} alt="preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-gray-400 text-[10px]">بدون صورة</span>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-xs font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors w-fit border border-blue-200">
+                            اختر صورة للذكرى
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleTimelineImageUpload(e, idx)}
+                              className="hidden"
+                            />
+                          </label>
+                          {item.image && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTimelineImage(idx)}
+                              className="text-[10px] text-red-600 hover:text-red-800 text-right w-fit font-semibold"
+                            >
+                              إزالة الصورة
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Text Input */}
+                      <div>
+                        <label className="mb-1 block text-[10px] font-medium text-gray-500">
+                          الجملة الرومانسية
+                        </label>
+                        <input
+                          type="text"
+                          value={item.text}
+                          onChange={(e) => {
+                            const nextTimeline = [...formData.timeline];
+                            nextTimeline[idx] = { ...nextTimeline[idx], text: e.target.value };
+                            updateField("timeline", nextTimeline);
+                          }}
+                          className="w-full rounded-lg border border-gray-200 p-2.5 text-xs focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+  
             {/* Bottom Actions Row */}
             <div className="mt-8 border-t border-gray-200 pt-5 flex items-center justify-between">
               <div>

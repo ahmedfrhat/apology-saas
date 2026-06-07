@@ -4,7 +4,7 @@ import { Heart } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem] overflow-hidden flex flex-col";
 
 const MOMENTS = [
   "أول يوم اتكلمنا فيه كان بداية أحلى حاجة في حياتي",
@@ -17,9 +17,13 @@ const MOMENTS = [
 ];
 
 export default function LoveTimeline({ onNext }) {
-  const { updateState, t } = useApp();
+  const { updateState, config, t } = useApp();
 
-  const moments = MOMENTS.map((m) => t(m));
+  // If config has timeline, use it. Otherwise, construct it from MOMENTS
+  let timelineData = config?.timeline;
+  if (!timelineData || !Array.isArray(timelineData) || timelineData.length === 0) {
+    timelineData = MOMENTS.map((m) => ({ text: m, image: "" }));
+  }
 
   useEffect(() => {
     updateState({
@@ -44,7 +48,7 @@ export default function LoveTimeline({ onNext }) {
         />
 
         <div className="space-y-10">
-          {moments.map((moment, i) => {
+          {timelineData.map((item, i) => {
             const isRight = i % 2 === 0;
             return (
               <motion.div
@@ -55,12 +59,13 @@ export default function LoveTimeline({ onNext }) {
                 transition={{ duration: 0.5, delay: 0.05 }}
                 className={`flex w-full ${isRight ? "justify-start" : "justify-end"}`}
               >
-                <div className={`relative w-[calc(50%-1.5rem)] ${CARD} p-6`}>
+                <div className={`relative w-[calc(50%-1.5rem)] ${CARD}`}>
+                  {/* Indicator Dot */}
                   <div
-                    className="absolute top-6 flex h-10 w-10 items-center justify-center rounded-full bg-[#F4F3EF] ring-4 ring-[#F4F3EF]"
+                    className="absolute flex h-10 w-10 items-center justify-center rounded-full bg-[#F4F3EF] ring-4 ring-[#F4F3EF] z-10"
                     style={{
-                      [isRight ? "insetInlineEnd" : "insetInlineStart"]:
-                        "-3.25rem",
+                      top: "1.5rem",
+                      [isRight ? "insetInlineEnd" : "insetInlineStart"]: "-3.25rem",
                       border: "1px solid rgba(26,26,26,0.1)",
                     }}
                   >
@@ -70,9 +75,26 @@ export default function LoveTimeline({ onNext }) {
                       className="text-[#DFBA73]"
                     />
                   </div>
-                  <p className="text-base font-medium leading-relaxed text-[#1A1A1A]">
-                    {moment}
-                  </p>
+
+                  {/* Optional Image */}
+                  {item.image && (
+                    <div className="w-full aspect-[4/3] relative overflow-hidden bg-[#EAE8E1]">
+                      <img 
+                        src={item.image} 
+                        alt="Memory" 
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                    </div>
+                  )}
+
+                  {/* Text Content */}
+                  <div className="p-6">
+                    <p className="text-base font-medium leading-relaxed text-[#1A1A1A]">
+                      {t(item.text)}
+                    </p>
+                  </div>
                 </div>
               </motion.div>
             );

@@ -79,7 +79,6 @@ function Experience() {
               <LoveBatteryHUD />
               <PanicButton />
               <AudioController />
-              <BroadcastToast />
             </>
           )}
 
@@ -123,6 +122,7 @@ export default function ExperiencePage() {
     <AppProvider>
       <Experience />
       <HiddenMultiSourcePlayer />
+      <BroadcastToast />
     </AppProvider>
   );
 }

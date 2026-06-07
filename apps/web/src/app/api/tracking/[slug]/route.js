@@ -42,6 +42,9 @@ export async function GET(request, context) {
     try {
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_detected BOOLEAN DEFAULT false`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_seconds FLOAT DEFAULT 0`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS plea_text TEXT`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS star_rating INTEGER`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS final_comment TEXT`;
     } catch (migErr) {
       // Ignore if it fails
     }
@@ -57,7 +60,7 @@ export async function GET(request, context) {
 
     // 2. Query tracking rows for this site including hesitation
     const rows = await sql`
-      SELECT id, session_id, current_section, battery_level, last_action, broadcast_msg, hesitation_detected, hesitation_seconds, created_at, updated_at
+      SELECT id, session_id, current_section, battery_level, last_action, broadcast_msg, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, created_at, updated_at
       FROM live_tracking
       WHERE site_id = ${siteId}
       ORDER BY updated_at DESC
@@ -91,6 +94,9 @@ export async function POST(request, context, c) {
     try {
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_detected BOOLEAN DEFAULT false`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_seconds FLOAT DEFAULT 0`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS plea_text TEXT`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS star_rating INTEGER`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS final_comment TEXT`;
     } catch (migErr) {
       // Ignore
     }
@@ -113,6 +119,9 @@ export async function POST(request, context, c) {
     const lastAction = body.last_action ?? null;
     const hesitationDetected = body.hesitation_detected ?? false;
     const hesitationSeconds = body.hesitation_seconds ?? 0;
+    const pleaText = body.plea_text ?? null;
+    const starRating = body.star_rating ?? null;
+    const finalComment = body.final_comment ?? null;
 
     // 2. Intercept for session initialization and completion alerts
     const existingTracking = await sql`
@@ -122,8 +131,8 @@ export async function POST(request, context, c) {
 
     // Upsert the tracking record
     const [row] = await sql`
-      INSERT INTO live_tracking (site_id, session_id, current_section, battery_level, last_action, hesitation_detected, hesitation_seconds, updated_at)
-      VALUES (${siteId}, ${session_id}, ${currentSection}, ${batteryLevel}, ${lastAction}, ${hesitationDetected}, ${hesitationSeconds}, now())
+      INSERT INTO live_tracking (site_id, session_id, current_section, battery_level, last_action, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, updated_at)
+      VALUES (${siteId}, ${session_id}, ${currentSection}, ${batteryLevel}, ${lastAction}, ${hesitationDetected}, ${hesitationSeconds}, ${pleaText}, ${starRating}, ${finalComment}, now())
       ON CONFLICT (session_id) DO UPDATE SET
         site_id = EXCLUDED.site_id,
         current_section = COALESCE(EXCLUDED.current_section, live_tracking.current_section),
@@ -131,6 +140,9 @@ export async function POST(request, context, c) {
         last_action = COALESCE(EXCLUDED.last_action, live_tracking.last_action),
         hesitation_detected = EXCLUDED.hesitation_detected OR live_tracking.hesitation_detected,
         hesitation_seconds = GREATEST(EXCLUDED.hesitation_seconds, live_tracking.hesitation_seconds),
+        plea_text = COALESCE(EXCLUDED.plea_text, live_tracking.plea_text),
+        star_rating = COALESCE(EXCLUDED.star_rating, live_tracking.star_rating),
+        final_comment = COALESCE(EXCLUDED.final_comment, live_tracking.final_comment),
         updated_at = now()
       RETURNING *
     `;

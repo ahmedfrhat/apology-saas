@@ -66,7 +66,7 @@ export default function AIJudgeCourtroom({ onNext }) {
       }
     }
 
-    updateState({ judgeText: text });
+    updateState({ pleaText: text, lastAction: "plea-submitted" });
     setTimeout(() => {
       setVerdict(true);
       updateState({ batteryLevel: 70, lastAction: "verdict" });

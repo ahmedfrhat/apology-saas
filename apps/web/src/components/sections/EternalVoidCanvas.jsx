@@ -8,7 +8,8 @@ export default function EternalVoidCanvas() {
   const [textStage, setTextStage] = useState("initial"); // 'initial' | 'funny' | 'forever'
 
   const voidText = t(config?.voidText || "منورتي للأبد 💛");
-  const funnyText = t("احا انتي لسه هنا يلا انطري ابلكاش 😂");
+  const enableFunnyText = config?.enableFunnyText ?? true;
+  const funnyText = t(config?.funnyText || "احا انتي لسه هنا يلا انطري ابلكاش 😂");
 
   const hearts = useMemo(
     () =>
@@ -23,24 +24,28 @@ export default function EternalVoidCanvas() {
   );
 
   useEffect(() => {
-    // Stage 1: Show "منورتي للأبد" for 5 seconds
+    // Stage 1: Show initial text for 5 seconds
     const timer1 = setTimeout(() => {
-      setTextStage("funny");
+      if (enableFunnyText) {
+        setTextStage("funny");
+      } else {
+        setTextStage("forever");
+      }
     }, 5000);
 
-    // Stage 2: Show the funny message for 4 seconds, then go back to "منورتي للأبد"
+    // Stage 2: Show the funny message for 4 seconds, then go back to forever
     let timer2;
     if (textStage === "funny") {
       timer2 = setTimeout(() => {
         setTextStage("forever");
-      }, 4000); // displays the funny text for 4 seconds
+      }, 4000);
     }
 
     return () => {
       clearTimeout(timer1);
       if (timer2) clearTimeout(timer2);
     };
-  }, [textStage]);
+  }, [textStage, enableFunnyText]);
 
   return (
     <div
