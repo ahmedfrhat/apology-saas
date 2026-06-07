@@ -108,7 +108,9 @@ export async function POST(request) {
     // تشغيل إنشاء الجداول في الخلفية عشان ما يعطلش الـ Request
     // تم التعطيل بناءً على طلبك لأن الجداول موجودة مسبقاً في Neon لتفادي الـ Timeout
     // ensureTable().catch(err => console.error("Background ensureTable error", err));
+    console.log("[sites/POST] Starting request processing...");
     const body = await request.json();
+    console.log("[sites/POST] Body parsed successfully:", Object.keys(body));
     const { slug, password, boyName, girlName } = body || {};
 
     if (!slug || !password || !boyName || !girlName) {
@@ -122,9 +124,11 @@ export async function POST(request) {
     }
 
     // Check if slug is already taken
+    console.log(`[sites/POST] Checking if slug exists: ${slug}`);
     const existing = await sql`
       SELECT id FROM apology_sites WHERE slug = ${slug}
     `;
+    console.log(`[sites/POST] Check complete. Found: ${existing.length}`);
     if (existing.length > 0) {
       return Response.json({ error: "الرابط ده محجوز يا هندسة ❌" }, { status: 409 });
     }
@@ -141,10 +145,12 @@ export async function POST(request) {
 
     const configStr = JSON.stringify(config);
 
+    console.log(`[sites/POST] Executing INSERT for slug: ${slug}`);
     await sql`
       INSERT INTO apology_sites (slug, edit_password, config)
-      VALUES (${slug}, ${password}, ${configStr})
+      VALUES (${slug}, ${password}, ${configStr}::jsonb)
     `;
+    console.log(`[sites/POST] INSERT completed successfully.`);
 
     return Response.json({ success: true, slug });
   } catch (error) {
