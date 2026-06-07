@@ -812,7 +812,7 @@ export default function AdminDashboard() {
                 <span className="text-blue-500">1️⃣</span>
                 <span>
                   اضغط لتفعيل البوت الرسمي:{" "}
-                  <a href="https://t.me/apology_saas_bot" target="_blank" rel="noreferrer" className="text-blue-600 underline font-bold">@apology_saas_bot</a>
+                  <a href="https://t.me/apology_saas_2026_bot" target="_blank" rel="noreferrer" className="text-blue-600 underline font-bold">@apology_saas_2026_bot</a>
                 </span>
               </p>
               <p className="text-[11px] font-semibold text-gray-700 flex items-start gap-1.5">
