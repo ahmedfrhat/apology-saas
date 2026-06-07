@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "installCommand": "true",
-  "buildCommand": "echo '=== PWD ===' && pwd && echo '=== LS ROOT ===' && ls -la && echo '=== LS APPS ===' && ls -la apps/ 2>/dev/null || echo 'NO APPS DIR' && npm --prefix apps/web install --legacy-peer-deps && npm --prefix apps/web run build",
-  "outputDirectory": "apps/web/build/client"
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm run build",
+  "outputDirectory": "build/client"
 }
