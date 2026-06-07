@@ -6,7 +6,7 @@ export async function POST(request, context) {
   if (!hasDb()) return new Response(null, { status: 204 }); // مؤقتًا
   try {
     const { slug } = context.params;
-    const body = await request.json();
+    const body = context.parsedBody || await request.json();
     const { session_id, message } = body;
 
     if (!session_id) {

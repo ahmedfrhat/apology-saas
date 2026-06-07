@@ -38,7 +38,15 @@ for (const key of sortedKeys) {
     if (typeof routeModule[method] !== 'function') continue;
     const handler: Handler = async (c) => {
       const params = c.req.param();
-      return await (routeModule[method] as Function)(c.req.raw, { params });
+      let parsedBody = null;
+      if (['POST', 'PUT', 'PATCH'].includes(method)) {
+        try {
+          parsedBody = await c.req.json();
+        } catch (e) {
+          // ignore parsing error if empty or not json
+        }
+      }
+      return await (routeModule[method] as Function)(c.req.raw, { params, parsedBody });
     };
     (api as any)[method.toLowerCase()](honoPath, handler);
   }

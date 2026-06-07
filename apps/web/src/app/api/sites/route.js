@@ -103,13 +103,13 @@ function getGirlNickname(name) {
   return name + "تي"; // e.g. منار -> منارتي
 }
 
-export async function POST(request) {
+export async function POST(request, context) {
   try {
     // تشغيل إنشاء الجداول في الخلفية عشان ما يعطلش الـ Request
     // تم التعطيل بناءً على طلبك لأن الجداول موجودة مسبقاً في Neon لتفادي الـ Timeout
     // ensureTable().catch(err => console.error("Background ensureTable error", err));
     console.log("[sites/POST] Starting request processing...");
-    const body = await request.json();
+    const body = context?.parsedBody || await request.json();
     console.log("[sites/POST] Body parsed successfully:", Object.keys(body));
     const { slug, password, boyName, girlName } = body || {};
 
