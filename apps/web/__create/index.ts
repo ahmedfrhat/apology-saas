@@ -40,9 +40,24 @@ for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
 
 const isBuild = process.env.npm_lifecycle_event === 'build' || process.argv.some(arg => arg.includes('build'));
 
-const pool = process.env.DATABASE_URL && !isBuild
+function sanitizeDatabaseUrl(urlStr: string | undefined): string | undefined {
+  if (!urlStr) return urlStr;
+  try {
+    const url = new URL(urlStr);
+    url.searchParams.delete('channel_binding');
+    return url.toString();
+  } catch (e) {
+    console.error('Failed to parse DATABASE_URL', e);
+    return urlStr.replace(/([?&])channel_binding=[^&]*/, '$1').replace(/\?$/, '');
+  }
+}
+
+const cleanedDbUrl = sanitizeDatabaseUrl(process.env.DATABASE_URL);
+
+const pool = cleanedDbUrl && !isBuild
   ? new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: cleanedDbUrl,
+      connectionTimeoutMillis: 5000,
     })
   : null;
 const adapter = pool ? NeonAdapter(pool) : null;
@@ -95,7 +110,8 @@ if (process.env.AUTH_SECRET && adapter) {
   app.use(
     '*',
     initAuthConfig((c) => ({
-      secret: c.env.AUTH_SECRET,
+      secret: process.env.AUTH_SECRET || c.env?.AUTH_SECRET,
+      trustHost: true,
       pages: {
         signIn: '/account/signin',
         signOut: '/account/logout',

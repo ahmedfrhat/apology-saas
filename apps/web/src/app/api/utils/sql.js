@@ -140,9 +140,24 @@ mockSql.transaction = (callback) => {
   return callback(mockSql);
 };
 
-const sqlConnection = process.env.DATABASE_URL
-  ? postgres(process.env.DATABASE_URL, {
+function sanitizeDatabaseUrl(urlStr) {
+  if (!urlStr) return urlStr;
+  try {
+    const url = new URL(urlStr);
+    url.searchParams.delete('channel_binding');
+    return url.toString();
+  } catch (e) {
+    console.error('Failed to parse DATABASE_URL', e);
+    return urlStr.replace(/([?&])channel_binding=[^&]*/, '$1').replace(/\?$/, '');
+  }
+}
+
+const cleanedUrl = sanitizeDatabaseUrl(process.env.DATABASE_URL);
+
+const sqlConnection = cleanedUrl
+  ? postgres(cleanedUrl, {
       ssl: { rejectUnauthorized: false },
+      connect_timeout: 5,
     })
   : null;
 

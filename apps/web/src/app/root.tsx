@@ -41,7 +41,7 @@ if (globalThis.window && globalThis.window !== undefined) {
   globalThis.window.fetch = fetch;
 }
 
-const LoadFontsSSR = import.meta.env.SSR ? LoadFonts : null;
+const LoadFontsSSR = LoadFonts;
 if (import.meta.hot) {
   import.meta.hot.on('update-font-links', (urls: string[]) => {
     // remove old font links
@@ -410,6 +410,15 @@ export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const pathname = location?.pathname;
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+
+  const [toasterPosition, setToasterPosition] = useState<'top-center' | 'bottom-right'>('bottom-right');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setToasterPosition('top-center');
+    }
+  }, []);
+
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'sandbox:navigation') {
@@ -447,7 +456,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <ClientOnly loader={() => children} />
-        <Toaster position={isMobile ? 'top-center' : 'bottom-right'} />
+        <Toaster position={toasterPosition} />
         <ScrollRestoration />
         <Scripts />
         <link rel="preconnect" href="https://ka-p.fontawesome.com" crossOrigin="anonymous" />

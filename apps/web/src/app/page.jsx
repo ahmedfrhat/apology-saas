@@ -27,13 +27,28 @@ export default function SaaSOnboardingPage() {
       setError("");
       setLoading(true);
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
       try {
         const res = await fetch("/api/sites", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ slug, password, boyName, girlName }),
+          signal: controller.signal,
         });
-        const data = await res.json();
+        clearTimeout(timeoutId);
+
+        const contentType = res.headers.get("content-type");
+        let data = {};
+        if (contentType && contentType.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text();
+          console.error("Non-JSON response received:", text);
+          throw new Error("استجابة غير صالحة من الخادم");
+        }
+
         if (res.ok) {
           setSuccess(true);
           setTimeout(() => {
@@ -43,8 +58,13 @@ export default function SaaSOnboardingPage() {
           setError(data.error || "حدث خطأ أثناء إنشاء الموقع");
         }
       } catch (err) {
-        console.error(err);
-        setError("فشل الاتصال بالخادم");
+        clearTimeout(timeoutId);
+        console.error("Form submission error:", err);
+        if (err.name === 'AbortError') {
+          setError("انتهت مهلة الاتصال بالخادم. يرجى التحقق من اتصال قاعدة البيانات.");
+        } else {
+          setError(err.message || "فشل الاتصال بالخادم أو حدث خطأ في قاعدة البيانات");
+        }
       } finally {
         setLoading(false);
       }
