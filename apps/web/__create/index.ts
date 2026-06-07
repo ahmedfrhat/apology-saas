@@ -94,17 +94,7 @@ if (process.env.CORS_ORIGINS) {
     })
   );
 }
-for (const method of ['post', 'put', 'patch'] as const) {
-  app[method](
-    '*',
-    bodyLimit({
-      maxSize: 4.5 * 1024 * 1024, // 4.5mb to match vercel limit
-      onError: (c) => {
-        return c.json({ error: 'Body size limit exceeded' }, 413);
-      },
-    })
-  );
-}
+// Removed bodyLimit middleware as it can cause request.json() to hang in Node adapters
 
 if (process.env.AUTH_SECRET && adapter) {
   app.use(
