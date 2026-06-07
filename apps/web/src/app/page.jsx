@@ -30,7 +30,7 @@ export default function SaaSOnboardingPage() {
       setLoading(true);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
       try {
         const res = await fetch("/api/sites", {
