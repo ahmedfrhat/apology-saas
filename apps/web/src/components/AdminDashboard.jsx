@@ -16,7 +16,8 @@ import {
   Gift,
   FileText,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Copy
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { motion } from "motion/react";
