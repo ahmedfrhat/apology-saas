@@ -141,13 +141,13 @@ mockSql.transaction = (callback) => {
 };
 
 function getCleanDbUrl() {
-  const url = process.env.DATABASE_URL;
+  let url = process.env.DATABASE_URL;
   if (!url) return null;
-  try {
-    const u = new URL(url);
-    u.searchParams.delete('channel_binding');
-    return u.toString();
-  } catch { return url; }
+  if (url.includes('?')) {
+    const base = url.split('?')[0];
+    return `${base}?sslmode=require`;
+  }
+  return url;
 }
 const cleanUrl = getCleanDbUrl();
 const sql = cleanUrl ? neon(cleanUrl) : mockSql;
