@@ -64,7 +64,10 @@ function InternalErrorBoundary({ error: errorArg }: Route.ErrorBoundaryProps) {
   const asyncError = useAsyncError();
   const error = errorArg ?? asyncError ?? routeError;
   const [isOpen, setIsOpen] = useState(false);
-  const shouldScale = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+  const [shouldScale, setShouldScale] = useState(false);
+  useEffect(() => {
+    setShouldScale(window.innerWidth < 768);
+  }, []);
   const scaleFactor = shouldScale ? 1.02 : 1;
   const copyButtonTextClass = shouldScale ? 'text-sm' : 'text-xs';
   const copyButtonPaddingClass = shouldScale ? 'px-[10px] py-[5px]' : 'px-[6px] py-[3px]';
