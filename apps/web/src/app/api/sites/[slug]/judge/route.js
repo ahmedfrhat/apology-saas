@@ -46,7 +46,7 @@ She has submitted the following plea/complaint to your court:
 "${pleaText}"
 
 Your absolute mandate:
-1. Tone Profile: A majestic, booming, yet hilariously biased Egyptian judge. Use theatrical phrases like ("حكمت المحكمة حضورياً بقصف جبهة المدعى عليه...").
+1. Tone Profile: A majestic, booming, yet hilariously biased Egyptian judge. Use theatrical phrases like ("حكمت المحكمة حضورياً بقصف جبهة المدعى عليه..."). However, ensure the "roasting" remains STRICTLY playful, loving, and completely safe. Never use actual insults or toxic words.
 2. Absolute Bias Logic: You MUST 100% side with the girl. Treat the boy's mistakes as absolute global emergencies in a comedic, over-exaggerated way ("جريمة نكراء في حق كوكب الضحك"). Validate the girl's text 100% using dramatic second-person feminine Arabic pronouns ("يا ابنتي، أنتِ خط أحمر...").
 3. The Epic Twist: Mandate that her only "punishment" for him is to forgive him because "the defendant built an entire custom SaaS software infrastructure just to please your mood, proving total surrender." Speak directly to her.
 ${petNameInstruction}
@@ -76,8 +76,14 @@ Strict Output Requirements:
       const data = await response.json();
       const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (jsonText) {
-        const parsed = JSON.parse(jsonText.replace(/```json/g, "").replace(/```/g, "").trim());
-        if (parsed.title && parsed.details) {
+        let parsed;
+        try {
+          parsed = JSON.parse(jsonText.replace(/```json/g, "").replace(/```/g, "").trim());
+        } catch (e) {
+          const match = jsonText.match(/\{[\s\S]*\}/);
+          if (match) parsed = JSON.parse(match[0]);
+        }
+        if (parsed && parsed.title && parsed.details) {
           return Response.json(parsed);
         }
       }

@@ -51,14 +51,14 @@ Additional parameters guiding the generation:
 
 Follow these instructions strictly:
 1. Deep Semantic Analyzer & Dynamic Tone:
-   - Extreme Slang Injection: If Text Vibe is "playful_banter", you MUST force the generation to leverage highly relatable, sharp, and genuinely funny Egyptian pop-culture wit, cinematic references, and lighthearted teasing. Absolutely no generic robotic text. (إيفيهات أفلام، ألش مصري أصيل، ومناوشات كوميدية).
-   - Intensity Scaling: Dynamically morph sentence structure, length, and emotional weight based on Vibe Intensity. If set to 'high', deliver maximum dramatic impact (either pure unparalleled romance or peak theatrical comedy).
-   - If Core Intent is "love" or "joy", frame the text more positively, focusing on affection and happiness rather than pure apology.
-   - ABSOLUTE BAN ON STATIC PREFIXES: Strictly forbid using hardcoded templates, quotes, or sentence starters that wrap the input reason. Do NOT concatenate the input reason blindly.
-   - 100% ORGANIC SYNTHESIS: The input reason must ONLY be treated as "semantic context". The raw input phrase should NEVER appear verbatim inside the output keys.
+   - Extreme Slang Injection: If Text Vibe is "playful_banter", you MUST leverage highly relatable, genuinely funny Egyptian pop-culture wit and lighthearted teasing. However, ensure it remains STRICTLY loving, cute, and completely safe. Never use actual insults or toxic behavior. (إيفيهات أفلام خفيفة، ألش مصري لذيذ، ومناوشات كوميدية تغلفها الرومانسية).
+   - Intensity Scaling: Dynamically morph sentence structure and emotional weight based on Vibe Intensity. If set to 'high', deliver maximum dramatic impact but maintain a perfectly balanced romantic undertone.
+   - If Core Intent is "love" or "joy", frame the text entirely around affection, happiness, and appreciation rather than apology.
+   - ABSOLUTE BAN ON STATIC PREFIXES: Strictly forbid using hardcoded templates, quotes, or sentence starters.
+   - 100% ORGANIC SYNTHESIS: The input reason must ONLY be treated as "semantic context". Never copy the exact phrase.
 2. Strict 2nd Person Feminine & Localized Language:
-   - Address the girl strictly in the 2nd person feminine singular (مخاطب مؤنث مفرد) (e.g. "إنتي", "سامحتيني", "زعّلتك", "ليكي", "بيكي").${petNameInstruction}
-   - Output must be in fluent, high-end, contemporary Egyptian Arabic (عامية مصرية راقية ومؤثرة). Do not use rigid literal standard Arabic (فصحى) or cringy clichés. It must sound like a deeply caring human boyfriend speaking directly to his girlfriend. Never copy third-person pronouns verbatim from the input.
+   - Address the girl strictly in the 2nd person feminine singular (مخاطب مؤنث مفرد) (e.g. "إنتي", "سامحتيني", "زعّلتك").${petNameInstruction}
+   - Output must be in fluent, high-end, contemporary Egyptian Arabic (عامية مصرية راقية ومؤثرة). It must sound like a deeply caring human boyfriend. No rigid standard Arabic.
 3. Contextual Trivia & Letter Generation:
    - Generate exactly 3 quiz questions matching the incident and the core intent.
    - Reward coupons must compensate for the mistake or match the vibe.
@@ -109,8 +109,14 @@ Follow these instructions strictly:
           const data = await response.json();
           const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (jsonText) {
-            const parsed = JSON.parse(jsonText.replace(/```json/g, "").replace(/```/g, "").trim());
-            if (parsed.landingText && parsed.triviaQuestions && parsed.finalLetter && parsed.judgeText && parsed.feedbackTexts) {
+            let parsed;
+            try {
+              parsed = JSON.parse(jsonText.replace(/```json/g, "").replace(/```/g, "").trim());
+            } catch (parseErr) {
+              const match = jsonText.match(/\{[\s\S]*\}/);
+              if (match) parsed = JSON.parse(match[0]);
+            }
+            if (parsed && parsed.landingText && parsed.triviaQuestions && parsed.finalLetter && parsed.judgeText && parsed.feedbackTexts) {
               return Response.json(parsed);
             }
           }
