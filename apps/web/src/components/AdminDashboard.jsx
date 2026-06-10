@@ -107,6 +107,8 @@ function SessionRow({ row, onBroadcast }) {
           ? "#EC4899"
           : "#22C55E";
 
+  const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 15000;
+
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 text-sm shadow-sm">
       <div className="flex items-center justify-between border-b border-gray-50 pb-3">
@@ -116,6 +118,10 @@ function SessionRow({ row, onBroadcast }) {
           </span>
           <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
             {timeStr}
+          </span>
+          <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+            {isOnline ? "متصل الآن" : "غير متصل"}
           </span>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
@@ -133,6 +139,15 @@ function SessionRow({ row, onBroadcast }) {
           <span className="text-gray-500 text-xs font-medium">آخر حركة:</span>
           <span className="font-bold text-blue-700 text-xs text-left" dir="ltr">{getActionStr(row.last_action)}</span>
         </div>
+
+        {row.details && row.details.quizChoices && (
+          <div className="mt-1 flex flex-col gap-1 rounded bg-amber-50 p-2 text-xs font-medium text-amber-900 border border-amber-100">
+            <span className="font-bold">🎯 إجابات الاختبار:</span>
+            {row.details.quizChoices.map((c, i) => (
+              <span key={i}>- {c.q}: {c.answer}</span>
+            ))}
+          </div>
+        )}
 
         {row.hesitation_detected && (
           <div className="mt-1 flex items-center gap-1.5 rounded bg-orange-50 p-2 text-xs font-medium text-orange-700 border border-orange-100">
@@ -1028,15 +1043,27 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
-                    <label className="block text-xs font-bold text-gray-700 mb-2">اسم الدلع للبنت</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.girlNickname}
-                      onChange={(e) => updateField("girlNickname", e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                      <label className="block text-xs font-bold text-gray-700 mb-2">اسم الدلع للبنت (الحالي)</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.girlNickname}
+                        onChange={(e) => updateField("girlNickname", e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                      />
+                    </div>
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                      <label className="block text-xs font-bold text-gray-700 mb-2">اسم دلع مخصص للذكاء الاصطناعي (اختياري)</label>
+                      <input
+                        type="text"
+                        value={formData.petNameOverride || ""}
+                        onChange={(e) => updateField("petNameOverride", e.target.value)}
+                        placeholder="مثال: مريومتي (لو فاضي الـ AI هيألف من عنده)"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                      />
+                    </div>
                   </div>
 
                   <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">

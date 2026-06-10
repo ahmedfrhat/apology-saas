@@ -133,8 +133,7 @@ export default function DeadlyTrapQuestion({ onNext }) {
                 type="button"
                 onMouseEnter={jump}
                 onClick={jump}
-                onTouchStart={(e) => {
-                  e.preventDefault();
+                onTouchStart={() => {
                   jump();
                 }}
                 animate={{ x: runPos.x, y: runPos.y }}

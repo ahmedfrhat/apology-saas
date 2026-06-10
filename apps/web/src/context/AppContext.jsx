@@ -42,6 +42,7 @@ const INITIAL_STATE = {
   pleaText: null,
   starRating: null,
   finalComment: null,
+  details: {},
 };
 
 export function AppProvider({ children }) {
@@ -145,6 +146,7 @@ export function AppProvider({ children }) {
       plea_text: next.pleaText,
       star_rating: next.starRating,
       final_comment: next.finalComment,
+      details: next.details,
     };
     if (syncTimerRef.current) return;
     syncTimerRef.current = setTimeout(async () => {
@@ -185,15 +187,16 @@ export function AppProvider({ children }) {
     setState((prev) => ({ ...prev, lastAction: `wrong:${text}` }));
   }, []);
 
-  // Poll for broadcast messages addressed to this session.
+  // Polling for broadcast message
   useEffect(() => {
-    const sessionId = sessionIdRef.current;
-    if (!sessionId) return undefined;
-    const slug = getSlugFromPath();
-    if (!slug) return undefined;
     let active = true;
 
     const poll = async () => {
+      const sessionId = sessionIdRef.current;
+      if (!sessionId) return;
+      const slug = getSlugFromPath();
+      if (!slug) return;
+
       try {
         const res = await fetch(
           `/api/broadcast/${encodeURIComponent(slug)}?session_id=${encodeURIComponent(sessionId)}`,

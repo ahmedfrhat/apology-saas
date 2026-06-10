@@ -24,11 +24,29 @@ export async function POST(request, context, c) {
       return Response.json({ error: "Gemini API Key is not configured." }, { status: 400 });
     }
 
-    const systemPrompt = `You are an expert, witty Egyptian AI Judge in a romantic "Court of Apology".
-The boyfriend (${boyName || "الولد"}) has submitted a defense plea to his girlfriend (${girlName || "البنت"}).
-Plea text: "${pleaText}"
+    let config = {};
+    try {
+      const result = await sql`SELECT config FROM apology_sites WHERE slug = ${slug}`;
+      if (result && result.length > 0 && result[0].config) {
+        config = result[0].config;
+      }
+    } catch (dbErr) {
+      console.error("Failed to fetch site config", dbErr);
+    }
 
-Your task is to generate a custom, funny, and dramatic court verdict in Egyptian Arabic favoring the girl and roasting the boy playfully, but ending on a romantic note.
+    const petNameInstruction = config.petNameOverride 
+      ? `You MUST use her specific pet name "${config.petNameOverride}" repeatedly when addressing her.` 
+      : `Use natural, common Egyptian pet names like (يا بنتي، يا حبيبتي).`;
+
+    const systemPrompt = `You are an expert, witty Egyptian AI Judge in a romantic "Court of Apology".
+The plaintiff standing before you is the girlfriend (${girlName || "البنت"}). You must address her DIRECTLY in the 2nd person feminine singular (مخاطب مؤنث مفرد - "إنتي", "حقك", "زعلانة").
+The defendant is her boyfriend (${boyName || "الولد"}) who designed this platform to apologize to her.
+
+She has submitted the following plea/complaint to your court:
+"${pleaText}"
+
+Your task is to generate a custom, funny, and dramatic court verdict in Egyptian Arabic. You must rule in HER favor, roast the boy playfully, validate her feelings, and end on a romantic note encouraging her to forgive him since he went through all this effort.
+${petNameInstruction}
 
 Strict Output Requirements:
 1. Output MUST be ONLY valid JSON matching this schema exactly (no markdown, no backticks, no trailing commas):
@@ -36,8 +54,8 @@ Strict Output Requirements:
   "title": "...", 
   "details": "..."
 }
-2. "title" should be a short, dramatic headline like "المحكمة تحكم لصالح [اسم البنت]".
-3. "details" should be the judge's full speech explaining why his defense is funny/flawed and why she is right, in highly fluent Egyptian Arabic.`;
+2. "title" should be a short, dramatic headline like "حكم المحكمة لصالح [اسم البنت]".
+3. "details" should be your full speech DIRECTED AT HER (e.g., "يا بنتي أنا قريت شكوتك... وهو غلطان بس بيحبك..."). Highly fluent Egyptian Arabic.`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
       method: "POST",

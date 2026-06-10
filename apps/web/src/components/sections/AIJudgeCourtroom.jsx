@@ -177,8 +177,7 @@ export default function AIJudgeCourtroom({ onNext }) {
                 type="button"
                 onMouseEnter={courtJump}
                 onClick={courtJump}
-                onTouchStart={(e) => {
-                  e.preventDefault();
+                onTouchStart={() => {
                   courtJump();
                 }}
                 animate={{ x: courtRunPos.x, y: courtRunPos.y }}

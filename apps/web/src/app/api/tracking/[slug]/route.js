@@ -62,6 +62,7 @@ export async function GET(request, context) {
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS plea_text TEXT`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS star_rating INTEGER`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS final_comment TEXT`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS details JSONB`;
     } catch (migErr) {
       // Ignore if it fails
     }
@@ -77,7 +78,7 @@ export async function GET(request, context) {
 
     // 2. Query tracking rows for this site including hesitation
     const rows = await sql`
-      SELECT id, session_id, current_section, battery_level, last_action, broadcast_msg, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, created_at, updated_at
+      SELECT id, session_id, current_section, battery_level, last_action, broadcast_msg, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, details, created_at, updated_at
       FROM live_tracking
       WHERE site_id = ${siteId}
       ORDER BY updated_at DESC
@@ -114,6 +115,7 @@ export async function POST(request, context, c) {
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS plea_text TEXT`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS star_rating INTEGER`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS final_comment TEXT`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS details JSONB`;
     } catch (migErr) {
       // Ignore
     }
@@ -139,6 +141,7 @@ export async function POST(request, context, c) {
     const pleaText = body.plea_text ?? null;
     const starRating = body.star_rating ?? null;
     const finalComment = body.final_comment ?? null;
+    const details = body.details ?? null;
 
     // 2. Intercept for session initialization and completion alerts
     const existingTracking = await sql`
@@ -148,8 +151,8 @@ export async function POST(request, context, c) {
 
     // Upsert the tracking record
     const [row] = await sql`
-      INSERT INTO live_tracking (site_id, session_id, current_section, battery_level, last_action, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, updated_at)
-      VALUES (${siteId}, ${session_id}, ${currentSection}, ${batteryLevel}, ${lastAction}, ${hesitationDetected}, ${hesitationSeconds}, ${pleaText}, ${starRating}, ${finalComment}, now())
+      INSERT INTO live_tracking (site_id, session_id, current_section, battery_level, last_action, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, details, updated_at)
+      VALUES (${siteId}, ${session_id}, ${currentSection}, ${batteryLevel}, ${lastAction}, ${hesitationDetected}, ${hesitationSeconds}, ${pleaText}, ${starRating}, ${finalComment}, ${details}, now())
       ON CONFLICT (session_id) DO UPDATE SET
         site_id = EXCLUDED.site_id,
         current_section = COALESCE(EXCLUDED.current_section, live_tracking.current_section),
@@ -160,6 +163,7 @@ export async function POST(request, context, c) {
         plea_text = COALESCE(EXCLUDED.plea_text, live_tracking.plea_text),
         star_rating = COALESCE(EXCLUDED.star_rating, live_tracking.star_rating),
         final_comment = COALESCE(EXCLUDED.final_comment, live_tracking.final_comment),
+        details = COALESCE(EXCLUDED.details, live_tracking.details),
         updated_at = now()
       RETURNING *
     `;

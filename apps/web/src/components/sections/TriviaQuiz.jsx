@@ -30,7 +30,7 @@ const QUESTIONS = [
 ];
 
 export default function TriviaQuiz({ onNext }) {
-  const { updateState, config, t } = useApp();
+  const { updateState, state, config, t } = useApp();
   const [index, setIndex] = useState(0);
   const [shake, setShake] = useState(false);
   const [trapMsg, setTrapMsg] = useState("");
@@ -87,26 +87,35 @@ export default function TriviaQuiz({ onNext }) {
     }
   }, [isCorrectOption]);
 
-  const handleAnswer = useCallback(
-    (option) => {
-      const currentQ = questions[index];
-      if (!currentQ) return;
-      if (currentQ.trap && option === currentQ.trap.option) {
-        setShake(true);
-        setTrapMsg(currentQ.trap.msg);
-        setTimeout(() => setShake(false), 500);
-        return;
-      }
-      const isCorrect = Array.isArray(currentQ.correct)
-        ? currentQ.correct.includes(option)
-        : option === currentQ.correct;
+    const handleAnswer = useCallback(
+      (option) => {
+        const currentQ = questions[index];
+        if (!currentQ) return;
 
-      if (!isCorrect) {
-        setShake(true);
-        setTrapMsg(t("جرّبي تاني يا {girlNickname} 😅"));
-        setTimeout(() => setShake(false), 500);
-        return;
-      }
+        // Log choice for tracking
+        const currentChoices = state?.details?.quizChoices || [];
+        const updatedDetails = {
+          ...(state?.details || {}),
+          quizChoices: [...currentChoices, { q: currentQ.q, answer: option }]
+        };
+        updateState({ details: updatedDetails });
+
+        if (currentQ.trap && option === currentQ.trap.option) {
+          setShake(true);
+          setTrapMsg(currentQ.trap.msg);
+          setTimeout(() => setShake(false), 500);
+          return;
+        }
+        const isCorrect = Array.isArray(currentQ.correct)
+          ? currentQ.correct.includes(option)
+          : option === currentQ.correct;
+  
+        if (!isCorrect) {
+          setShake(true);
+          setTrapMsg(t("جرّبي تاني يا {girlNickname} 😅"));
+          setTimeout(() => setShake(false), 500);
+          return;
+        }
 
       // Check for hesitation
       if (firstWrongHoverTime.current) {
