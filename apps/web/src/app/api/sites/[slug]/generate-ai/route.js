@@ -13,7 +13,7 @@ export async function POST(request, context, c) {
         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
       ]);
     }
-    const { incident_reason } = body || {};
+    const { incident_reason, coreIntent = "apology", textVibe = "affectionate", vibeIntensity = "medium" } = body || {};
 
     if (!incident_reason) {
       return Response.json({ error: "الرجاء إدخال سبب الزعل" }, { status: 400 });
@@ -42,19 +42,26 @@ export async function POST(request, context, c) {
         const petNameInstruction = config?.petNameOverride ? `\n   - CRITICAL: You MUST use her specific pet name "${config.petNameOverride}" repeatedly when addressing her. Do not invent other pet names.` : `\n   - Use natural, common Egyptian pet names like (يا روحي، يا حبيبتي، يا قلبي).`;
         
         const systemPrompt = `You are an expert in Emotional Intelligence, Psychological Subtext, and Egyptian/Arab Cultural Nuance.
-Your task is to generate a custom apology configuration in JSON format based on the boyfriend's incident reason: "${reason}".
+Your task is to generate a custom configuration in JSON format based on the boyfriend's incident reason: "${reason}".
+
+Additional parameters guiding the generation:
+- Core Intent: ${coreIntent} (Options: apology, love, joy)
+- Text Vibe: ${textVibe} (Options: affectionate, playful_banter, gentle_reproach)
+- Vibe Intensity: ${vibeIntensity} (Options: low, medium, high)
 
 Follow these instructions strictly:
-1. Deep Semantic Analyzer & Absolute Prefix Ban:
-   - Decode the incident reason and adapt the Tone: If the issue is severe (e.g. trust breach, talking to someone else), the tone must be deeply sincere and emotionally heavy. If the issue is light/gaming/sports, weave in witty, contemporary Egyptian humor.
+1. Deep Semantic Analyzer & Dynamic Tone:
+   - If Text Vibe is "playful_banter", inject local Egyptian comedic references, street-smart wits, and playful teasing into the generated text.
+   - Adjust the length, emotional depth, and terminology dynamically based on Vibe Intensity ("low", "medium", or "high").
+   - If Core Intent is "love" or "joy", frame the text more positively, focusing on affection and happiness rather than pure apology.
    - ABSOLUTE BAN ON STATIC PREFIXES: Strictly forbid using hardcoded templates, quotes, or sentence starters that wrap the input reason. Do NOT concatenate the input reason blindly.
-   - 100% ORGANIC SYNTHESIS: The input reason must ONLY be treated as "semantic context". The raw input phrase should NEVER appear verbatim inside the output keys (e.g., do NOT generate "عارف إني ضايقتك وزعلتك بـ '...'"). Instead, rewrite the entire sentence dynamically from scratch.
+   - 100% ORGANIC SYNTHESIS: The input reason must ONLY be treated as "semantic context". The raw input phrase should NEVER appear verbatim inside the output keys.
 2. Strict 2nd Person Feminine & Localized Language:
    - Address the girl strictly in the 2nd person feminine singular (مخاطب مؤنث مفرد) (e.g. "إنتي", "سامحتيني", "زعّلتك", "ليكي", "بيكي").${petNameInstruction}
-   - Output must be in fluent, high-end, contemporary Egyptian Arabic (عامية مصرية راقية ومؤثرة). Do not use rigid literal standard Arabic (فصحى) or cringy clichés. It must sound like a deeply caring human boyfriend speaking directly to his girlfriend. Never copy third-person pronouns verbatim from the input (e.g., if input is "هي فكراني مش مهتم بيها", output must be rephrased as: "عارف إنك الفترة دي حاسة إني مش مهتم بيكي ومقصر معاكي...").
+   - Output must be in fluent, high-end, contemporary Egyptian Arabic (عامية مصرية راقية ومؤثرة). Do not use rigid literal standard Arabic (فصحى) or cringy clichés. It must sound like a deeply caring human boyfriend speaking directly to his girlfriend. Never copy third-person pronouns verbatim from the input.
 3. Contextual Trivia & Letter Generation:
-   - Generate exactly 3 quiz questions matching the incident.
-   - Reward coupons must compensate for the mistake (e.g. "كوبون اعتزال الببجي لمدة أسبوع كامل").
+   - Generate exactly 3 quiz questions matching the incident and the core intent.
+   - Reward coupons must compensate for the mistake or match the vibe.
 4. Schema Constraint:
    - Exclusively return a raw, clean JSON object matching this schema (do not wrap in markdown \`\`\`json code blocks, do not include trailing commas):
       {

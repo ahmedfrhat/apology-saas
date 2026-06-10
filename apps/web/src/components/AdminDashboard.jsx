@@ -229,6 +229,10 @@ export default function AdminDashboard() {
   };  const [incidentReason, setIncidentReason] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiSuccessMsg, setAiSuccessMsg] = useState("");
+  
+  const [coreIntent, setCoreIntent] = useState("apology");
+  const [textVibe, setTextVibe] = useState("affectionate");
+  const [vibeIntensity, setVibeIntensity] = useState("medium");
 
   const handleGenerateAI = async (e) => {
     e.preventDefault();
@@ -239,7 +243,12 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/generate-ai`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ incident_reason: incidentReason.trim() }),
+        body: JSON.stringify({
+          incident_reason: incidentReason.trim(),
+          coreIntent,
+          textVibe,
+          vibeIntensity
+        }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -997,6 +1006,70 @@ export default function AdminDashboard() {
                     <p className="text-xs sm:text-sm text-amber-800/80 mb-4 font-medium leading-relaxed max-w-2xl">
                       اكتب سبب الزعل باختصار، وسيقوم الذكاء الاصطناعي بصياغة اعتذار رومانسي متكامل، وتجهيز أسئلة فخ مضحكة، وجواب خاص يليق بالمشكلة!
                     </p>
+
+                    {/* AI Configuration Chips */}
+                    <div className="flex flex-col gap-4 mb-5 border-b border-amber-200/40 pb-5">
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-amber-900/70">الهدف الأساسي (Core Intent):</label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { id: 'apology', label: 'مصالحة واعتذار استراتيجي' },
+                            { id: 'love', label: 'اعتراف رومانسي مفتوح' },
+                            { id: 'joy', label: 'بهجة وسعادة بدون سبب' }
+                          ].map(opt => (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => setCoreIntent(opt.id)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${coreIntent === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-amber-900/70">الروح العامة (Text Vibe):</label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { id: 'affectionate', label: 'حنين ومرهم حنان' },
+                            { id: 'playful_banter', label: 'رخامة وهزار كرتوني' },
+                            { id: 'gentle_reproach', label: 'عتاب راقٍ ومشرّف' }
+                          ].map(opt => (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => setTextVibe(opt.id)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${textVibe === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-bold text-amber-900/70">الجرعة وقوة المشاعر (Intensity):</label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { id: 'low', label: 'على الهادي' },
+                            { id: 'medium', label: 'دوز متوسط' },
+                            { id: 'high', label: 'إكستريم / عالي الجرعة' }
+                          ].map(opt => (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => setVibeIntensity(opt.id)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${vibeIntensity === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input
                         type="text"
