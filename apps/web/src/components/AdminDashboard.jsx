@@ -272,7 +272,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
                 key={opt.id}
                 type="button"
                 onClick={() => setCoreIntent(opt.id)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300 ease-in-out ${coreIntent === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+                className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ease-in-out cursor-pointer select-none outline-none ${coreIntent === opt.id ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/40 ring-1 ring-amber-400 transform scale-[1.02]" : "bg-white/40 text-amber-900 hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-95 border border-amber-200/40"}`}
               >
                 {opt.label}
               </button>
@@ -292,7 +292,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
                 key={opt.id}
                 type="button"
                 onClick={() => setTextVibe(opt.id)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300 ease-in-out ${textVibe === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+                className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ease-in-out cursor-pointer select-none outline-none ${textVibe === opt.id ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/40 ring-1 ring-amber-400 transform scale-[1.02]" : "bg-white/40 text-amber-900 hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-95 border border-amber-200/40"}`}
               >
                 {opt.label}
               </button>
@@ -312,7 +312,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
                 key={opt.id}
                 type="button"
                 onClick={() => setVibeIntensity(opt.id)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300 ease-in-out ${vibeIntensity === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+                className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ease-in-out cursor-pointer select-none outline-none ${vibeIntensity === opt.id ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/40 ring-1 ring-amber-400 transform scale-[1.02]" : "bg-white/40 text-amber-900 hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-95 border border-amber-200/40"}`}
               >
                 {opt.label}
               </button>

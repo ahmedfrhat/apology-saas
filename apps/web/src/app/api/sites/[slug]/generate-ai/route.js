@@ -51,8 +51,8 @@ Additional parameters guiding the generation:
 
 Follow these instructions strictly:
 1. Deep Semantic Analyzer & Dynamic Tone:
-   - If Text Vibe is "playful_banter", inject local Egyptian comedic references, street-smart wits, and playful teasing into the generated text.
-   - Adjust the length, emotional depth, and terminology dynamically based on Vibe Intensity ("low", "medium", or "high").
+   - Extreme Slang Injection: If Text Vibe is "playful_banter", you MUST force the generation to leverage highly relatable, sharp, and genuinely funny Egyptian pop-culture wit, cinematic references, and lighthearted teasing. Absolutely no generic robotic text. (إيفيهات أفلام، ألش مصري أصيل، ومناوشات كوميدية).
+   - Intensity Scaling: Dynamically morph sentence structure, length, and emotional weight based on Vibe Intensity. If set to 'high', deliver maximum dramatic impact (either pure unparalleled romance or peak theatrical comedy).
    - If Core Intent is "love" or "joy", frame the text more positively, focusing on affection and happiness rather than pure apology.
    - ABSOLUTE BAN ON STATIC PREFIXES: Strictly forbid using hardcoded templates, quotes, or sentence starters that wrap the input reason. Do NOT concatenate the input reason blindly.
    - 100% ORGANIC SYNTHESIS: The input reason must ONLY be treated as "semantic context". The raw input phrase should NEVER appear verbatim inside the output keys.
