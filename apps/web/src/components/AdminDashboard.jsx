@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import {
   Activity,
   Radio,
@@ -199,37 +199,10 @@ function SessionRow({ row, onBroadcast }) {
   );
 }
 
-export default function AdminDashboard() {
-  const { config, refetchConfig, siteSlug } = useApp();
-
-  const [activeTab, setActiveTab] = useState("live");
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const intervalRef = useRef(null);
-
-  // Password gate states
-  const [savedPassword, setSavedPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [typingPassword, setTypingPassword] = useState("");
-
-  // Settings tab states
-  const [formData, setFormData] = useState(null);
-  const [activeSection, setActiveSection] = useState("basic");
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null);
-  const [copyFeedback, setCopyFeedback] = useState("");
-
-  const copyToClipboard = () => {
-    const url = window.location.origin + "/" + siteSlug;
-    navigator.clipboard.writeText(url);
-    setCopyFeedback("تم النسخ بنجاح! 📋");
-    setTimeout(() => setCopyFeedback(""), 2000);
-  };  const [incidentReason, setIncidentReason] = useState("");
+const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
+  const [incidentReason, setIncidentReason] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiSuccessMsg, setAiSuccessMsg] = useState("");
-  
   const [coreIntent, setCoreIntent] = useState("apology");
   const [textVibe, setTextVibe] = useState("affectionate");
   const [vibeIntensity, setVibeIntensity] = useState("medium");
@@ -272,6 +245,134 @@ export default function AdminDashboard() {
     } finally {
       setIsGeneratingAI(false);
     }
+  };
+
+  return (
+    <div className="bg-amber-50/60 border border-amber-200/50 rounded-2xl p-5 sm:p-6 mb-2 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+      <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 mb-2">
+        <Sparkles size={16} className="text-amber-800 animate-pulse" />
+        الصياغة السحرية بالذكاء الاصطناعي ✨
+      </h4>
+      <p className="text-xs sm:text-sm text-amber-800/80 mb-4 font-medium leading-relaxed max-w-2xl">
+        اكتب سبب الزعل باختصار، وسيقوم الذكاء الاصطناعي بصياغة اعتذار رومانسي متكامل، وتجهيز أسئلة فخ مضحكة، وجواب خاص يليق بالمشكلة!
+      </p>
+
+      {/* AI Configuration Chips */}
+      <div className="flex flex-col gap-4 mb-5 border-b border-amber-200/40 pb-5">
+        <div className="space-y-2">
+          <label className="block text-xs font-bold text-amber-900/70">الهدف الأساسي (Core Intent):</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'apology', label: 'مصالحة واعتذار استراتيجي' },
+              { id: 'love', label: 'اعتراف رومانسي مفتوح' },
+              { id: 'joy', label: 'بهجة وسعادة بدون سبب' }
+            ].map(opt => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setCoreIntent(opt.id)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300 ease-in-out ${coreIntent === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-xs font-bold text-amber-900/70">الروح العامة (Text Vibe):</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'affectionate', label: 'حنين ومرهم حنان' },
+              { id: 'playful_banter', label: 'رخامة وهزار كرتوني' },
+              { id: 'gentle_reproach', label: 'عتاب راقٍ ومشرّف' }
+            ].map(opt => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setTextVibe(opt.id)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300 ease-in-out ${textVibe === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-xs font-bold text-amber-900/70">الجرعة وقوة المشاعر (Intensity):</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'low', label: 'على الهادي' },
+              { id: 'medium', label: 'دوز متوسط' },
+              { id: 'high', label: 'إكستريم / عالي الجرعة' }
+            ].map(opt => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setVibeIntensity(opt.id)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all duration-300 ease-in-out ${vibeIntensity === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          value={incidentReason}
+          onChange={(e) => setIncidentReason(e.target.value)}
+          placeholder="مثال: نسيت عيد ميلادها / اتأخرت عليها..."
+          className="flex-1 rounded-xl border border-amber-200/50 bg-white/80 backdrop-blur-sm px-4 py-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-amber-500 shadow-inner placeholder:text-gray-400"
+        />
+        <button
+          type="button"
+          onClick={handleGenerateAI}
+          disabled={isGeneratingAI || !incidentReason.trim()}
+          className="rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 px-6 py-3 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50 transition-all duration-300 ease-in-out shadow-md shrink-0 flex items-center justify-center gap-2"
+        >
+          {isGeneratingAI ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {isGeneratingAI ? "جاري الإبداع..." : "توليد سحري"}
+        </button>
+      </div>
+      {aiSuccessMsg && (
+        <p className="mt-3 text-xs sm:text-sm font-bold text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-100 inline-block">{aiSuccessMsg}</p>
+      )}
+    </div>
+  );
+});
+
+export default function AdminDashboard() {
+  const { config, refetchConfig, siteSlug } = useApp();
+
+  const [activeTab, setActiveTab] = useState("live");
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const intervalRef = useRef(null);
+
+  // Password gate states
+  const [savedPassword, setSavedPassword] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [typingPassword, setTypingPassword] = useState("");
+
+  // Settings tab states
+  const [formData, setFormData] = useState(null);
+  const [activeSection, setActiveSection] = useState("basic");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
+  const [copyFeedback, setCopyFeedback] = useState("");
+
+  const copyToClipboard = () => {
+    const url = window.location.origin + "/" + siteSlug;
+    navigator.clipboard.writeText(url);
+    setCopyFeedback("تم النسخ بنجاح! 📋");
+    setTimeout(() => setCopyFeedback(""), 2000);
   };
 
   // Verify cached password on mount once config is loaded
@@ -997,101 +1098,7 @@ export default function AdminDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex flex-col gap-6"
                 >
-                  <div className="bg-amber-50/60 border border-amber-200/50 rounded-2xl p-5 sm:p-6 mb-2 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
-                    <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 mb-2">
-                      <Sparkles size={16} className="text-amber-800 animate-pulse" />
-                      الصياغة السحرية بالذكاء الاصطناعي ✨
-                    </h4>
-                    <p className="text-xs sm:text-sm text-amber-800/80 mb-4 font-medium leading-relaxed max-w-2xl">
-                      اكتب سبب الزعل باختصار، وسيقوم الذكاء الاصطناعي بصياغة اعتذار رومانسي متكامل، وتجهيز أسئلة فخ مضحكة، وجواب خاص يليق بالمشكلة!
-                    </p>
-
-                    {/* AI Configuration Chips */}
-                    <div className="flex flex-col gap-4 mb-5 border-b border-amber-200/40 pb-5">
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold text-amber-900/70">الهدف الأساسي (Core Intent):</label>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            { id: 'apology', label: 'مصالحة واعتذار استراتيجي' },
-                            { id: 'love', label: 'اعتراف رومانسي مفتوح' },
-                            { id: 'joy', label: 'بهجة وسعادة بدون سبب' }
-                          ].map(opt => (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => setCoreIntent(opt.id)}
-                              className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${coreIntent === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold text-amber-900/70">الروح العامة (Text Vibe):</label>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            { id: 'affectionate', label: 'حنين ومرهم حنان' },
-                            { id: 'playful_banter', label: 'رخامة وهزار كرتوني' },
-                            { id: 'gentle_reproach', label: 'عتاب راقٍ ومشرّف' }
-                          ].map(opt => (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => setTextVibe(opt.id)}
-                              className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${textVibe === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-xs font-bold text-amber-900/70">الجرعة وقوة المشاعر (Intensity):</label>
-                        <div className="flex flex-wrap gap-2">
-                          {[
-                            { id: 'low', label: 'على الهادي' },
-                            { id: 'medium', label: 'دوز متوسط' },
-                            { id: 'high', label: 'إكستريم / عالي الجرعة' }
-                          ].map(opt => (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => setVibeIntensity(opt.id)}
-                              className={`px-3 py-1.5 text-xs font-bold rounded-full transition-all ${vibeIntensity === opt.id ? "bg-amber-600 text-white shadow-sm" : "bg-white/50 text-amber-800 hover:bg-white border border-amber-200/50"}`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <input
-                        type="text"
-                        value={incidentReason}
-                        onChange={(e) => setIncidentReason(e.target.value)}
-                        placeholder="مثال: نسيت عيد ميلادها / اتأخرت عليها..."
-                        className="flex-1 rounded-xl border border-amber-200/50 bg-white/80 backdrop-blur-sm px-4 py-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-amber-500 shadow-inner placeholder:text-gray-400"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleGenerateAI}
-                        disabled={isGeneratingAI || !incidentReason.trim()}
-                        className="rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 px-6 py-3 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50 transition-all shadow-md shrink-0 flex items-center justify-center gap-2"
-                      >
-                        {isGeneratingAI ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                        {isGeneratingAI ? "جاري الإبداع..." : "توليد سحري"}
-                      </button>
-                    </div>
-                    {aiSuccessMsg && (
-                      <p className="mt-3 text-xs sm:text-sm font-bold text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-100 inline-block">{aiSuccessMsg}</p>
-                    )}
-                  </div>
+                  <MagicAIGenerator siteSlug={siteSlug} setFormData={setFormData} />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">

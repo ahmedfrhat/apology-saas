@@ -190,6 +190,7 @@ export function AppProvider({ children }) {
   // Polling for broadcast message
   useEffect(() => {
     let active = true;
+    let abortController = new AbortController();
 
     const poll = async () => {
       const sessionId = sessionIdRef.current;
@@ -200,6 +201,7 @@ export function AppProvider({ children }) {
       try {
         const res = await fetch(
           `/api/broadcast/${encodeURIComponent(slug)}?session_id=${encodeURIComponent(sessionId)}`,
+          { signal: abortController.signal }
         );
         if (!res.ok) return;
         const data = await res.json();
@@ -215,6 +217,7 @@ export function AppProvider({ children }) {
     return () => {
       active = false;
       clearInterval(interval);
+      abortController.abort();
     };
   }, []);
 
