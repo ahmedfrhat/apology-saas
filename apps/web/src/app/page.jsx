@@ -174,7 +174,7 @@ export default function SaaSOnboardingPage() {
           <div className="bg-[#FCFBF7] p-3 rounded-lg border border-[#E5E0D8] text-xs space-y-1 mb-3 text-[#5A5955]">
             <p className="font-bold text-[#4A3E3D] mb-1">{t("telegramSetup") || "خطوات تفعيل التليجرام"}:</p>
             <ol className="list-decimal list-inside space-y-0.5">
-              <li>{t("telegramStep1") || "ابحث عن البوت"}: <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-blue-500 font-bold hover:underline">@userinfobot</a></li>
+              <li>{t("telegramStep1") || "ابحث عن البوت"}: <a href="https://t.me/apology_saas_2026_bot" target="_blank" rel="noreferrer" className="text-blue-500 font-bold hover:underline">@apology_saas_2026_bot</a></li>
               <li>{t("telegramStep2") || "أرسل له /start"}</li>
               <li>{t("telegramStep3") || "انسخ الـ ID الخاص بك وضعه هنا"}</li>
             </ol>

@@ -1392,7 +1392,7 @@ export default function AdminDashboard() {
                           <div className="bg-[#FCFBF7] dark:bg-[#1A1A1A] p-4 rounded-xl border border-[#E5E0D8] dark:border-[#1A1A1A]/10 text-sm">
                             <p className="font-bold mb-2 text-[#5A5955] dark:text-[#EDE8E0]">{t("telegramSetup")}:</p>
                             <ol className="list-decimal list-inside space-y-1 text-[#5A5955] dark:text-[#A89E90]">
-                              <li>{t("telegramStep1")}: <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">@userinfobot</a></li>
+                              <li>{t("telegramStep1")}: <a href="https://t.me/apology_saas_2026_bot" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">@apology_saas_2026_bot</a></li>
                               <li>{t("telegramStep2")}</li>
                               <li>{t("telegramStep3")}</li>
                             </ol>
