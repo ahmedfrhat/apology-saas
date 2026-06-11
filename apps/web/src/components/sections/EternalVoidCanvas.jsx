@@ -28,7 +28,7 @@ function decryptText(base64Text, key = "safi-love") {
 }
 
 export default function EternalVoidCanvas() {
-  const { config, t, state, updateState, siteSlug } = useApp();
+  const { config, t, capsule_created_at, time_capsule, updateState, siteSlug } = useApp();
   const [textStage, setTextStage] = useState("initial"); // 'initial' | 'funny' | 'forever'
   const [showControlCenter, setShowControlCenter] = useState(false);
   
@@ -91,10 +91,10 @@ export default function EternalVoidCanvas() {
 
   // Compute countdown for Time Capsule
   useEffect(() => {
-    if (!state.capsule_created_at || !state.time_capsule) return;
+    if (!capsule_created_at || !time_capsule) return;
 
     const updateCountdown = () => {
-      const createdAt = new Date(state.capsule_created_at).getTime();
+      const createdAt = new Date(capsule_created_at).getTime();
       const unlockAt = createdAt + 365 * 24 * 60 * 60 * 1000; // Exactly 1 year in ms
       const diff = unlockAt - Date.now();
 
@@ -117,7 +117,7 @@ export default function EternalVoidCanvas() {
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [state.capsule_created_at, state.time_capsule, config?.locale]);
+  }, [capsule_created_at, time_capsule, config?.locale]);
 
   const triggerHaptic = () => {
     if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -171,7 +171,7 @@ export default function EternalVoidCanvas() {
     }
   };
 
-  const isCapsuleLocked = !!state.time_capsule;
+  const isCapsuleLocked = !!time_capsule;
   const isCapsuleUnlocked = isCapsuleLocked && timeLeftStr === "";
 
   return (
@@ -351,7 +351,7 @@ export default function EternalVoidCanvas() {
                           📬 {t("الرسالة التي كتبتيها قبل سنة:")}
                         </p>
                         <p className="text-xs font-semibold text-white leading-relaxed whitespace-pre-wrap">
-                          {decryptText(state.time_capsule)}
+                          {decryptText(time_capsule)}
                         </p>
                       </div>
                     </div>

@@ -48,11 +48,6 @@ export async function POST(request, context, c) {
       return Response.json({ error: "الرجاء إدخال نص الدفاع" }, { status: 400 });
     }
 
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-    if (!geminiApiKey) {
-      return Response.json({ error: "Gemini API Key is not configured." }, { status: 400 });
-    }
-
     let config = {};
     try {
       const result = await sql`SELECT config FROM apology_sites WHERE slug = ${slug}`;
@@ -61,6 +56,11 @@ export async function POST(request, context, c) {
       }
     } catch (dbErr) {
       console.error("Failed to fetch site config", dbErr);
+    }
+
+    const geminiApiKey = config.geminiApiKey || process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      return Response.json({ error: "Gemini API Key is not configured." }, { status: 400 });
     }
 
     // --- STEP 1: Ask follow-up question ---

@@ -98,6 +98,7 @@ export default function ScratchToReveal({ src, alt, className = "" }) {
   };
 
   const startScratching = (e) => {
+    if (e.cancelable) e.preventDefault();
     setIsDrawing(true);
     scratch(e);
   };
@@ -109,15 +110,20 @@ export default function ScratchToReveal({ src, alt, className = "" }) {
 
   const scratch = (e) => {
     if (!isDrawing && e.type !== "touchstart") return;
+    if (e.cancelable) e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas || cleared) return;
 
     const ctx = canvas.getContext("2d");
     const { x, y } = getCoordinates(e);
 
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || window.innerWidth < 768;
+    const radius = isMobile ? 38 : 22;
+
     ctx.globalCompositeOperation = "destination-out";
     ctx.beginPath();
-    ctx.arc(x, y, 22, 0, 2 * Math.PI);
+    ctx.arc(x, y, radius, 0, 2 * Math.PI);
     ctx.fill();
 
     // Trigger subtle textured scratch vibration (throttled to 100ms)
@@ -155,7 +161,7 @@ export default function ScratchToReveal({ src, alt, className = "" }) {
     }
 
     const ratio = clearedCount / samples;
-    if (ratio > 0.40) { // 40% cleared is enough for full reveal
+    if (ratio > 0.32) { // 32% cleared is enough for full reveal
       setCleared(true);
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         navigator.vibrate([30, 30, 50]); // Success double vibration

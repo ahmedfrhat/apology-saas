@@ -41,7 +41,7 @@ export async function POST(request, context, c) {
     }
 
     // 1. Check for API key (Gemini / OpenAI)
-    const geminiApiKey = process.env.GEMINI_API_KEY;
+    const geminiApiKey = config.geminiApiKey || process.env.GEMINI_API_KEY;
     if (geminiApiKey) {
       try {
         const petNameInstruction = config?.petNameOverride ? `\n   - CRITICAL: You MUST use her specific pet name "${config.petNameOverride}" repeatedly when addressing her. Do not invent other pet names.` : `\n   - Use natural, common Egyptian pet names like (يا روحي، يا حبيبتي، يا قلبي).`;
@@ -63,7 +63,7 @@ Follow these instructions strictly:
    - ABSOLUTE BAN ON STATIC PREFIXES: Strictly forbid using hardcoded templates, quotes, or sentence starters.
    - 100% ORGANIC SYNTHESIS: The input reason must ONLY be treated as "semantic context". Never copy the exact phrase.
 2. Strict 2nd Person Feminine & Localized Language:
-   - Address the girl strictly in the 2nd person feminine singular (مخاطب مؤنث مفرد) (e.g. "إنتي", "سامحتيني", "زعّلتك").${petNameInstructionAr}
+   - Address the girl strictly in the 2nd person feminine singular (مخاطب مؤنث مفرد) (e.g. "إنتي", "سامحتيني", "زعّلتك").${petNameInstruction}
    - Output must be in fluent, high-end, contemporary Egyptian Arabic (عامية مصرية راقية ومؤثرة). It must sound like a deeply caring human boyfriend. No rigid standard Arabic.
 3. Contextual Trivia & Letter Generation:
    - Generate exactly 3 quiz questions matching the incident and the core intent.
@@ -104,7 +104,7 @@ Follow these instructions strictly:
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: finalSystemPrompt + "\n" + schemaString }] }],
+            contents: [{ parts: [{ text: systemPrompt }] }],
             generationConfig: {
               responseMimeType: "application/json"
             }
