@@ -1,18 +1,23 @@
 // Shared Motion (framer-motion) variants used across all sections.
 
 export const sectionContainer = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, y: 35, scale: 0.98 },
   show: {
     opacity: 1,
+    y: 0,
+    scale: 1,
     transition: {
+      duration: 0.55,
+      ease: [0.25, 1, 0.5, 1],
       staggerChildren: 0.12,
       delayChildren: 0.05,
     },
   },
   exit: {
     opacity: 0,
-    y: -25,
-    transition: { duration: 0.4 },
+    y: -35,
+    scale: 0.98,
+    transition: { duration: 0.45, ease: [0.25, 1, 0.5, 1] },
   },
 };
 

@@ -2,12 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *, .candlelight *));
 
 /* =============================================
    SAFI.IO DESIGN SYSTEM — CINEMATIC ROMANCE
-   Palette: Midnight Navy / Warm Ivory / Rose Gold
-============================================= */
+   Palette: Midnight Navy / Warm Ivory / Rose Gold / Amber Candlelight
+ ============================================= */
 :root {
   --bg-base:         #FAF8F3;
   --bg-surface:      #FFFFFF;
@@ -22,6 +22,23 @@
   --accent-glow:     rgba(201, 149, 108, 0.25);
   --shadow-card:     0 8px 40px rgba(30, 20, 10, 0.08);
   --gradient-bg:     linear-gradient(135deg, #FAF8F3 0%, #F0EBE0 50%, #FAF8F3 100%);
+
+  /* Overrides variables for light mode */
+  --bg-white-override: #FFFFFF;
+  --bg-white-80-override: rgba(255,255,255,0.80);
+  --bg-white-95-override: rgba(255,255,255,0.95);
+  --bg-white-50-override: rgba(255,255,255,0.50);
+  --bg-f8f9fa-override: #F8F9FA;
+  --bg-f4f3ef-override: #F4F3EF;
+  --bg-f4f3ef-60-override: rgba(244,243,239,0.60);
+  --bg-f4f3ef-95-override: rgba(244,243,239,0.95);
+  --bg-gray-50-override: #F9FAFB;
+  --bg-gray-50-50-override: rgba(249,250,251,0.50);
+  --bg-gray-100-override: #F3F4F6;
+  --bg-gray-200-override: #E5E7EB;
+  --text-1a1a1a-override: #1A1A1A;
+  --text-5a5955-override: #5A5955;
+  --text-8a7e72-override: #8A7E72;
 }
 
 .dark {
@@ -38,11 +55,61 @@
   --accent-glow:     rgba(201, 149, 108, 0.20);
   --shadow-card:     0 8px 40px rgba(0,0,0,0.5);
   --gradient-bg:     linear-gradient(135deg, #0D0F1A 0%, #111420 50%, #0D0F1A 100%);
+
+  /* Overrides variables for dark mode */
+  --bg-white-override: #141622;
+  --bg-white-80-override: rgba(20,22,34,0.80);
+  --bg-white-95-override: rgba(20,22,34,0.95);
+  --bg-white-50-override: rgba(20,22,34,0.50);
+  --bg-f8f9fa-override: #0D0F1A;
+  --bg-f4f3ef-override: #141622;
+  --bg-f4f3ef-60-override: rgba(20,22,34,0.85);
+  --bg-f4f3ef-95-override: rgba(20,22,34,0.95);
+  --bg-gray-50-override: #1C1F30;
+  --bg-gray-50-50-override: rgba(28,31,48,0.50);
+  --bg-gray-100-override: #1C1F30;
+  --bg-gray-200-override: #252840;
+  --text-1a1a1a-override: #EDE8E0;
+  --text-5a5955-override: #A89E90;
+  --text-8a7e72-override: #7A7068;
+}
+
+.candlelight {
+  --bg-base:         #24170D;
+  --bg-surface:      #2E1E12;
+  --bg-surface-2:    #3B2718;
+  --bg-card:         rgba(46, 30, 18, 0.95);
+  --border-base:     rgba(223, 186, 115, 0.20);
+  --text-primary:    #F5EBE1;
+  --text-secondary:  #D9CBB6;
+  --text-muted:      #A6927D;
+  --accent:          #DFBA73;
+  --accent-2:        #E29B5C;
+  --accent-glow:     rgba(223, 186, 115, 0.25);
+  --shadow-card:     0 8px 40px rgba(15, 8, 3, 0.65);
+  --gradient-bg:     linear-gradient(135deg, #24170D 0%, #302013 50%, #24170D 100%);
+
+  /* Overrides variables for candlelight mode */
+  --bg-white-override: #2E1E12;
+  --bg-white-80-override: rgba(46,30,18,0.80);
+  --bg-white-95-override: rgba(46,30,18,0.95);
+  --bg-white-50-override: rgba(46,30,18,0.50);
+  --bg-f8f9fa-override: #24170D;
+  --bg-f4f3ef-override: #2E1E12;
+  --bg-f4f3ef-60-override: rgba(46,30,18,0.85);
+  --bg-f4f3ef-95-override: rgba(46,30,18,0.95);
+  --bg-gray-50-override: #3B2718;
+  --bg-gray-50-50-override: rgba(59,39,24,0.50);
+  --bg-gray-100-override: #3B2718;
+  --bg-gray-200-override: #452E1C;
+  --text-1a1a1a-override: #F5EBE1;
+  --text-5a5955-override: #D9CBB6;
+  --text-8a7e72-override: #A6927D;
 }
 
 /* =============================================
    RIPPLE TRANSITION
-============================================= */
+ ============================================= */
 html.theme-transitioning *,
 html.theme-transitioning *::before,
 html.theme-transitioning *::after {
@@ -71,11 +138,10 @@ html.theme-transitioning *::after {
 
 /* =============================================
    BASE STYLES
-============================================= */
+ ============================================= */
 @layer base {
   html, body {
     background: var(--gradient-bg);
-    /* ⚠️ NO background-attachment:fixed — causes GPU repaint lag on iOS Safari */
     color: var(--text-primary);
     font-family: 'Inter', 'Cairo', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -83,7 +149,6 @@ html.theme-transitioning *::after {
     min-height: 100vh;
   }
 
-  /* Smooth transitions for theme switch — ONLY non-animated elements */
   *, *::before, *::after {
     box-sizing: border-box;
   }
@@ -91,171 +156,149 @@ html.theme-transitioning *::after {
   input, textarea, select { @apply outline-none focus:outline-none; }
   button { @apply outline-none focus:outline-none; }
 
-  /* Thin scrollbar */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 9999px; }
   
-  /* Hide scrollbar utility */
   .scrollbar-hide { scrollbar-width: none; }
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
 
 /* =============================================
-   DARK MODE — COMPREHENSIVE OVERRIDES
-   Uses .dark selector for HIGH specificity
-============================================= */
-
-/* Page background */
-.dark,
-.dark body,
-.dark html {
+   DARK & CANDLELIGHT COMPREHENSIVE OVERRIDES
+   Uses nested modern CSS rules for robustness
+ ============================================= */
+.dark, .candlelight {
   background: var(--gradient-bg) !important;
   color: var(--text-primary) !important;
-}
 
-/* ── White / near-white backgrounds ──────── */
-.dark .bg-white                { background-color: #141622 !important; }
-.dark .bg-white\/80            { background-color: rgba(20,22,34,0.80) !important; }
-.dark .bg-white\/95            { background-color: rgba(20,22,34,0.95) !important; }
-.dark .bg-white\/50            { background-color: rgba(20,22,34,0.50) !important; }
-.dark .bg-\[\#F8F9FA\]         { background-color: #0D0F1A !important; }
-.dark .bg-\[\#F4F3EF\]         { background-color: #141622 !important; }
-.dark .bg-\[\#F4F3EF\]\/60     { background-color: rgba(20,22,34,0.85) !important; }
-.dark .bg-\[\#F4F3EF\]\/95     { background-color: rgba(20,22,34,0.95) !important; }
+  & body, & html {
+    background: var(--gradient-bg) !important;
+    color: var(--text-primary) !important;
+  }
 
-/* ── Gray backgrounds ─────────────────────── */
-.dark .bg-gray-50              { background-color: #1C1F30 !important; }
-.dark .bg-gray-50\/50          { background-color: rgba(28,31,48,0.50) !important; }
-.dark .bg-gray-100             { background-color: #1C1F30 !important; }
-.dark .bg-gray-200             { background-color: #252840 !important; }
+  & .bg-white                { background-color: var(--bg-white-override) !important; }
+  & .bg-white\/80            { background-color: var(--bg-white-80-override) !important; }
+  & .bg-white\/95            { background-color: var(--bg-white-95-override) !important; }
+  & .bg-white\/50            { background-color: var(--bg-white-50-override) !important; }
+  & .bg-\[\#F8F9FA\]         { background-color: var(--bg-f8f9fa-override) !important; }
+  & .bg-\[\#F4F3EF\]         { background-color: var(--bg-f4f3ef-override) !important; }
+  & .bg-\[\#F4F3EF\]\/60     { background-color: var(--bg-f4f3ef-60-override) !important; }
+  & .bg-\[\#F4F3EF\]\/95     { background-color: var(--bg-f4f3ef-95-override) !important; }
 
-/* ── Borders ─────────────────────────────── */
-.dark .border-gray-50          { border-color: rgba(201,149,108,0.08) !important; }
-.dark .border-gray-100         { border-color: rgba(201,149,108,0.12) !important; }
-.dark .border-gray-200         { border-color: rgba(201,149,108,0.18) !important; }
-.dark .border-gray-300         { border-color: rgba(201,149,108,0.25) !important; }
-.dark .border-\[\#E5E0D8\]     { border-color: rgba(201,149,108,0.18) !important; }
-.dark .border-\[\#1A1A1A\]\/10 { border-color: rgba(201,149,108,0.12) !important; }
-.dark .border-dashed           { border-color: rgba(201,149,108,0.20) !important; }
+  & .bg-gray-50              { background-color: var(--bg-gray-50-override) !important; }
+  & .bg-gray-50\/50          { background-color: var(--bg-gray-50-50-override) !important; }
+  & .bg-gray-100             { background-color: var(--bg-gray-100-override) !important; }
+  & .bg-gray-200             { background-color: var(--bg-gray-200-override) !important; }
 
-/* ── Text colors ─────────────────────────── */
-.dark .text-\[\#1A1A1A\]       { color: #EDE8E0 !important; }
-.dark .text-\[\#5A5955\]       { color: #A89E90 !important; }
-.dark .text-\[\#8A7E72\]       { color: #7A7068 !important; }
-.dark .text-black              { color: #EDE8E0 !important; }
-.dark .text-gray-900           { color: #EDE8E0 !important; }
-.dark .text-gray-800           { color: #D8D2C8 !important; }
-.dark .text-gray-700           { color: #C0B8AC !important; }
-.dark .text-gray-600           { color: #A89E90 !important; }
-.dark .text-gray-500           { color: #8A8278 !important; }
-.dark .text-gray-400           { color: #6B6458 !important; }
-.dark .text-gray-300           { color: #555048 !important; }
-.dark .text-slate-900          { color: #EDE8E0 !important; }
+  & .border-gray-50          { border-color: var(--border-base) !important; }
+  & .border-gray-100         { border-color: var(--border-base) !important; }
+  & .border-gray-200         { border-color: var(--border-base) !important; }
+  & .border-gray-300         { border-color: var(--border-base) !important; }
+  & .border-\[\#E5E0D8\]     { border-color: var(--border-base) !important; }
+  & .border-\[\#1A1A1A\]\/10 { border-color: var(--border-base) !important; }
+  & .border-dashed           { border-color: var(--border-base) !important; }
 
-/* ── Placeholders ────────────────────────── */
-.dark .placeholder-\[\#8A7E72\]::placeholder { color: #6B6458 !important; }
-.dark input::placeholder       { color: #6B6458 !important; }
-.dark textarea::placeholder    { color: #6B6458 !important; }
+  & .text-\[\#1A1A1A\]       { color: var(--text-1a1a1a-override) !important; }
+  & .text-\[\#5A5955\]       { color: var(--text-5a5955-override) !important; }
+  & .text-\[\#8A7E72\]       { color: var(--text-8a7e72-override) !important; }
+  & .text-black              { color: var(--text-1a1a1a-override) !important; }
+  & .text-gray-900           { color: var(--text-1a1a1a-override) !important; }
+  & .text-gray-800           { color: var(--text-1a1a1a-override) !important; }
+  & .text-gray-700           { color: var(--text-5a5955-override) !important; }
+  & .text-gray-600           { color: var(--text-5a5955-override) !important; }
+  & .text-gray-500           { color: var(--text-8a7e72-override) !important; }
+  & .text-gray-400           { color: var(--text-muted) !important; }
+  & .text-gray-300           { color: var(--text-muted) !important; }
+  & .text-slate-900          { color: var(--text-1a1a1a-override) !important; }
 
-/* ── Inputs & Form fields ────────────────── */
-.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-.dark textarea,
-.dark select {
-  background-color: #1C1F30 !important;
-  color: #EDE8E0 !important;
-  border-color: rgba(201,149,108,0.20) !important;
-}
-.dark input:focus:not([type="checkbox"]):not([type="radio"]),
-.dark textarea:focus,
-.dark select:focus {
-  background-color: #141622 !important;
-  border-color: #C9956C !important;
-  box-shadow: 0 0 0 3px rgba(201,149,108,0.15) !important;
-}
+  & .placeholder-\[\#8A7E72\]::placeholder { color: var(--text-muted) !important; }
+  & input::placeholder       { color: var(--text-muted) !important; }
+  & textarea::placeholder    { color: var(--text-muted) !important; }
 
-/* ── Admin Dashboard tab buttons ─────────── */
-.dark .hover\:bg-gray-50:hover  { background-color: #1C1F30 !important; }
-.dark .hover\:bg-gray-100:hover { background-color: #252840 !important; }
+  & input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  & textarea,
+  & select {
+    background-color: var(--bg-surface-2) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-base) !important;
+  }
+  & input:focus:not([type="checkbox"]):not([type="radio"]),
+  & textarea:focus,
+  & select:focus {
+    background-color: var(--bg-surface) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
+  }
 
-/* ── Tab: amber active state (keep visible) ─ */
-.dark .bg-amber-50              { background-color: rgba(201,149,108,0.12) !important; }
-.dark .border-amber-200\/50     { border-color: rgba(201,149,108,0.25) !important; }
-.dark .text-amber-900           { color: #DFBA73 !important; }
-.dark .text-amber-800           { color: #C9956C !important; }
-.dark .text-amber-500           { color: #C9956C !important; }
+  & .hover\:bg-gray-50:hover  { background-color: var(--bg-surface-2) !important; }
+  & .hover\:bg-gray-100:hover { background-color: var(--bg-surface-2) !important; }
 
-/* ── Semantic color panels (analytics cards) */
-.dark .bg-indigo-50    { background-color: rgba(79,70,229,0.10) !important; }
-.dark .text-indigo-800, .dark .text-indigo-900 { color: #818CF8 !important; }
-.dark .border-indigo-100 { border-color: rgba(79,70,229,0.20) !important; }
+  & .bg-amber-50              { background-color: var(--accent-glow) !important; }
+  & .border-amber-200\/50     { border-color: var(--border-base) !important; }
+  & .text-amber-900           { color: var(--accent-2) !important; }
+  & .text-amber-800           { color: var(--accent) !important; }
+  & .text-amber-500           { color: var(--accent) !important; }
 
-.dark .bg-pink-50      { background-color: rgba(236,72,153,0.10) !important; }
-.dark .text-pink-800, .dark .text-pink-900 { color: #F472B6 !important; }
-.dark .border-pink-100 { border-color: rgba(236,72,153,0.20) !important; }
+  & .bg-indigo-50    { background-color: rgba(79,70,229,0.10) !important; }
+  & .text-indigo-800, & .text-indigo-900 { color: #818CF8 !important; }
+  & .border-indigo-100 { border-color: rgba(79,70,229,0.20) !important; }
 
-.dark .bg-orange-50    { background-color: rgba(251,146,60,0.10) !important; }
-.dark .text-orange-700, .dark .text-orange-800 { color: #FB923C !important; }
-.dark .border-orange-100 { border-color: rgba(251,146,60,0.20) !important; }
+  & .bg-pink-50      { background-color: rgba(236,72,153,0.10) !important; }
+  & .text-pink-800, & .text-pink-900 { color: #F472B6 !important; }
+  & .border-pink-100 { border-color: rgba(236,72,153,0.20) !important; }
 
-.dark .bg-blue-50      { background-color: rgba(96,165,250,0.10) !important; }
-.dark .text-blue-700, .dark .text-blue-800 { color: #60A5FA !important; }
-.dark .border-blue-100 { border-color: rgba(96,165,250,0.20) !important; }
+  & .bg-orange-50    { background-color: rgba(251,146,60,0.10) !important; }
+  & .text-orange-700, & .text-orange-800 { color: #FB923C !important; }
+  & .border-orange-100 { border-color: rgba(251,146,60,0.20) !important; }
 
-.dark .bg-green-50     { background-color: rgba(74,222,128,0.10) !important; }
-.dark .text-green-700, .dark .text-green-800 { color: #4ADE80 !important; }
-.dark .border-green-100 { border-color: rgba(74,222,128,0.20) !important; }
+  & .bg-blue-50      { background-color: rgba(96,165,250,0.10) !important; }
+  & .text-blue-700, & .text-blue-800 { color: #60A5FA !important; }
+  & .border-blue-100 { border-color: rgba(96,165,250,0.20) !important; }
 
-.dark .bg-green-400    { background-color: rgba(74,222,128,0.25) !important; }
-.dark .border-green-400 { border-color: rgba(74,222,128,0.40) !important; }
-.dark .text-green-900  { color: #4ADE80 !important; }
+  & .bg-green-50     { background-color: rgba(74,222,128,0.10) !important; }
+  & .text-green-700, & .text-green-800 { color: #4ADE80 !important; }
+  & .border-green-100 { border-color: rgba(74,222,128,0.20) !important; }
 
-/* ── Shadow ──────────────────────────────── */
-.dark .shadow-sm      { box-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
-.dark .shadow-lg      { box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important; }
+  & .bg-green-400    { background-color: rgba(74,222,128,0.25) !important; }
+  & .border-green-400 { border-color: rgba(74,222,128,0.40) !important; }
+  & .text-green-900  { color: #4ADE80 !important; }
 
-/* ── Backdrop blur cards (glass) ─────────── */
-.dark .backdrop-blur-3xl,
-.dark .backdrop-blur-xl,
-.dark .backdrop-blur-md {
-  backdrop-filter: blur(24px) !important;
-  -webkit-backdrop-filter: blur(24px) !important;
-}
+  & .shadow-sm      { box-shadow: 0 1px 4px rgba(0,0,0,0.5) !important; }
+  & .shadow-lg      { box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important; }
 
-/* ── Section cards (LandingSection, Courtroom, etc.) ─── */
-/* These use bg-[#F4F3EF]/60 hardcoded — override in dark */
-.dark .bg-\[\#F4F3EF\]\/60 { background-color: rgba(20,22,34,0.85) !important; }
-.dark .bg-\[\#F4F3EF\]\/80 { background-color: rgba(20,22,34,0.90) !important; }
+  & .backdrop-blur-3xl,
+  & .backdrop-blur-xl,
+  & .backdrop-blur-md {
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+  }
 
-/* Text colors from section components */
-.dark .text-\[\#1A1A1A\]   { color: #EDE8E0 !important; }
-.dark .text-\[\#5A5955\]   { color: #A89E90 !important; }
+  & .bg-\[\#F4F3EF\]\/60 { background-color: var(--bg-card) !important; }
+  & .bg-\[\#F4F3EF\]\/80 { background-color: var(--bg-card) !important; }
 
-/* Borders from section components */
-.dark .border-\[\#1A1A1A\]\/10 { border-color: rgba(201,149,108,0.15) !important; }
-.dark .border-\[\#E5E0D8\]     { border-color: rgba(201,149,108,0.18) !important; }
+  & .text-\[\#1A1A1A\]   { color: var(--text-1a1a1a-override) !important; }
+  & .text-\[\#5A5955\]   { color: var(--text-5a5955-override) !important; }
 
-/* FinalFeedback rating card */
-.dark .border-\[\#1A1A1A\]\/10 { border-color: rgba(201,149,108,0.15) !important; }
+  & .border-\[\#1A1A1A\]\/10 { border-color: var(--border-base) !important; }
+  & .border-\[\#E5E0D8\]     { border-color: var(--border-base) !important; }
 
-/* Button in LandingSection and sections */
-.dark .bg-\[\#1A1A1A\]         { background-color: #EDE8E0 !important; }
-.dark .text-\[\#F4F3EF\]       { color: #1A1510 !important; }
-.dark .hover\:bg-\[\#DFBA73\]:hover { background-color: #C9956C !important; }
+  & .bg-\[\#1A1A1A\]         { background-color: var(--text-primary) !important; }
+  & .text-\[\#F4F3EF\]       { color: var(--bg-base) !important; }
+  & .hover\:bg-\[\#DFBA73\]:hover { background-color: var(--accent) !important; }
 
-/* Star rating muted */
-.dark .text-\[\#1A1A1A\]\/20 { color: rgba(237,232,224,0.20) !important; }
+  & .text-\[\#1A1A1A\]\/20 { color: rgba(237,232,224,0.20) !important; }
 
-/* ── Toaster (sonner) ────────────────────── */
-.dark [data-sonner-toast] {
-  background: #1C1F30 !important;
-  color: #EDE8E0 !important;
-  border-color: rgba(201,149,108,0.18) !important;
+  & [data-sonner-toast] {
+    background: var(--bg-surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-base) !important;
+  }
 }
 
 /* =============================================
    UTILITY CLASSES (used in components)
-============================================= */
+ ============================================= */
 @layer components {
   .safi-card {
     background: var(--bg-card);
@@ -268,8 +311,8 @@ html.theme-transitioning *::after {
 }
 
 /* =============================================
-   ANIMATIONS
-============================================= */
+   ANIMATIONS & VINYL RECORD SPIN
+ ============================================= */
 @keyframes manarBlink {
   0%, 50%    { opacity: 1; }
   50.01%,100%{ opacity: 0; }
@@ -289,4 +332,18 @@ html.theme-transitioning *::after {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   animation: shimmer 3s linear infinite;
+}
+
+@keyframes vinyl-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.vinyl-record {
+  animation: vinyl-spin 6s linear infinite;
+}
+.vinyl-play {
+  animation-play-state: running;
+}
+.vinyl-pause {
+  animation-play-state: paused;
 }

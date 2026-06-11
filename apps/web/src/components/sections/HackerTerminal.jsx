@@ -77,7 +77,7 @@ export default function HackerTerminal({ onNext }) {
               animate={{ opacity: 1 }}
               style={{ color: lineColor(line) }}
             >
-              <DecryptedText text={line} speed={14} />
+              <DecryptedText text={line} speed={14} playTypingSound={true} />
             </motion.div>
           ))}
         </div>

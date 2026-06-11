@@ -49,9 +49,21 @@ export default function MoodSlider({ onNext }) {
         updateState({ angerLevel: v });
       }
       
+      // Sliding notches feedback (vibrate slightly every 10 units)
+      if (Math.floor(v / 10) !== Math.floor(value / 10)) {
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate(8);
+        }
+      }
+
       setValue(v);
       if (v >= 98 && !unlocked) {
         setUnlocked(true);
+        
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate([80, 50, 150]); // success heartbeat buzz
+        }
+
         // If they just slammed it to 100 immediately, capture that too
         if (initialAnger === null) {
             updateState({ angerLevel: 100 });
@@ -64,7 +76,7 @@ export default function MoodSlider({ onNext }) {
         setTimeout(onNext, 1400);
       }
     },
-    [unlocked, onNext, updateState, initialAnger],
+    [value, unlocked, onNext, updateState, initialAnger],
   );
 
   return (

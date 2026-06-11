@@ -103,6 +103,10 @@ export default function TriviaQuiz({ onNext }) {
           updatedDetails.trapCount = (updatedDetails.trapCount || 0) + 1;
           updateState({ details: updatedDetails });
           
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]); // double buzz for trap
+          }
+
           setShake(true);
           setTrapMsg(currentQ.trap.msg);
           setTimeout(() => setShake(false), 500);
@@ -116,11 +120,20 @@ export default function TriviaQuiz({ onNext }) {
           : option === currentQ.correct;
   
         if (!isCorrect) {
+          if (typeof navigator !== "undefined" && navigator.vibrate) {
+            navigator.vibrate([100, 50, 100]); // double buzz for wrong answer
+          }
+
           setShake(true);
           setTrapMsg(t("جرّبي تاني يا {girlNickname} 😅"));
           setTimeout(() => setShake(false), 500);
           return;
         }
+
+      // Correct answer haptic
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(40); // clean short buzz
+      }
 
       // Check for hesitation
       if (firstWrongHoverTime.current) {
@@ -144,6 +157,9 @@ export default function TriviaQuiz({ onNext }) {
         firstWrongHoverTime.current = null; // reset for next question
       } else {
         setFinished(true);
+        if (typeof navigator !== "undefined" && navigator.vibrate) {
+          navigator.vibrate([100, 50, 150]); // premium success vibration
+        }
         updateState({ batteryLevel: 60, lastAction: "trivia-done" });
         setTimeout(onNext, 2600);
       }

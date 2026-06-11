@@ -26,6 +26,9 @@ export default function LandingSection({ onNext }) {
   }, [landingText]);
 
   const handleStart = useCallback(() => {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(30);
+    }
     updateState({
       batteryLevel: 10,
       lastAction: "started",

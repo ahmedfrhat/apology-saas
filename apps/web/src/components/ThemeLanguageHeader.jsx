@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { useLanguage } from "../context/LanguageContext";
-import { Sun, Moon, Globe } from "lucide-react";
+import { Sun, Moon, Globe, Flame } from "lucide-react";
 
 /**
  * ThemeLanguageHeader — Premium floating controls
@@ -43,7 +43,13 @@ export default function ThemeLanguageHeader() {
 
     // Perform the actual theme change slightly delayed for ripple start
     setTimeout(() => {
-      setTheme(theme === "dark" ? "light" : "dark");
+      if (theme === "light") {
+        setTheme("dark");
+      } else if (theme === "dark") {
+        setTheme("candlelight");
+      } else {
+        setTheme("light");
+      }
     }, 50);
 
     // Cleanup after animation
@@ -89,13 +95,22 @@ export default function ThemeLanguageHeader() {
             e.currentTarget.style.transform = "scale(1)";
           }}
           className="p-2 rounded-full"
-          aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          aria-label={
+            theme === "light"
+              ? "Switch to Dark Mode"
+              : theme === "dark"
+              ? "Switch to Candlelight Mode"
+              : "Switch to Light Mode"
+          }
         >
           <div style={{ transition: "transform 400ms cubic-bezier(0.34,1.56,0.64,1), opacity 300ms ease" }}>
-            {isDark
-              ? <Sun size={18} className="text-[var(--accent-2)]" style={{ filter: "drop-shadow(0 0 6px rgba(223,186,115,0.6))" }} />
-              : <Moon size={18} />
-            }
+            {theme === "candlelight" ? (
+              <Flame size={18} className="text-amber-500" style={{ filter: "drop-shadow(0 0 6px rgba(245,158,11,0.6))" }} />
+            ) : theme === "dark" ? (
+              <Moon size={18} className="text-[var(--accent-2)]" style={{ filter: "drop-shadow(0 0 6px rgba(223,186,115,0.6))" }} />
+            ) : (
+              <Sun size={18} />
+            )}
           </div>
         </button>
 
