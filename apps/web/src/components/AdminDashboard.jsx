@@ -64,7 +64,7 @@ const ACTION_MAP = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function timeAgo(iso) {
+function timeAgo(iso, t) {
   if (!iso) return "—";
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (diff < 60) return `منذ ${diff} ثانية`;
@@ -72,13 +72,13 @@ function timeAgo(iso) {
   return `منذ ${Math.floor(diff / 3600)} ساعة`;
 }
 
-function getActionStr(action) {
+function getActionStr(action, t) {
   if (!action) return "غير معروف";
   if (action.startsWith("wrong:")) return `ضغطت زر خطأ: ${action.replace("wrong:", "")}`;
   return ACTION_MAP[action] || action;
 }
 
-function getSectionStr(section) {
+function getSectionStr(section, t) {
   return SECTION_MAP[section] || section || "غير معروف";
 }
 
@@ -202,11 +202,11 @@ function BatteryBar({ level }) {
 
 // ─── Journey Progress Map ─────────────────────────────────────────────────────
 
-function JourneyMap({ currentSection }) {
+function JourneyMap({ currentSection, t }) {
   const currentIdx = JOURNEY_STAGES.findIndex(s => s.key === currentSection);
   return (
     <div>
-      <p style={{ color: "var(--text-muted)", fontSize: "0.6rem" }} className="font-bold uppercase tracking-widest mb-2">خريطة الرحلة</p>
+      <p style={{ color: "var(--text-muted)", fontSize: "0.6rem" }} className="font-bold uppercase tracking-widest mb-2">{t("journeyMap")}</p>
       <div className="flex items-center gap-0.5 overflow-x-auto pb-1 scrollbar-hide">
         {JOURNEY_STAGES.map((stage, idx) => {
           const isPast = currentIdx >= 0 && idx < currentIdx;
@@ -247,7 +247,7 @@ function JourneyMap({ currentSection }) {
 
 // ─── Premium Session Card ─────────────────────────────────────────────────────
 
-function PremiumSessionCard({ row, onBroadcast }) {
+function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -307,25 +307,30 @@ function PremiumSessionCard({ row, onBroadcast }) {
             className="flex items-center gap-1 px-2 py-0.5 rounded-full font-bold"
           >
             {isOnline
-              ? (isAtGate ? "عند البوابة 🔒" : "داخل المنصة ✅")
-              : "غير متصلة"}
+              ? (isAtGate ? t("atGate") : t("insidePlatform"))
+              : t("disconnected")}
           </span>
         </div>
-        <BatteryBar level={battery} />
+        <div className="flex items-center gap-3">
+          <BatteryBar level={battery} />
+          <button onClick={() => onDelete(row.session_id)} className="text-gray-400 hover:text-red-500 transition-colors">
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Journey Map */}
-      <JourneyMap currentSection={row.current_section} />
+      <JourneyMap currentSection={row.current_section} t={t} />
 
       {/* Info grid */}
       <div className="grid grid-cols-2 gap-2">
         <div style={T.base} className="rounded-xl px-3 py-2">
-          <p style={{ color: "var(--text-muted)", fontSize: "0.58rem" }} className="font-bold uppercase tracking-wider mb-0.5">القسم الحالي</p>
-          <p style={{ color: "var(--text-primary)", fontSize: "0.78rem" }} className="font-bold truncate">{getSectionStr(row.current_section)}</p>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.58rem" }} className="font-bold uppercase tracking-wider mb-0.5">{t("currentSectionLabel")}</p>
+          <p style={{ color: "var(--text-primary)", fontSize: "0.78rem" }} className="font-bold truncate">{getSectionStr(row.current_section, t)}</p>
         </div>
         <div style={T.base} className="rounded-xl px-3 py-2">
-          <p style={{ color: "var(--text-muted)", fontSize: "0.58rem" }} className="font-bold uppercase tracking-wider mb-0.5">آخر حركة</p>
-          <p style={{ color: "#60A5FA", fontSize: "0.78rem" }} className="font-bold truncate">{getActionStr(row.last_action)}</p>
+          <p style={{ color: "var(--text-muted)", fontSize: "0.58rem" }} className="font-bold uppercase tracking-wider mb-0.5">{t("lastActionLabel")}</p>
+          <p style={{ color: "#60A5FA", fontSize: "0.78rem" }} className="font-bold truncate">{getActionStr(row.last_action, t)}</p>
         </div>
       </div>
 
@@ -369,7 +374,7 @@ function PremiumSessionCard({ row, onBroadcast }) {
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") send(); }}
-          placeholder="ابعث رسالة تظهر على شاشتها فوراً..."
+          placeholder={t("broadcastPlaceholder")}
           style={{ ...T.input, fontSize: "0.78rem" }}
           className="flex-1 rounded-xl px-3 py-2 font-medium outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
         />
@@ -385,7 +390,7 @@ function PremiumSessionCard({ row, onBroadcast }) {
           className="rounded-xl px-3 py-2 font-bold text-xs transition-all hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 shrink-0"
         >
           {sending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
-          {sending ? "..." : "إرسال"}
+          {sending ? t("sending") : t("sendBtn")}
         </button>
       </div>
     </motion.div>
@@ -394,7 +399,7 @@ function PremiumSessionCard({ row, onBroadcast }) {
 
 // ─── AI Generator ─────────────────────────────────────────────────────────────
 
-const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
+const MagicAIGenerator = memo(({ siteSlug, setFormData, t }) => {
   const [incidentReason, setIncidentReason] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiSuccessMsg, setAiSuccessMsg] = useState("");
@@ -470,9 +475,9 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
           🤖
         </div>
         <div>
-          <h3 style={{ color: "var(--text-primary)" }} className="text-lg font-bold">الصياغة السحرية بالذكاء الاصطناعي</h3>
+          <h3 style={{ color: "var(--text-primary)" }} className="text-lg font-bold">{t("aiTitle")}</h3>
           <p style={{ color: "var(--text-muted)" }} className="text-sm mt-0.5 font-medium leading-relaxed">
-            اكتب سبب الزعل واضغط توليد — سيصيغ الـ AI اعتذاراً رومانسياً متكاملاً مع أسئلة وفخوخ مخصصة.
+            {t("aiDesc")}
           </p>
         </div>
       </div>
@@ -480,7 +485,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
       {/* Config chips */}
       <div style={T.surface} className="rounded-2xl p-5 space-y-5">
         <ChipGroup
-          label="الهدف الأساسي (Core Intent)"
+          label={t("coreIntent")}
           options={[
             { id: "apology", label: "🤝 مصالحة واعتذار" },
             { id: "love",    label: "💕 اعتراف رومانسي" },
@@ -490,7 +495,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
           onChange={setCoreIntent}
         />
         <ChipGroup
-          label="روح النص (Vibe)"
+          label={t("textVibe")}
           options={[
             { id: "standard",            label: "✨ عادي وراقي" },
             { id: "funny",               label: "😂 كوميدي" },
@@ -500,7 +505,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
           onChange={setTextVibe}
         />
         <ChipGroup
-          label="جرعة المشاعر (Intensity)"
+          label={t("vibeIntensity")}
           options={[
             { id: "low",    label: "🌤 على الهادي" },
             { id: "medium", label: "🔥 دوز متوسط" },
@@ -517,7 +522,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
           type="text"
           value={incidentReason}
           onChange={(e) => setIncidentReason(e.target.value)}
-          placeholder="مثال: نسيت عيد ميلادها / اتأخرت عليها..."
+          placeholder={t("incidentReasonPlaceholder")}
           style={T.input}
           className="flex-1 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
         />
@@ -529,7 +534,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
           className="rounded-xl px-6 py-3 text-sm font-bold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
         >
           {isGeneratingAI ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          {isGeneratingAI ? "جاري الإبداع..." : "توليد سحري ✨"}
+          {isGeneratingAI ? t("generating") : t("generateMagic")}
         </button>
       </div>
 
@@ -637,7 +642,9 @@ export default function AdminDashboard() {
     }
   }, [config, formData]);
 
-  // ── Live Tracking ──
+  // ── Live Tracking & Web Push ──
+  const knownSessionsRef = useRef(new Set());
+
   const load = useCallback(async () => {
     if (!siteSlug) return;
     try {
@@ -646,6 +653,18 @@ export default function AdminDashboard() {
       const data = await res.json();
       setRows(data.rows || []);
       setError(null);
+
+      // Web Push Notification Logic
+      if ("Notification" in window && Notification.permission === "granted") {
+        const currentIds = data.rows.map(r => r.session_id);
+        const newSessions = currentIds.filter(id => !knownSessionsRef.current.has(id));
+        if (newSessions.length > 0 && knownSessionsRef.current.size > 0) {
+          // Only notify if we already had a known state (don't notify on first load)
+          new Notification("🚀 زيارة جديدة!", { body: "دخلت على اللينك حالا!" });
+        }
+        currentIds.forEach(id => knownSessionsRef.current.add(id));
+      }
+
     } catch (err) {
       console.error("dashboard load failed", err);
       setError("مش قادر أجيب البيانات دلوقتي");
@@ -655,10 +674,30 @@ export default function AdminDashboard() {
   }, [siteSlug]);
 
   useEffect(() => {
+    // Request permission on mount
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
     load();
     intervalRef.current = setInterval(load, 3000);
     return () => clearInterval(intervalRef.current);
   }, [load]);
+
+  const deleteSession = useCallback(async (sessionId) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذه الجلسة؟")) return;
+    try {
+      const res = await fetch(`/api/tracking/${encodeURIComponent(siteSlug)}/${sessionId}`, { method: "DELETE" });
+      if (res.ok) {
+        setRows(prev => prev.filter(r => r.session_id !== sessionId));
+      } else {
+        alert("فشل حذف الجلسة.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء الاتصال.");
+    }
+  }, [siteSlug]);
 
   const broadcast = useCallback(async (sessionId, message) => {
     if (!siteSlug) return;
@@ -825,20 +864,21 @@ export default function AdminDashboard() {
 
   // ── Derived ──
   const onlineCount = rows.filter((r) => (Date.now() - new Date(r.updated_at).getTime()) < 15000).length;
-  const lastSeen = rows.length > 0 ? timeAgo(rows.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0]?.updated_at) : null;
+  const lastSeen = rows.length > 0 ? timeAgo(rows.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0]?.updated_at, t) : null;
 
   const MAIN_TABS = [
-    { id: "live",     label: "مباشر",     icon: Activity },
-    { id: "settings", label: "الإعدادات", icon: Settings },
-    { id: "ai",       label: "الذكاء",    icon: Sparkles },
+    { id: "live",     label: t("liveTracking"),     icon: Activity },
+    { id: "settings", label: t("settingsTitle"),    icon: Settings },
+    { id: "ai",       label: t("aiGenerator"),      icon: Sparkles },
   ];
 
   const SETTINGS_TABS = [
-    { id: "basic",    label: "الأساسيات",       icon: Sparkles },
-    { id: "timeline", label: "الذكريات",         icon: Activity },
-    { id: "quiz",     label: "الاختبار",          icon: HelpCircle },
-    { id: "court",    label: "المحكمة",           icon: Gavel },
-    { id: "letter",   label: "الجواب والهدايا",   icon: Gift },
+    { id: "basic",    label: t("basicSettings"),       icon: Sparkles },
+    { id: "timeline", label: t("timeline"),         icon: Activity },
+    { id: "quiz",     label: t("quizSettings"),          icon: HelpCircle },
+    { id: "court",    label: t("courtSettings"),           icon: Gavel },
+    { id: "letter",   label: t("letterSettings"),   icon: Gift },
+    { id: "notifications", label: t("telegramAlerts"), icon: Activity },
   ];
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -875,6 +915,9 @@ export default function AdminDashboard() {
                     {formData?.girlNickname || "—"}
                   </span>
                 </p>
+                <div className="mt-2 text-xs font-bold animate-pulse" style={{ color: "var(--accent)" }}>
+                  {t("pwdReminder")}
+                </div>
               </div>
             </div>
 
@@ -891,7 +934,7 @@ export default function AdminDashboard() {
                 className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
               >
                 <span className={`w-2 h-2 rounded-full ${onlineCount > 0 ? "bg-green-500 animate-pulse" : "bg-slate-400"}`} />
-                {onlineCount > 0 ? `${onlineCount} متصلة الآن` : "لا يوجد زوار"}
+                {onlineCount > 0 ? `${onlineCount} ${t("onlineNow")}` : t("offline")}
               </div>
 
               {/* Last seen */}
@@ -992,7 +1035,7 @@ export default function AdminDashboard() {
               {/* Cards grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {rows.map((row) => (
-                  <PremiumSessionCard key={row.session_id} row={row} onBroadcast={broadcast} />
+                  <PremiumSessionCard key={row.session_id} row={row} onBroadcast={broadcast} onDelete={deleteSession} t={t} />
                 ))}
               </div>
             </motion.div>
@@ -1002,7 +1045,7 @@ export default function AdminDashboard() {
           {activeTab === "ai" && (
             <motion.div key="ai" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
               <div style={T.card} className="rounded-3xl p-6 sm:p-8">
-                <MagicAIGenerator siteSlug={siteSlug} setFormData={setFormData} />
+                <MagicAIGenerator siteSlug={siteSlug} setFormData={setFormData} t={t} />
               </div>
             </motion.div>
           )}
@@ -1017,10 +1060,10 @@ export default function AdminDashboard() {
                   <div>
                     <h2 style={{ color: "var(--text-primary)" }} className="text-base font-bold flex items-center gap-2">
                       <Settings size={18} style={{ color: "var(--accent)" }} />
-                      إعدادات محتوى الموقع
+                      {t("contentSettingsTitle")}
                     </h2>
                     <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 font-medium">
-                      عدّل النصوص والأسئلة ثم اضغط حفظ.
+                      {t("contentSettingsDesc")}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2 shrink-0">
@@ -1337,6 +1380,30 @@ export default function AdminDashboard() {
                               </div>
                             ))}
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ─ Notifications (Telegram) ─ */}
+                    {activeSection === "notifications" && (
+                      <div className="space-y-5">
+                        <div style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="rounded-2xl p-5 space-y-4">
+                          <SectionHeading icon={Activity}>{t("notificationsSettings")}</SectionHeading>
+                          <div className="bg-[#FCFBF7] dark:bg-[#1A1A1A] p-4 rounded-xl border border-[#E5E0D8] dark:border-[#1A1A1A]/10 text-sm">
+                            <p className="font-bold mb-2 text-[#5A5955] dark:text-[#EDE8E0]">{t("telegramSetup")}:</p>
+                            <ol className="list-decimal list-inside space-y-1 text-[#5A5955] dark:text-[#A89E90]">
+                              <li>{t("telegramStep1")}: <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">@userinfobot</a></li>
+                              <li>{t("telegramStep2")}</li>
+                              <li>{t("telegramStep3")}</li>
+                            </ol>
+                          </div>
+                          <FormField label="Telegram Chat ID">
+                            <TokenInput 
+                              value={formData.telegramChatId || ""} 
+                              onChange={(e) => updateField("telegramChatId", e.target.value)} 
+                              placeholder={t("telegramChatIdPlaceholder")}
+                            />
+                          </FormField>
                         </div>
                       </div>
                     )}

@@ -75,19 +75,30 @@ html.theme-transitioning *::after {
 @layer base {
   html, body {
     background: var(--gradient-bg);
-    background-attachment: fixed;
+    /* ⚠️ NO background-attachment:fixed — causes GPU repaint lag on iOS Safari */
     color: var(--text-primary);
     font-family: 'Inter', 'Cairo', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
+  }
+
+  /* Smooth transitions for theme switch — ONLY non-animated elements */
+  *, *::before, *::after {
+    box-sizing: border-box;
   }
 
   input, textarea, select { @apply outline-none focus:outline-none; }
   button { @apply outline-none focus:outline-none; }
 
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: var(--bg-base); }
-  ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 9999px; opacity: 0.5; }
+  /* Thin scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 9999px; }
+  
+  /* Hide scrollbar utility */
+  .scrollbar-hide { scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
 }
 
 /* =============================================
@@ -210,6 +221,30 @@ html.theme-transitioning *::after {
   backdrop-filter: blur(24px) !important;
   -webkit-backdrop-filter: blur(24px) !important;
 }
+
+/* ── Section cards (LandingSection, Courtroom, etc.) ─── */
+/* These use bg-[#F4F3EF]/60 hardcoded — override in dark */
+.dark .bg-\[\#F4F3EF\]\/60 { background-color: rgba(20,22,34,0.85) !important; }
+.dark .bg-\[\#F4F3EF\]\/80 { background-color: rgba(20,22,34,0.90) !important; }
+
+/* Text colors from section components */
+.dark .text-\[\#1A1A1A\]   { color: #EDE8E0 !important; }
+.dark .text-\[\#5A5955\]   { color: #A89E90 !important; }
+
+/* Borders from section components */
+.dark .border-\[\#1A1A1A\]\/10 { border-color: rgba(201,149,108,0.15) !important; }
+.dark .border-\[\#E5E0D8\]     { border-color: rgba(201,149,108,0.18) !important; }
+
+/* FinalFeedback rating card */
+.dark .border-\[\#1A1A1A\]\/10 { border-color: rgba(201,149,108,0.15) !important; }
+
+/* Button in LandingSection and sections */
+.dark .bg-\[\#1A1A1A\]         { background-color: #EDE8E0 !important; }
+.dark .text-\[\#F4F3EF\]       { color: #1A1510 !important; }
+.dark .hover\:bg-\[\#DFBA73\]:hover { background-color: #C9956C !important; }
+
+/* Star rating muted */
+.dark .text-\[\#1A1A1A\]\/20 { color: rgba(237,232,224,0.20) !important; }
 
 /* ── Toaster (sonner) ────────────────────── */
 .dark [data-sonner-toast] {

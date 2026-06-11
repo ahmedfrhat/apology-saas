@@ -8,7 +8,7 @@ const CARD =
   "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
 
 export default function AIJudgeCourtroom({ onNext }) {
-  const { updateState, config, t, siteSlug } = useApp();
+  const { updateState, config, t, siteSlug, state } = useApp();
   const [text, setText] = useState("");
   const [slam, setSlam] = useState(false);
   const [verdict, setVerdict] = useState(false);

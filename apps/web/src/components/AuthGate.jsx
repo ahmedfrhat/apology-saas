@@ -24,6 +24,8 @@ export default function AuthGate({ children }) {
   // Broadcast "at_gate" status
   useEffect(() => {
     if (unlocked) return;
+    const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
+    if (isDashboard) return;
 
     let sessionId = sessionStorage.getItem("safi_session_id");
     if (!sessionId) {

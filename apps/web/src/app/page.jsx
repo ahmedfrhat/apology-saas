@@ -18,6 +18,8 @@ export default function SaaSOnboardingPage() {
  const [slug, setSlug] = useState("");
  const [password, setPassword] = useState("");
  const [passwordHint, setPasswordHint] = useState("");
+ const [telegramChatId, setTelegramChatId] = useState("");
+ const [showTelegram, setShowTelegram] = useState(false);
  const [loading, setLoading] = useState(false);
  const [error, setError] = useState("");
  const [success, setSuccess] = useState(false);
@@ -44,7 +46,7 @@ export default function SaaSOnboardingPage() {
  const res = await fetch("/api/sites", {
  method: "POST",
  headers: { "Content-Type": "application/json" },
- body: JSON.stringify({ slug, password, passwordHint, boyName, girlName, petName, locale }),
+ body: JSON.stringify({ slug, password, passwordHint, telegramChatId, boyName, girlName, petName, locale }),
  signal: controller.signal,
  });
  clearTimeout(timeoutId);
@@ -79,7 +81,7 @@ export default function SaaSOnboardingPage() {
  setLoading(false);
  }
  },
- [slug, password, passwordHint, boyName, girlName, petName, locale]
+ [slug, password, passwordHint, telegramChatId, boyName, girlName, petName, locale]
  );
 
  return (
@@ -149,6 +151,45 @@ export default function SaaSOnboardingPage() {
  <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("pwdPlaceholder")} className="flex-1 rounded-xl border border-gray-200 bg-white p-2.5 " />
  <input type="text" value={passwordHint} onChange={(e) => setPasswordHint(e.target.value)} placeholder="تلميح للباسورد (اختياري)" className="flex-1 rounded-xl border border-gray-200 bg-white p-2.5 text-xs" />
  </div>
+
+  <div className="border border-gray-200 rounded-xl bg-white overflow-hidden">
+    <button 
+      type="button" 
+      onClick={() => setShowTelegram(!showTelegram)}
+      className="w-full flex items-center justify-between p-3 text-sm font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 transition-colors"
+    >
+      <span className="flex items-center gap-2 text-[#4A3E3D]">
+        {t("telegramOptional") || "🔔 تفعيل إشعارات تليجرام (اختياري)"}
+      </span>
+      <span className="text-gray-400">{showTelegram ? "▲" : "▼"}</span>
+    </button>
+    <AnimatePresence>
+      {showTelegram && (
+        <motion.div 
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          className="p-4 bg-white border-t border-gray-100"
+        >
+          <div className="bg-[#FCFBF7] p-3 rounded-lg border border-[#E5E0D8] text-xs space-y-1 mb-3 text-[#5A5955]">
+            <p className="font-bold text-[#4A3E3D] mb-1">{t("telegramSetup") || "خطوات تفعيل التليجرام"}:</p>
+            <ol className="list-decimal list-inside space-y-0.5">
+              <li>{t("telegramStep1") || "ابحث عن البوت"}: <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="text-blue-500 font-bold hover:underline">@userinfobot</a></li>
+              <li>{t("telegramStep2") || "أرسل له /start"}</li>
+              <li>{t("telegramStep3") || "انسخ الـ ID الخاص بك وضعه هنا"}</li>
+            </ol>
+          </div>
+          <input 
+            type="text" 
+            value={telegramChatId} 
+            onChange={(e) => setTelegramChatId(e.target.value)} 
+            placeholder={t("telegramChatIdPlaceholder") || "Telegram Chat ID (e.g. 123456789)"} 
+            className="w-full rounded-xl border border-gray-200 bg-[#FCFBF7] p-2.5 outline-none focus:border-[#C9956C] transition-colors"
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
  <button type="submit" disabled={loading} className="w-full bg-amber-800 text-white py-3.5 rounded-xl font-bold transition-all hover:bg-amber-900 active:scale-95 shadow-sm">
  {loading ? t("creating") : t("createMagicLink")}
  </button>

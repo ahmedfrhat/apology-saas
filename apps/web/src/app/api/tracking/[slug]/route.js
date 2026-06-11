@@ -3,7 +3,9 @@ import sql from "@/app/api/utils/sql";
 async function triggerNotification(slug, eventType, sessionId, data = {}) {
   let message = "";
   if (eventType === "init") {
-    message = `🚨 طباختك فتحت اللينك حالاً وهي في سكشن الـ Terminal! (الموقع: ${slug})`;
+    message = `🚨 طباختك فتحت اللينك ودخلت المنصة! (الموقع: ${slug})`;
+  } else if (eventType === "at_gate") {
+    message = `🔒 زائر جديد يحاول فك الباسورد عند البوابة! (الموقع: ${slug})`;
   } else if (eventType === "complete") {
     message = `🎉 تم الصلح بنجاح! طباختك سامحتك ووصلت لللانهاية (الموقع: ${slug})`;
   } else if (eventType === "rating") {
@@ -170,13 +172,23 @@ export async function POST(request, context, c) {
 
     // Trigger notification webhook alerts asynchronously
     if (isNewSession) {
-      triggerNotification(slug, "init", session_id).catch(err => console.error("Init notification fail", err));
+      if (currentSection === "at_gate") {
+        triggerNotification(slug, "at_gate", session_id).catch(err => console.error("Gate notification fail", err));
+      } else {
+        triggerNotification(slug, "init", session_id).catch(err => console.error("Init notification fail", err));
+      }
     } else {
       const prevTracking = existingTracking[0];
       const prevSection = prevTracking.current_section;
       const reachedEnd = currentSection === "eternal-void" || lastAction === "forgiven";
       const previouslyEnd = prevSection === "eternal-void" || prevSection === "forgiven";
       
+      if (currentSection === "at_gate" && prevSection !== "at_gate") {
+        triggerNotification(slug, "at_gate", session_id).catch(err => console.error("Gate notification fail", err));
+      } else if (currentSection !== "at_gate" && prevSection === "at_gate") {
+        triggerNotification(slug, "init", session_id).catch(err => console.error("Init notification fail", err));
+      }
+
       if (reachedEnd && !previouslyEnd) {
         triggerNotification(slug, "complete", session_id).catch(err => console.error("Complete notification fail", err));
       }

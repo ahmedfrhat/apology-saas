@@ -203,11 +203,12 @@ export async function POST(request, context, c) {
 
     const stripHtml = (str) => typeof str === "string" ? str.replace(/</g, "&lt;").replace(/>/g, "&gt;") : str;
 
-    let { slug, password, passwordHint, boyName, girlName, petName, locale } = body || {};
+    let { slug, password, passwordHint, telegramChatId, boyName, girlName, petName, locale } = body || {};
 
     slug = stripHtml(slug);
     password = stripHtml(password);
     passwordHint = stripHtml(passwordHint || "");
+    telegramChatId = stripHtml(telegramChatId || "");
     boyName = stripHtml(boyName);
     girlName = stripHtml(girlName);
     petName = stripHtml(petName);
@@ -246,6 +247,7 @@ export async function POST(request, context, c) {
       girlNickname,
       petNameOverride: petName && petName.trim() ? petName.trim() : null,
       passwordHint: passwordHint || null,
+      telegramChatId: telegramChatId || null,
       locale: locale === "en" ? "en" : "ar"
     };
 

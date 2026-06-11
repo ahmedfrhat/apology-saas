@@ -194,6 +194,9 @@ export function AppProvider({ children }) {
 
   // Polling for broadcast message
   useEffect(() => {
+    const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
+    if (isDashboard) return;
+
     let active = true;
     let abortController = new AbortController();
 
@@ -228,6 +231,9 @@ export function AppProvider({ children }) {
 
   // Fire initial session tracking registration on mount
   useEffect(() => {
+    const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
+    if (isDashboard) return;
+
     const slug = getSlugFromPath();
     if (!slug) return;
     const sessionId = sessionIdRef.current;
