@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
+import { useLanguage } from "./LanguageContext";
 
 const AppContext = createContext(null);
 
@@ -46,6 +47,7 @@ const INITIAL_STATE = {
 };
 
 export function AppProvider({ children }) {
+  const { setLocale } = useLanguage();
   const [state, setState] = useState(INITIAL_STATE);
   const [config, setConfig] = useState(null);
   const [isLoadingConfig, setIsLoadingConfig] = useState(true);
@@ -112,6 +114,9 @@ export function AppProvider({ children }) {
         }
         
         setConfig(actualConfig);
+        if (actualConfig.locale) {
+          setLocale(actualConfig.locale);
+        }
       } else {
         console.error("Failed to load config from server, status:", res.status);
       }

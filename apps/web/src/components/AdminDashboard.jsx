@@ -122,7 +122,7 @@ function SessionRow({ row, onBroadcast }) {
           </span>
           <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
-            {isOnline ? "متصل الآن" : "غير متصل"}
+            {isOnline ? (row.current_section === "at_gate" ? "متصلة وتقف عند البوابة 🔒" : "متصلة داخل المنصة ✅") : "غير متصل"}
           </span>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
@@ -347,7 +347,10 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
   );
 });
 
+import { useLanguage } from "../context/LanguageContext";
+
 export default function AdminDashboard() {
+  const { t } = useLanguage();
   const { config, refetchConfig, siteSlug } = useApp();
 
   const [activeTab, setActiveTab] = useState("live");
@@ -356,11 +359,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const intervalRef = useRef(null);
 
-  // Password gate states
-  const [savedPassword, setSavedPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [typingPassword, setTypingPassword] = useState("");
+
 
   // Settings tab states
   const [formData, setFormData] = useState(null);
@@ -376,32 +375,7 @@ export default function AdminDashboard() {
     setTimeout(() => setCopyFeedback(""), 2000);
   };
 
-  // Verify cached password on mount once config is loaded
-  useEffect(() => {
-    if (siteSlug && config) {
-      const cached = localStorage.getItem(`auth_pwd_${siteSlug}`);
-      if (cached) {
-        const verifyCached = async () => {
-          try {
-            const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/config`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ edit_password: cached, config }),
-            });
-            if (res.ok) {
-              setSavedPassword(cached);
-              setIsAuthenticated(true);
-            } else {
-              localStorage.removeItem(`auth_pwd_${siteSlug}`);
-            }
-          } catch (e) {
-            console.error("Cached verification failed", e);
-          }
-        };
-        verifyCached();
-      }
-    }
-  }, [siteSlug, config]);
+
 
   // Sync formData from context configuration once loaded
   useEffect(() => {
@@ -412,22 +386,37 @@ export default function AdminDashboard() {
       if (!parsedConfig.boyName) parsedConfig.boyName = "";
       if (!parsedConfig.girlName) parsedConfig.girlName = "";
       if (!parsedConfig.girlNickname) parsedConfig.girlNickname = "";
-      if (!parsedConfig.landingText) parsedConfig.landingText = "";
-      if (!parsedConfig.voidText) parsedConfig.voidText = "";
+      
+      const isEn = parsedConfig.locale === "en";
+
+      if (!parsedConfig.landingText) parsedConfig.landingText = isEn 
+        ? "In the middle of any argument.. there are things that can never be lost.. scroll down and see" 
+        : "في وسط أي زعل.. فيه حاجات تانية مستحيل تضيع.. انزلي شوفي";
+      if (!parsedConfig.voidText) parsedConfig.voidText = isEn ? "{girlNickname} forever 💛" : "{girlNickname} للأبد 💛";
       if (!parsedConfig.audioUrl) parsedConfig.audioUrl = "";
       if (typeof parsedConfig.enableFunnyText === "undefined") parsedConfig.enableFunnyText = true;
-      if (!parsedConfig.funnyText) parsedConfig.funnyText = "احا انتي لسه هنا يلا انطري ابلكاش 😂";
+      if (!parsedConfig.funnyText) parsedConfig.funnyText = isEn ? "Come on, stop playing around! 😂" : "احا انتي لسه هنا يلا انطري ابلكاش 😂";
       
       // Integrations
       if (!parsedConfig.telegramBotToken) parsedConfig.telegramBotToken = "";
       if (!parsedConfig.telegramChatId) parsedConfig.telegramChatId = "";
       if (!parsedConfig.geminiApiKey) parsedConfig.geminiApiKey = "";
 
-      if (!parsedConfig.loaderTexts) parsedConfig.loaderTexts = ["جار التحميل..."];
+      if (!parsedConfig.loaderTexts) parsedConfig.loaderTexts = isEn 
+        ? ["Loading Memories...", "Fetching Love Signals..."] 
+        : ["جار التحميل..."];
       if (!parsedConfig.triviaQuestions) parsedConfig.triviaQuestions = [];
       if (!parsedConfig.giftCoupons) parsedConfig.giftCoupons = [];
       if (!parsedConfig.timeline || !Array.isArray(parsedConfig.timeline) || parsedConfig.timeline.length === 0) {
-        parsedConfig.timeline = [
+        parsedConfig.timeline = isEn ? [
+          { text: "The first day we talked was the beginning of the best thing in my life", image: "" },
+          { text: "Your smile makes me forget anything bad in the world", image: "" },
+          { text: "No matter what happens, you are always the closest to my heart", image: "" },
+          { text: "I'll never forget your support during my hardest times", image: "" },
+          { text: "You are not just my girlfriend, you are my best friend and my rock", image: "" },
+          { text: "Every detail about you makes me love you even more", image: "" },
+          { text: "Nothing in the world could ever replace you for a second", image: "" },
+        ] : [
           { text: "أول يوم اتكلمنا فيه كان بداية أحلى حاجة في حياتي", image: "" },
           { text: "ضحكتك بتخليني أنسى أي حاجة وحشة في الدنيا", image: "" },
           { text: "مهما حصل بينا، بتفضلي أقرب حد لقلبي", image: "" },
@@ -439,15 +428,25 @@ export default function AdminDashboard() {
       }
       
       if (!parsedConfig.finalLetter) {
-        parsedConfig.finalLetter = { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
+        parsedConfig.finalLetter = isEn 
+          ? { title: "A Letter for you", body: [""], loveSignature: "Love,", boySignature: "" }
+          : { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
       }
       if (!parsedConfig.finalLetter.body) parsedConfig.finalLetter.body = [""];
       
       if (!parsedConfig.judgeText) {
-        parsedConfig.judgeText = { title: "المحكمة تحكم لصالحك!", details: "كل كلامك صح" };
+        parsedConfig.judgeText = isEn 
+          ? { title: "The Court rules in your favor!", details: "Everything you said is right." }
+          : { title: "المحكمة تحكم لصالحك!", details: "كل كلامك صح" };
       }
       if (!parsedConfig.feedbackTexts) {
-        parsedConfig.feedbackTexts = {
+        parsedConfig.feedbackTexts = isEn ? {
+          oneStar: "1 star alert!",
+          twoStar: "2 stars?",
+          threeStar: "3 stars.",
+          fourStar: "4 stars!",
+          fiveStar: "5 stars! Perfect!"
+        } : {
           oneStar: "تنبيه: نجمة واحدة!",
           twoStar: "نجمتين!",
           threeStar: "3 نجوم",
@@ -476,13 +475,12 @@ export default function AdminDashboard() {
     }
   }, [siteSlug]);
 
-  // Poll only when authenticated
+  // Poll automatically
   useEffect(() => {
-    if (!isAuthenticated) return;
     load();
     intervalRef.current = setInterval(load, 3000);
     return () => clearInterval(intervalRef.current);
-  }, [load, isAuthenticated]);
+  }, [load]);
 
   const broadcast = useCallback(async (sessionId, message) => {
     if (!siteSlug) return;
@@ -498,27 +496,7 @@ export default function AdminDashboard() {
     }
   }, [siteSlug]);
 
-  // Password verification handler
-  const handleVerifyPassword = async (pwd) => {
-    setAuthError("");
-    try {
-      const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/config`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ edit_password: pwd, config }),
-      });
-      if (res.ok) {
-        setSavedPassword(pwd);
-        localStorage.setItem(`auth_pwd_${siteSlug}`, pwd);
-        setIsAuthenticated(true);
-      } else {
-        setAuthError("كلمة المرور غير صحيحة");
-      }
-    } catch (err) {
-      console.error(err);
-      setAuthError("حدث خطأ أثناء الاتصال بالخادم");
-    }
-  };
+
 
   // Settings Save Handler
   const handleSave = async (e) => {
@@ -526,13 +504,14 @@ export default function AdminDashboard() {
     setIsSaving(true);
     setSaveStatus(null);
     try {
+      const savedPwd = sessionStorage.getItem(`auth_pwd_${siteSlug}`) || "";
       const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/config`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          edit_password: savedPassword,
+          edit_password: savedPwd,
           config: formData,
         }),
       });
@@ -564,10 +543,11 @@ export default function AdminDashboard() {
   const handleDeleteSite = async () => {
     if (!window.confirm("تحذير: هذا سيؤدي إلى مسح الموقع بالكامل ولن تتمكن من الدخول مرة أخرى. هل أنت متأكد؟")) return;
     try {
+      const savedPwd = sessionStorage.getItem(`auth_pwd_${siteSlug}`) || "";
       const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: savedPassword })
+        body: JSON.stringify({ password: savedPwd })
       });
       if (res.ok) {
         alert("تم مسح الموقع نهائياً بنجاح.");
@@ -844,185 +824,68 @@ export default function AdminDashboard() {
     { id: "letter", name: "الجواب والهدايا", icon: FileText },
   ];
 
-  // Passcode Lock Screen
-  if (!isAuthenticated) {
-    return (
-      <div
-        className="min-h-screen bg-[#FCFBF7] flex items-center justify-center px-5 font-sans antialiased text-[#4A3E3D]"
-        dir="rtl"
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md bg-[#F4F3EF]/70 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.4)] rounded-[2.5rem] p-8 sm:p-10 text-center relative overflow-hidden"
-        >
-          <div className="mb-6 flex h-20 w-20 mx-auto items-center justify-center rounded-full bg-amber-50 border border-amber-200/50">
-            <Radio size={36} className="text-amber-800 animate-pulse" />
-          </div>
-          <h2 className="text-xl font-bold text-[#1A1A1A] mb-2">لوحة التحكم 🔐</h2>
-          <p className="text-xs text-[#8A7E72] mb-6 leading-relaxed">
-            أدخل كلمة المرور الخاصة بهذا الرابط لتتمكن من متابعة رحلة شريكتك لايف وتعديل إعدادات الموقع.
-          </p>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleVerifyPassword(typingPassword);
-            }}
-            className="space-y-4"
-          >
-            {authError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
-                <AlertCircle size={14} className="shrink-0" />
-                <span>{authError}</span>
-              </div>
-            )}
-            <input
-              type="password"
-              required
-              value={typingPassword}
-              onChange={(e) => setTypingPassword(e.target.value)}
-              placeholder="أدخل كلمة المرور هنا..."
-              className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-amber-800 transition-all text-center"
-            />
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-amber-800 py-3 text-sm font-semibold text-white transition-all hover:bg-amber-900 focus:outline-none"
-            >
-              فتح لوحة التحكم 🔓
-            </button>
-          </form>
-        </motion.div>
-      </div>
-    );
-  }
 
   // Dashboard Interface
   return (
-    <div className="min-h-screen bg-gray-50 pb-20" dir="rtl">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8 sm:py-12 space-y-8">
-
-        {/* Top Section: Hero Welcome & Telegram Sync */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left/Center Column (Welcome) */}
-          <div className="lg:col-span-2 flex flex-col justify-center rounded-3xl bg-white p-6 sm:p-10 shadow-sm border border-gray-100">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-800 w-fit">
-              <Sparkles size={16} /> لوحة تحكم الإدارة
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 mb-2">
-              أهلاً بك في منصة الصلح 👋
+    <div className="min-h-screen bg-[#F8F9FA] dark:bg-gray-950 p-4 sm:p-8 font-sans antialiased text-[#1A1A1A] dark:text-gray-200">
+      <div className="mx-auto max-w-6xl space-y-6">
+        
+        {/* Top Header Panel */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+              {t("dashboardTitle")}
             </h1>
-            <p className="text-sm sm:text-base text-gray-500 max-w-lg leading-relaxed">
-              هنا يمكنك متابعة رحلة شريكتك لحظة بلحظة، وتعديل نصوص المحكمة، والأسئلة، والذكريات المصورة بسهولة لإنشاء تجربة اعتذار لا تُنسى.
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 font-medium">
+              إدارة شاملة لرحلة {formData?.girlNickname}
             </p>
-            
-            <div className="mt-8 bg-green-50/50 border border-green-200/50 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between">
-              <div className="flex items-center gap-3 mb-3 sm:mb-0">
-                <CheckCircle size={24} className="text-green-600 shrink-0" />
-                <div>
-                  <h4 className="text-green-800 font-bold text-sm">رابط الموقع جاهز</h4>
-                  <p className="text-xs text-green-700/80">انسخ الرابط وشاركه معها بعد ضبط الإعدادات</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-[10px] sm:text-xs font-mono text-gray-500 bg-white px-2 py-1.5 rounded-lg border border-green-100 select-all truncate max-w-[150px] sm:max-w-xs">
-                  {typeof window !== "undefined" ? window.location.origin : ""}/{siteSlug}
-                </span>
-                <button
-                  type="button"
-                  onClick={copyToClipboard}
-                  className="flex items-center gap-2 bg-green-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs font-medium hover:bg-green-700 transition-colors shrink-0"
-                >
-                  <Copy size={14} />
-                  {copyFeedback ? "تم!" : "نسخ"}
-                </button>
-              </div>
-            </div>
           </div>
-
-          {/* Right Column (Telegram Notification Box) */}
-          <div className="lg:col-span-1 rounded-3xl bg-blue-50/50 p-6 shadow-sm border border-blue-100/50 flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 bg-white rounded-lg shadow-sm border border-blue-100">
-                <Send size={20} className="text-blue-600" />
-              </div>
-              <h3 className="font-bold text-blue-900 text-base">رادار الإشعارات</h3>
-            </div>
-            
-            <p className="text-xs text-blue-800/80 mb-4 font-medium leading-relaxed">
-              اربط حسابك بتيليجرام لاستقبال تنبيهات لحظية عندما تفتح الموقع وتتصفح صفحاته.
-            </p>
-
-            <div className="bg-white rounded-2xl p-4 border border-blue-50/80 space-y-3 shadow-sm mb-4">
-              <p className="text-[11px] font-semibold text-gray-700 flex items-start gap-1.5">
-                <span className="text-blue-500">1️⃣</span>
-                <span>
-                  اضغط لتفعيل البوت الرسمي:{" "}
-                  <a href="https://t.me/apology_saas_2026_bot" target="_blank" rel="noreferrer" className="text-blue-600 underline font-bold">@apology_saas_2026_bot</a>
-                </span>
-              </p>
-              <p className="text-[11px] font-semibold text-gray-700 flex items-start gap-1.5">
-                <span className="text-blue-500">2️⃣</span>
-                <span>
-                  أرسل /start للبوت <a href="https://t.me/getmyid_bot" target="_blank" rel="noreferrer" className="text-blue-600 underline font-bold">@getmyid_bot</a> لنسخ رقم الـ ID الخاص بك (مكون من أرقام فقط).
-                </span>
-              </p>
-              <p className="text-[11px] font-semibold text-gray-700 flex items-start gap-1.5">
-                <span className="text-blue-500">3️⃣</span>
-                <span>الصق الرقم في الخانة أدناه واضغط حفظ.</span>
-              </p>
-            </div>
-
-            <div className="mt-auto">
-              <label className="mb-1 block text-xs font-bold text-gray-700">
-                Telegram Chat ID
-              </label>
-              <input
-                type="text"
-                value={formData?.telegramChatId || ""}
-                onChange={(e) => updateField("telegramChatId", e.target.value)}
-                placeholder="مثال: 987654321"
-                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all shadow-inner"
-              />
-            </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={copyToClipboard}
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 focus-visible:outline-none"
+            >
+              <Copy size={16} /> 
+              {copyFeedback ? t("copied") : t("copyLink")}
+            </button>
           </div>
         </div>
 
         {/* Middle Section: Live Tracking & Broadcast Control Center */}
-        <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100">
+        <div className="rounded-3xl bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-sm border border-gray-100 dark:border-gray-800">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
-              <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
                 <Activity size={22} className="text-red-500 animate-pulse" />
-                المتابعة اللحظية
+                {t("liveTracking")}
               </h2>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
-                شاهد تقدمها في الموقع وأرسل لها رسائل تنبيهية تظهر فوراً على شاشتها.
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">
+                {t("liveTrackingDesc")}
               </p>
             </div>
             <button
               type="button"
               onClick={load}
               disabled={loading}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 focus-visible:outline-none disabled:opacity-50"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 focus-visible:outline-none disabled:opacity-50"
             >
-              <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> تحديث
+              <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> {t("refresh")}
             </button>
           </div>
 
           <div className="flex flex-col gap-4">
-            {loading && rows.length === 0 && <div className="text-sm text-center py-8 text-gray-400">جاري التحميل...</div>}
-            {error && <div className="text-sm text-center py-8 text-red-500">{error}</div>}
+            {loading && rows.length === 0 && <div className="text-sm text-center py-8 text-gray-400 dark:text-gray-500">جار التحميل...</div>}
+            {error && <div className="text-sm text-center py-8 text-red-500 dark:text-red-400">{error}</div>}
 
             {!loading && rows.length === 0 && !error && (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-10 text-center">
-                <Activity size={32} className="mx-auto mb-3 text-gray-300" />
-                <p className="text-sm font-bold text-gray-900">
-                  لا توجد زيارات حتى الآن
+              <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 p-10 text-center">
+                <Activity size={32} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  {t("noVisits")}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  بمجرد أن تفتح الفتاة الرابط ستظهر تحركاتها هنا بشكل مباشر.
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {t("noVisitsDesc")}
                 </p>
               </div>
             )}
@@ -1707,22 +1570,22 @@ export default function AdminDashboard() {
         )}
 
         {/* Danger Zone Section */}
-        <div className="mt-6 rounded-3xl bg-red-50 p-6 sm:p-8 border border-red-200">
+        <div className="mt-6 rounded-3xl bg-red-50 dark:bg-red-900/20 p-6 sm:p-8 border border-red-200 dark:border-red-800/50">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-red-900 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-red-900 dark:text-red-400 flex items-center gap-2">
                 <AlertCircle size={20} />
-                منطقة الخطر (Danger Zone)
+                {t("dangerZone")}
               </h2>
-              <p className="text-xs sm:text-sm text-red-700 mt-1 font-medium">
-                مسح هذا الموقع سيؤدي إلى تدمير الرابط وحذف جميع بيانات المحكمة والمحتوى نهائياً.
+              <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 mt-1 font-medium">
+                {t("dangerZoneDesc")}
               </p>
             </div>
             <button
               onClick={handleDeleteSite}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-700 shadow-md hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 dark:bg-red-700 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-700 dark:hover:bg-red-800 shadow-md hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 shrink-0"
             >
-              <Trash2 size={16} /> إنهاء ومسح الجلسة نهائياً 🗑️
+              <Trash2 size={16} /> {t("deleteSiteBtn")}
             </button>
           </div>
         </div>

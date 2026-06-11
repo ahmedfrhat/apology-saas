@@ -18,7 +18,7 @@ export async function POST(request, context, c) {
         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
       ]);
     }
-    const { incident_reason, coreIntent = "apology", textVibe = "affectionate", vibeIntensity = "medium" } = body || {};
+    const { incident_reason, coreIntent = "apology", textVibe = "affectionate", vibeIntensity = "medium", locale = "ar" } = body || {};
 
     if (!incident_reason) {
       return Response.json({ error: "الرجاء إدخال سبب الزعل" }, { status: 400 });
@@ -63,7 +63,7 @@ Follow these instructions strictly:
    - ABSOLUTE BAN ON STATIC PREFIXES: Strictly forbid using hardcoded templates, quotes, or sentence starters.
    - 100% ORGANIC SYNTHESIS: The input reason must ONLY be treated as "semantic context". Never copy the exact phrase.
 2. Strict 2nd Person Feminine & Localized Language:
-   - Address the girl strictly in the 2nd person feminine singular (مخاطب مؤنث مفرد) (e.g. "إنتي", "سامحتيني", "زعّلتك").${petNameInstruction}
+   - Address the girl strictly in the 2nd person feminine singular (مخاطب مؤنث مفرد) (e.g. "إنتي", "سامحتيني", "زعّلتك").${petNameInstructionAr}
    - Output must be in fluent, high-end, contemporary Egyptian Arabic (عامية مصرية راقية ومؤثرة). It must sound like a deeply caring human boyfriend. No rigid standard Arabic.
 3. Contextual Trivia & Letter Generation:
    - Generate exactly 3 quiz questions matching the incident and the core intent.
@@ -104,7 +104,7 @@ Follow these instructions strictly:
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: systemPrompt }] }],
+            contents: [{ parts: [{ text: finalSystemPrompt + "\n" + schemaString }] }],
             generationConfig: {
               responseMimeType: "application/json"
             }

@@ -26,6 +26,33 @@ import DeadlyTrapQuestion from "@/components/sections/DeadlyTrapQuestion";
 import FinalLetter from "@/components/sections/FinalLetter";
 import EternalVoidCanvas from "@/components/sections/EternalVoidCanvas";
 
+import sql from "@/app/api/utils/sql";
+
+export async function loader({ params }) {
+  try {
+    const result = await sql`SELECT config FROM apology_sites WHERE slug = ${params.slug}`;
+    if (result && result.length > 0) {
+      const { boyName, girlName } = result[0].config;
+      return { boyName, girlName };
+    }
+  } catch (err) {
+    console.error("OG Loader Error:", err);
+  }
+  return { boyName: "أنا", girlName: "أنتي" };
+}
+
+export function meta({ data }) {
+  const boy = data?.boyName || "أنا";
+  const girl = data?.girlName || "أنتي";
+  return [
+    { name: "robots", content: "noindex, nofollow" },
+    { property: "og:title", content: `مفاجأة خاصة من ${boy} إلى ${girl} 🎁` },
+    { property: "og:description", content: "Safi.io - منصة المصالحة والاعتذار الذكية" },
+    { property: "og:image", content: `/api/og?boy=${encodeURIComponent(boy)}&girl=${encodeURIComponent(girl)}` },
+    { name: "twitter:card", content: "summary_large_image" }
+  ];
+}
+
 const SECTIONS = [
   LandingSection,
   HackerTerminal,
@@ -117,12 +144,16 @@ function Experience() {
   );
 }
 
+import AuthGate from "@/components/AuthGate";
+
 export default function ExperiencePage() {
   return (
     <AppProvider>
-      <Experience />
-      <HiddenMultiSourcePlayer />
-      <BroadcastToast />
+      <AuthGate>
+        <Experience />
+        <HiddenMultiSourcePlayer />
+        <BroadcastToast />
+      </AuthGate>
     </AppProvider>
   );
 }

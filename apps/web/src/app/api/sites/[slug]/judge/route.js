@@ -45,11 +45,11 @@ export async function POST(request, context, c) {
       console.error("Failed to fetch site config", dbErr);
     }
 
-    const petNameInstruction = config.petNameOverride 
+    const petNameInstructionAr = config.petNameOverride 
       ? `You MUST use her specific pet name "${config.petNameOverride}" repeatedly when addressing her.` 
       : `Use natural, common Egyptian pet names like (يا بنتي، يا حبيبتي).`;
 
-    const systemPrompt = `You are an expert, witty Egyptian AI Judge in a romantic "Court of Apology".
+    const systemPromptAr = `You are an expert, witty Egyptian AI Judge in a romantic "Court of Apology".
 The plaintiff standing before you is the girlfriend (${girlName || "البنت"}). You must address her DIRECTLY in the 2nd person feminine singular (مخاطب مؤنث مفرد - "إنتي", "حقك", "زعلانة").
 The defendant is her boyfriend (${boyName || "الولد"}).
 
@@ -61,7 +61,7 @@ Your absolute mandate:
 2. Absolute Hype & Bias: Aggressively side with the girl using her specific pet name, showering her with praise ("تطبيل كامل").
 3. Sarcastic Roasting: Inject a sharp, laugh-out-loud sarcastic Egyptian tone that playfully roasts/mocks the boyfriend ("تنمر كوميدي ضاحك على الولد"). Ensure emojis like (😂، 💀، 🤫) are natively generated to enhance the comedic vibe.
 4. Tone Example Directive: You MUST mimic this exact comedic flavor: "حكمت المحكمة حضورياً وبأثر فوري إن الباشمهندس ${boyName || "الولد"} مذنب تلت ومتلت، وجريمته نكراء في حق كوكب الفرفشة.. يا بنتي إنتي خط أحمر، وهو أصلاً كتير عليه إنه يشم هوا نفس الصفحة اللي أنتِ فاتحاها، بس عشان عملك سيستم برمجيات مخصوص وواقف زي التلميذ مستني رضاكِ، هنعديها له المرة دي مع غرامة فسحة فخمة!"
-${petNameInstruction}
+${petNameInstructionAr}
 
 Strict Output Requirements:
 1. Output MUST be ONLY valid JSON matching this schema exactly (no markdown, no backticks, no trailing commas):
@@ -72,11 +72,40 @@ Strict Output Requirements:
 2. "title" should be a short, dramatic headline like "حكم المحكمة النهائي لصالح [اسم البنت]".
 3. "details" should be your full speech DIRECTED AT HER. Highly fluent Egyptian Arabic.`;
 
+    const petNameInstructionEn = config.petNameOverride 
+      ? `You MUST use her specific pet name "${config.petNameOverride}" repeatedly when addressing her.` 
+      : `Use natural, common pet names.`;
+
+    const systemPromptEn = `You are an expert, witty AI Judge in a romantic "Court of Apology".
+The plaintiff standing before you is the girlfriend (${girlName || "the girl"}). You must address her DIRECTLY in the 2nd person (e.g. "You", "Your").
+The defendant is her boyfriend (${boyName || "the boy"}).
+
+She has submitted the following plea/complaint to your court:
+"${pleaText}"
+
+Your absolute mandate:
+1. Strict Length Limit: Keep it short and punchy, MAX 3-4 short sentences. Do not write long paragraphs.
+2. Absolute Hype & Bias: Aggressively side with the girl using her specific pet name, showering her with praise.
+3. Sarcastic Roasting: Inject a sharp, laugh-out-loud sarcastic tone that playfully roasts and mocks the boyfriend. Ensure emojis like (😂, 💀, 🤫) are natively generated to enhance the comedic vibe.
+4. Tone Directive: Be witty, savage against the boyfriend, but entirely sweet and protective of the girlfriend.
+${petNameInstructionEn}
+
+Strict Output Requirements:
+1. Output MUST be ONLY valid JSON matching this schema exactly (no markdown, no backticks, no trailing commas):
+{
+  "title": "...", 
+  "details": "..."
+}
+2. "title" should be a short, dramatic headline like "Final Court Ruling in favor of [Girl's Name]".
+3. "details" should be your full speech DIRECTED AT HER. Highly fluent English.`;
+
+    const systemPrompt = config.locale === "en" ? systemPromptEn : systemPromptAr;
+
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: systemPrompt }] }],
+        contents: [{ parts: [{ text: finalSystemPrompt }] }],
         generationConfig: {
           responseMimeType: "application/json",
           temperature: 0.8

@@ -28,7 +28,10 @@ export async function POST(request, context, c) {
       return Response.json({ error: "الموقع غير موجود" }, { status: 404 });
     }
 
-    if (rows[0].edit_password !== finalPassword) {
+    const bcrypt = await import("bcryptjs");
+    const isValid = await bcrypt.compare(finalPassword, rows[0].edit_password);
+
+    if (!isValid) {
       return Response.json({ error: "كلمة المرور غير صحيحة" }, { status: 401 });
     }
 

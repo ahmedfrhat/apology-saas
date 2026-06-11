@@ -35,6 +35,9 @@ import '../__create/design-mode';
 import type { Route } from './+types/root';
 import CookieBanner from '@/components/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
+import { ThemeProvider } from 'next-themes';
+import { LanguageProvider } from '@/context/LanguageContext';
+import ThemeLanguageHeader from '@/components/ThemeLanguageHeader';
 
 export const meta = () => {
   return [
@@ -42,7 +45,8 @@ export const meta = () => {
     { name: "description", content: "أرسل مفاجأة رومانسية واعتذاراً ذكياً لمن تحب بطريقة مبتكرة ومرحة." },
     { property: "og:title", content: "منصة المصالحة والاعتذار الذكية" },
     { property: "og:description", content: "أرسل مفاجأة رومانسية واعتذاراً ذكياً لمن تحب بطريقة مبتكرة ومرحة." },
-    { property: "og:type", content: "website" }
+    { property: "og:type", content: "website" },
+    { tagName: "link", rel: "manifest", href: "/manifest.json" }
   ];
 };
 
@@ -434,6 +438,36 @@ export function Layout({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      toast.warning("⚠️ حقوق الملكية الفكرية والبرمجية محفوظة لشركة Safi.io.");
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F12") {
+        e.preventDefault();
+        toast.warning("⚠️ حقوق الملكية الفكرية والبرمجية محفوظة لشركة Safi.io.");
+      }
+      if (e.ctrlKey && (e.key === "u" || e.key === "U" || (e.shiftKey && (e.key === "i" || e.key === "I")))) {
+        e.preventDefault();
+        toast.warning("⚠️ حقوق الملكية الفكرية والبرمجية محفوظة لشركة Safi.io.");
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("contextmenu", handleContextMenu);
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("contextmenu", handleContextMenu);
+        window.removeEventListener("keydown", handleKeyDown);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'sandbox:navigation') {
         navigate(event.data.pathname);
@@ -468,12 +502,25 @@ export function Layout({ children }: { children: ReactNode }) {
         {LoadFontsSSR ? <LoadFontsSSR /> : null}
       </head>
       <body>
-        <ClientOnly loader={() => children} />
-        <CookieBanner />
-        <Analytics />
-        <Toaster position={toasterPosition} />
-        <ScrollRestoration />
-        <Scripts />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <LanguageProvider>
+            <ThemeLanguageHeader />
+            <div className="flex flex-col min-h-screen">
+              <div className="flex-1">
+                <ClientOnly loader={() => children} />
+              </div>
+              <footer className="text-sm text-gray-500 text-center py-4 bg-[#F8F9FA] dark:bg-gray-950 w-full z-50 border-t border-gray-200 dark:border-gray-800">
+                © 2026 جميع الحقوق محفوظة لشركة Safi.io التقنية. المنصة محمية بموجب قوانين الملكية الفكرية.
+              </footer>
+            </div>
+            <CookieBanner />
+            <Analytics />
+            <Toaster position={toasterPosition} />
+            <ScrollRestoration />
+            <Scripts />
+            {import.meta.env.DEV && <div id="create-designer-overlay" />}
+          </LanguageProvider>
+        </ThemeProvider>
         <link rel="preconnect" href="https://ka-p.fontawesome.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://ka-p.fontawesome.com/releases/v6.3.0/css/pro.min.css?token=2c15cc0cc7" crossOrigin="anonymous" />
       </body>

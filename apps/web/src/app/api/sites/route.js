@@ -2,6 +2,7 @@ import sql from "@/app/api/utils/sql";
 import { neon } from "@neondatabase/serverless";
 
 const DEFAULT_CONFIG_TEMPLATE = {
+  locale: "ar",
   boyName: "",
   girlName: "",
   girlNickname: "",
@@ -60,6 +61,68 @@ const DEFAULT_CONFIG_TEMPLATE = {
     boySignature: "- {boyName}"
   },
   voidText: "{girlNickname} للأبد 💛"
+};
+
+const EN_CONFIG_TEMPLATE = {
+  locale: "en",
+  boyName: "",
+  girlName: "",
+  girlNickname: "",
+  landingText: "In the middle of any argument.. there are things that can never be lost.. scroll down and see",
+  loaderTexts: [
+    "$ Initializing {girlNickname} Protocol...",
+    "$ Loading Memories...",
+    "$ Fetching Love Signals...",
+    "[OK] All Systems Online. Welcome, {girlName}."
+  ],
+  triviaQuestions: [
+    {
+      q: "Who is my absolute favorite person?",
+      options: ["My Best Friend", "My PS5", "You"],
+      correct: ["My Best Friend", "My PS5"],
+      trap: { option: "You", msg: "Stop playing! My friends are more important, choose again!" }
+    },
+    {
+      q: "What makes me the happiest?",
+      options: ["Coding", "Playing Football", "Sleeping"],
+      correct: "Playing Football",
+      trap: null
+    },
+    {
+      q: "Who do I love more?",
+      options: ["You", "Ronaldo"],
+      correct: "Ronaldo",
+      trap: { option: "You", msg: "Choose correctly so we can move on, {girlNickname}! 😂" }
+    }
+  ],
+  judgeText: {
+    title: "After reviewing all evidence... The Court rules in favor of {girlName}! ⚖️❤️",
+    details: "Judge: Everything {girlName} said is correct, the rest is nonsense 😂"
+  },
+  feedbackTexts: {
+    oneStar: "🚨 CRITICAL ALERT! Hostile 1-star rating detected. The system views this as a direct threat to {boyName}'s peace. Self-defense protocol initiated: flooding the screen with soft hearts in {count} seconds...",
+    twoStar: "Hmm.. Two stars? A slight improvement, but not worthy of Queen {girlName}. Auto-bribe protocol activated...",
+    threeStar: "3 stars? That means we're fine, but {boyName}'s ego is a bit bruised. Scanning server files...",
+    fourStar: "Oh wow! 4 stars! We reached 80% total peace. But {boyName} needs that last star just to pass his engineering term in peace 😂",
+    fiveStar: "100% EFFICIENCY! Total reconciliation documented, and {girlName} is officially declared the greatest Queen in the galaxy! 🥰❤️"
+  },
+  giftCoupons: [
+    "A full date at any place you choose, entirely paid by {boyName} 🎟️",
+    "A heavy, fancy dinner (with absolutely no arguing over where to eat) 🍔",
+    "A Full Immunity Coupon: No getting mad at you for 24 hours (Single Use) 📜"
+  ],
+  finalLetter: {
+    title: "To my most precious.. 🤍",
+    body: [
+      "My beautiful {girlNickname},",
+      "I know I might upset you sometimes, and I know our last argument was tough.. but God knows you mean the world to me. You're not just my girl, you're the soul that lights up my days and the smile that erases all my tiredness.",
+      "I built this entire site just to prove that no argument can pull me away from you. You deserve all the good things in the world, and you deserve me coding all night just to see that smile.",
+      "I'm sorry for every moment of sadness, and I promise I'll always be by your side. I pray we stay together forever, and you always fill my life with joy."
+    ],
+    loveSignature: "I love you, {girlName} ❤️",
+    boySignature: "- {boyName}"
+  },
+  voidText: "{girlNickname} forever 💛"
 };
 
 let dbInitialized = false;
@@ -138,7 +201,16 @@ export async function POST(request, context, c) {
       return Response.json({ error: "فشل قراءة البيانات. قد يكون الاتصال بطيئاً." }, { status: 400 });
     }
 
-    const { slug, password, boyName, girlName, petName } = body || {};
+    const stripHtml = (str) => typeof str === "string" ? str.replace(/</g, "&lt;").replace(/>/g, "&gt;") : str;
+
+    let { slug, password, passwordHint, boyName, girlName, petName, locale } = body || {};
+
+    slug = stripHtml(slug);
+    password = stripHtml(password);
+    passwordHint = stripHtml(passwordHint || "");
+    boyName = stripHtml(boyName);
+    girlName = stripHtml(girlName);
+    petName = stripHtml(petName);
 
     if (!slug || !password || !boyName || !girlName) {
       console.log("[sites/POST] 4. Missing fields validation failed.");
@@ -168,11 +240,13 @@ export async function POST(request, context, c) {
     const girlNickname = petName && petName.trim() ? petName.trim() : getGirlNickname(girlName);
 
     const configBase = {
-      ...DEFAULT_CONFIG_TEMPLATE,
+      ...(locale === "en" ? EN_CONFIG_TEMPLATE : DEFAULT_CONFIG_TEMPLATE),
       boyName,
       girlName,
       girlNickname,
-      petNameOverride: petName && petName.trim() ? petName.trim() : null
+      petNameOverride: petName && petName.trim() ? petName.trim() : null,
+      passwordHint: passwordHint || null,
+      locale: locale === "en" ? "en" : "ar"
     };
 
     // Deep replace template strings so dashboard shows actual names
@@ -200,12 +274,16 @@ export async function POST(request, context, c) {
 
     const configStr = JSON.stringify(config);
 
-    console.log(`[sites/POST] 9. Before INSERT query for: ${slug}`);
+    console.log(`[sites/POST] 9. Before hashing password for: ${slug}`);
+    const bcrypt = await import("bcryptjs");
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    console.log(`[sites/POST] 10. Before INSERT query for: ${slug}`);
     await safeSql`
       INSERT INTO apology_sites (slug, edit_password, config)
-      VALUES (${slug}, ${password}, ${configStr}::jsonb)
+      VALUES (${slug}, ${hashedPassword}, ${configStr}::jsonb)
     `;
-    console.log(`[sites/POST] 10. After INSERT query. Success!`);
+    console.log(`[sites/POST] 11. After INSERT query. Success!`);
 
     return Response.json({ success: true, slug });
   } catch (error) {

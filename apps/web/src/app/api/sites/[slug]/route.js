@@ -29,7 +29,10 @@ export async function DELETE(request, { params }) {
     const rows = await sql`SELECT edit_password FROM apology_sites WHERE slug = ${slug}`;
     if (rows.length === 0) return Response.json({ error: "Not Found" }, { status: 404 });
     
-    if (rows[0].edit_password !== password) {
+    const bcrypt = await import("bcryptjs");
+    const isValid = await bcrypt.compare(password, rows[0].edit_password);
+
+    if (!isValid) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
