@@ -348,6 +348,4 @@ if (!isBuild) {
   }));
 }
 
-import { handle } from '@hono/node-server/vercel';
-
-export default process.env.VERCEL ? handle(app) : app;
+export default app;
