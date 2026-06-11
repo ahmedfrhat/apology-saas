@@ -78,6 +78,14 @@ async function ensureTable() {
     await sql`
       CREATE INDEX IF NOT EXISTS idx_apology_sites_slug ON apology_sites(slug)
     `;
+    await sql`ALTER TABLE apology_sites ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now()`;
+    
+    // Auto TTL cleanup: Delete sites older than 7 days
+    try {
+      await sql`DELETE FROM apology_sites WHERE created_at < NOW() - INTERVAL '7 days'`;
+    } catch(err) {
+      console.error("TTL cleanup failed", err);
+    }
     await sql`
       CREATE TABLE IF NOT EXISTS live_tracking (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

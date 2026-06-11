@@ -1,7 +1,12 @@
 import sql from "@/app/api/utils/sql";
+import { enforceRateLimit } from "@/app/api/utils/ratelimit";
 
 export async function POST(request, context, c) {
   try {
+    const isAllowed = await enforceRateLimit(request);
+    if (!isAllowed) {
+      return Response.json({ error: "خلصت محاولاتك السحرية النهاردة، جرب بكرة!" }, { status: 429 });
+    }
     const { slug } = context.params;
     let body;
     const nodeReq = c?.env?.incoming || {};

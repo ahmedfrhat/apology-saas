@@ -561,6 +561,27 @@ export default function AdminDashboard() {
   }, [saveStatus]);
 
   // Form State Mutator Helpers
+  const handleDeleteSite = async () => {
+    if (!window.confirm("تحذير: هذا سيؤدي إلى مسح الموقع بالكامل ولن تتمكن من الدخول مرة أخرى. هل أنت متأكد؟")) return;
+    try {
+      const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: savedPassword })
+      });
+      if (res.ok) {
+        alert("تم مسح الموقع نهائياً بنجاح.");
+        window.location.href = "/";
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "فشل مسح الموقع");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء الاتصال بالخادم");
+    }
+  };
+
   const updateField = (path, value) => {
     setFormData((prev) => {
       const next = { ...prev };
@@ -1684,6 +1705,28 @@ export default function AdminDashboard() {
             </div>
           </form>
         )}
+
+        {/* Danger Zone Section */}
+        <div className="mt-6 rounded-3xl bg-red-50 p-6 sm:p-8 border border-red-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-red-900 flex items-center gap-2">
+                <AlertCircle size={20} />
+                منطقة الخطر (Danger Zone)
+              </h2>
+              <p className="text-xs sm:text-sm text-red-700 mt-1 font-medium">
+                مسح هذا الموقع سيؤدي إلى تدمير الرابط وحذف جميع بيانات المحكمة والمحتوى نهائياً.
+              </p>
+            </div>
+            <button
+              onClick={handleDeleteSite}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-700 shadow-md hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 shrink-0"
+            >
+              <Trash2 size={16} /> إنهاء ومسح الجلسة نهائياً 🗑️
+            </button>
+          </div>
+        </div>
+
       </div>
       <Footer />
     </div>

@@ -1,7 +1,18 @@
 import sql from "@/app/api/utils/sql";
+import { enforceRateLimit } from "@/app/api/utils/ratelimit";
+
+const fallbacks = [
+  "السيستم هنج من كتر ما أنتِ معاكي حق! المحكمة بتحكم إنك التوب والباقي كنتلوب، وهو غلطان من ساسه لراسه! 💅",
+  "القاضي بيشرب شاي دلوقتي، بس سابلنا ورقة مكتوب فيها: البنت دي دايماً صح، والباشمهندس يدفع غرامة خروجة فورية! ☕😂",
+  "الذكاء الاصطناعي نفسه مش مصدق أخطاء المشكو في حقه! حكمت المحكمة بإنك قمر وهو ميطولش أصلاً يزعلك! 🤫"
+];
 
 export async function POST(request, context, c) {
   try {
+    const isAllowed = await enforceRateLimit(request);
+    if (!isAllowed) {
+      return Response.json({ error: "خلصت محاولاتك السحرية النهاردة، جرب بكرة!" }, { status: 429 });
+    }
     const { slug } = context.params;
     let body;
     const nodeReq = c?.env?.incoming || {};
@@ -90,10 +101,16 @@ Strict Output Requirements:
       }
     }
 
-    return Response.json({ error: "Failed to generate AI verdict" }, { status: 500 });
+    return Response.json({
+      title: `حكم المحكمة النهائي لصالح ${girlName || "البنت"}`,
+      details: fallbacks[Math.floor(Math.random() * fallbacks.length)]
+    });
 
   } catch (error) {
     console.error("[judge-ai] error", error);
-    return Response.json({ error: "Server Error" }, { status: 500 });
+    return Response.json({
+      title: "حكم المحكمة النهائي",
+      details: fallbacks[Math.floor(Math.random() * fallbacks.length)]
+    });
   }
 }

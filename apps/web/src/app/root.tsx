@@ -34,6 +34,7 @@ import { useDevServerHeartbeat } from '../__create/useDevServerHeartbeat';
 import '../__create/design-mode';
 import type { Route } from './+types/root';
 import CookieBanner from '@/components/CookieBanner';
+import { Analytics } from '@vercel/analytics/react';
 
 export const meta = () => {
   return [
@@ -469,6 +470,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <body>
         <ClientOnly loader={() => children} />
         <CookieBanner />
+        <Analytics />
         <Toaster position={toasterPosition} />
         <ScrollRestoration />
         <Scripts />
