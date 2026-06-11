@@ -30,6 +30,7 @@ export default function MoodSlider({ onNext }) {
   const { updateState, t } = useApp();
   const [value, setValue] = useState(0);
   const [unlocked, setUnlocked] = useState(false);
+  const [initialAnger, setInitialAnger] = useState(null);
 
   const stages = STAGES.map((s) => ({
     ...s,
@@ -41,9 +42,20 @@ export default function MoodSlider({ onNext }) {
   const handleChange = useCallback(
     (e) => {
       const v = Number(e.target.value);
+      
+      // Capture the first distinct movement as their authentic mood/anger level
+      if (initialAnger === null && v > 0 && v < 98) {
+        setInitialAnger(v);
+        updateState({ angerLevel: v });
+      }
+      
       setValue(v);
       if (v >= 98 && !unlocked) {
         setUnlocked(true);
+        // If they just slammed it to 100 immediately, capture that too
+        if (initialAnger === null) {
+            updateState({ angerLevel: 100 });
+        }
         updateState({
           batteryLevel: 40,
           lastAction: "mood-cleared",
@@ -52,7 +64,7 @@ export default function MoodSlider({ onNext }) {
         setTimeout(onNext, 1400);
       }
     },
-    [unlocked, onNext, updateState],
+    [unlocked, onNext, updateState, initialAnger],
   );
 
   return (

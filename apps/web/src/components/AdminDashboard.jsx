@@ -111,7 +111,7 @@ function SessionRow({ row, onBroadcast }) {
   const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 15000;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 text-sm shadow-sm">
+    <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 text-sm shadow-sm dark:bg-slate-950">
       <div className="flex items-center justify-between border-b border-gray-50 pb-3">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs text-gray-400">
@@ -132,12 +132,12 @@ function SessionRow({ row, onBroadcast }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <div className="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded-md">
-          <span className="text-gray-500 text-xs font-medium">القسم الحالي:</span>
-          <span className="font-bold text-gray-800 text-xs">{getSectionStr(row.current_section)}</span>
+        <div className="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded-md dark:bg-slate-900/50">
+          <span className="text-gray-500 text-xs font-medium dark:text-slate-300">القسم الحالي:</span>
+          <span className="font-bold text-gray-800 text-xs dark:text-white">{getSectionStr(row.current_section)}</span>
         </div>
-        <div className="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded-md">
-          <span className="text-gray-500 text-xs font-medium">آخر حركة:</span>
+        <div className="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded-md dark:bg-slate-900/50">
+          <span className="text-gray-500 text-xs font-medium dark:text-slate-300">آخر حركة:</span>
           <span className="font-bold text-blue-700 text-xs text-left" dir="ltr">{getActionStr(row.last_action)}</span>
         </div>
 
@@ -182,7 +182,7 @@ function SessionRow({ row, onBroadcast }) {
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
           placeholder="ابعث رسالة تظهر على شاشتها فوراً..."
-          className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-800 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+          className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-800 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all dark:text-white dark:bg-slate-900/50"
           onKeyDown={(e) => {
             if (e.key === "Enter") send();
           }}
@@ -191,7 +191,7 @@ function SessionRow({ row, onBroadcast }) {
           type="button"
           disabled={!msg.trim() || sending}
           onClick={send}
-          className="rounded-lg bg-blue-600 px-3 py-2 text-white font-medium text-xs transition-all hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 shadow-sm disabled:shadow-none flex items-center gap-1.5"
+          className="rounded-lg bg-blue-600 px-3 py-2 text-white font-medium text-xs transition-all hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 shadow-sm disabled:shadow-none flex items-center gap-1.5 dark:text-slate-300"
         >
           {sending ? "جاري..." : "إرسال"} <Send size={14} />
         </button>
@@ -328,7 +328,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
           value={incidentReason}
           onChange={(e) => setIncidentReason(e.target.value)}
           placeholder="مثال: نسيت عيد ميلادها / اتأخرت عليها..."
-          className="flex-1 rounded-xl border border-amber-200/50 bg-white/80 backdrop-blur-sm px-4 py-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-amber-500 shadow-inner placeholder:text-gray-400"
+          className="flex-1 rounded-xl border border-amber-200/50 bg-white/80 backdrop-blur-sm px-4 py-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-amber-500 shadow-inner placeholder:text-gray-400 dark:text-white dark:bg-slate-950"
         />
         <button
           type="button"
@@ -837,14 +837,14 @@ export default function AdminDashboard() {
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
               {t("dashboardTitle")}
             </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 font-medium">
+            <p className="mt-1 text-sm text-gray-500 dark:text-slate-300 font-medium">
               إدارة شاملة لرحلة {formData?.girlNickname}
             </p>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={copyToClipboard}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 focus-visible:outline-none"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-gray-50 dark:bg-slate-900 px-4 py-2 text-sm font-bold text-gray-700 dark:text-slate-200 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-slate-800 focus-visible:outline-none"
             >
               <Copy size={16} /> 
               {copyFeedback ? t("copied") : t("copyLink")}
@@ -860,7 +860,7 @@ export default function AdminDashboard() {
                 <Activity size={22} className="text-red-500 animate-pulse" />
                 {t("liveTracking")}
               </h2>
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-300 mt-1 font-medium">
                 {t("liveTrackingDesc")}
               </p>
             </div>
@@ -868,7 +868,7 @@ export default function AdminDashboard() {
               type="button"
               onClick={load}
               disabled={loading}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 focus-visible:outline-none disabled:opacity-50"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900 px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-200 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700 focus-visible:outline-none disabled:opacity-50"
             >
               <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> {t("refresh")}
             </button>
@@ -879,12 +879,12 @@ export default function AdminDashboard() {
             {error && <div className="text-sm text-center py-8 text-red-500 dark:text-red-400">{error}</div>}
 
             {!loading && rows.length === 0 && !error && (
-              <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 p-10 text-center">
+              <div className="rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-slate-900/50 p-10 text-center">
                 <Activity size={32} className="mx-auto mb-3 text-gray-300 dark:text-gray-600" />
                 <p className="text-sm font-bold text-gray-900 dark:text-white">
                   {t("noVisits")}
                 </p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-gray-500 dark:text-slate-300">
                   {t("noVisitsDesc")}
                 </p>
               </div>
@@ -904,14 +904,14 @@ export default function AdminDashboard() {
 
         {/* Bottom Section: Tabbed Management Interface */}
         {formData && (
-          <form onSubmit={handleSave} className="rounded-3xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100">
+          <form onSubmit={handleSave} className="rounded-3xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100 dark:bg-slate-950">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 border-b border-gray-100 pb-4">
               <div>
-                <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+                <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
                   <Settings size={22} className="text-amber-800" />
                   إعدادات محتوى الموقع
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium dark:text-slate-300">
                   عدّل على نصوص وأسئلة الموقع لحفظ تجربة مخصصة لها.
                 </p>
               </div>
@@ -986,87 +986,87 @@ export default function AdminDashboard() {
                   <MagicAIGenerator siteSlug={siteSlug} setFormData={setFormData} />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 dark:bg-slate-900/50">
                       <label className="block text-xs font-bold text-gray-700 mb-2">اسم الولد</label>
                       <input
                         type="text"
                         required
                         value={formData.boyName}
                         onChange={(e) => updateField("boyName", e.target.value)}
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:bg-slate-950"
                       />
                     </div>
-                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 dark:bg-slate-900/50">
                       <label className="block text-xs font-bold text-gray-700 mb-2">اسم البنت</label>
                       <input
                         type="text"
                         required
                         value={formData.girlName}
                         onChange={(e) => updateField("girlName", e.target.value)}
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:bg-slate-950"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 dark:bg-slate-900/50">
                       <label className="block text-xs font-bold text-gray-700 mb-2">اسم الدلع للبنت (الحالي)</label>
                       <input
                         type="text"
                         required
                         value={formData.girlNickname}
                         onChange={(e) => updateField("girlNickname", e.target.value)}
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:bg-slate-950"
                       />
                     </div>
-                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 dark:bg-slate-900/50">
                       <label className="block text-xs font-bold text-gray-700 mb-2">اسم دلع مخصص للذكاء الاصطناعي (اختياري)</label>
                       <input
                         type="text"
                         value={formData.petNameOverride || ""}
                         onChange={(e) => updateField("petNameOverride", e.target.value)}
                         placeholder="مثال: مريومتي (لو فاضي الـ AI هيألف من عنده)"
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:bg-slate-950"
                       />
                     </div>
                   </div>
 
-                  <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                  <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 dark:bg-slate-900/50">
                     <label className="block text-xs font-bold text-gray-700 mb-2">نص الصفحة الرئيسية (Landing)</label>
                     <textarea
                       rows={3}
                       required
                       value={formData.landingText}
                       onChange={(e) => updateField("landingText", e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 resize-none shadow-sm"
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 resize-none shadow-sm dark:bg-slate-950"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 dark:bg-slate-900/50">
                       <label className="block text-xs font-bold text-gray-700 mb-2">نص النهاية (الشاشة اللانهائية)</label>
                       <input
                         type="text"
                         required
                         value={formData.voidText}
                         onChange={(e) => updateField("voidText", e.target.value)}
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:bg-slate-950"
                       />
                     </div>
-                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 dark:bg-slate-900/50">
                       <label className="block text-xs font-bold text-gray-700 mb-2">رابط ملف الموسيقى (MP3/M4A)</label>
                       <input
                         type="text"
                         value={formData.audioUrl || ""}
                         onChange={(e) => updateField("audioUrl", e.target.value)}
                         placeholder="مثال: https://link-to-song.mp3"
-                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm dark:bg-slate-950"
                       />
                     </div>
                   </div>
 
                   <div className="border-t border-gray-100 pt-6 mt-2">
-                    <span className="block text-sm font-bold text-gray-900 mb-4">رسائل شاشة الهاكر (Loader Terminal)</span>
+                    <span className="block text-sm font-bold text-gray-900 mb-4 dark:text-white">رسائل شاشة الهاكر (Loader Terminal)</span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {formData.loaderTexts.map((txt, idx) => (
                         <div key={idx} className="flex flex-col gap-1">
@@ -1076,7 +1076,7 @@ export default function AdminDashboard() {
                             required
                             value={txt}
                             onChange={(e) => updateLoaderText(idx, e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-colors"
+                            className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-colors dark:bg-slate-900/50"
                           />
                         </div>
                       ))}
@@ -1094,11 +1094,11 @@ export default function AdminDashboard() {
                 >
                   <div className="flex flex-col gap-4">
                     {formData.timeline?.map((item, idx) => (
-                      <div key={idx} className="flex flex-col sm:flex-row gap-4 p-5 bg-gray-50/50 rounded-2xl border border-gray-100 shadow-sm">
+                      <div key={idx} className="flex flex-col sm:flex-row gap-4 p-5 bg-gray-50/50 rounded-2xl border border-gray-100 shadow-sm dark:bg-slate-900/50">
                         
                         {/* Image Preview & Upload */}
                         <div className="flex flex-col items-center gap-3 w-full sm:w-1/3 shrink-0">
-                          <div className="w-full aspect-video sm:aspect-square rounded-xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center bg-white relative group">
+                          <div className="w-full aspect-video sm:aspect-square rounded-xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center bg-white relative group dark:bg-slate-950">
                             {item.image ? (
                               <>
                                 <img src={item.image} alt="preview" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -1120,7 +1120,7 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           {!item.image && (
-                            <label className="text-xs font-bold bg-white text-gray-700 px-4 py-2 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors w-full text-center border border-gray-200 shadow-sm">
+                            <label className="text-xs font-bold bg-white text-gray-700 px-4 py-2 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors w-full text-center border border-gray-200 shadow-sm dark:bg-slate-950">
                               رفع صورة
                               <input
                                 type="file"
@@ -1134,7 +1134,7 @@ export default function AdminDashboard() {
 
                         {/* Text Input */}
                         <div className="flex flex-col w-full">
-                          <label className="mb-2 block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          <label className="mb-2 block text-xs font-bold text-gray-500 uppercase tracking-wider dark:text-slate-300">
                             ذكرى رقم {idx + 1}
                           </label>
                           <textarea
@@ -1146,7 +1146,7 @@ export default function AdminDashboard() {
                             }}
                             rows={3}
                             placeholder="اكتب جملة توصف الذكرى..."
-                            className="w-full h-full min-h-[100px] rounded-xl border border-gray-200 p-4 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none resize-none bg-white shadow-inner"
+                            className="w-full h-full min-h-[100px] rounded-xl border border-gray-200 p-4 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none resize-none bg-white shadow-inner dark:bg-slate-950"
                           />
                         </div>
                       </div>
@@ -1163,7 +1163,7 @@ export default function AdminDashboard() {
                   className="flex flex-col gap-6"
                 >
                   <div className="flex items-center justify-between">
-                    <p className="text-xs sm:text-sm text-gray-500 font-medium">أضف أسئلة للتأكد من ذاكرتها ومواقفكم المشتركة.</p>
+                    <p className="text-xs sm:text-sm text-gray-500 font-medium dark:text-slate-300">أضف أسئلة للتأكد من ذاكرتها ومواقفكم المشتركة.</p>
                     <button
                       type="button"
                       onClick={addQuestion}
@@ -1177,7 +1177,7 @@ export default function AdminDashboard() {
                     {formData.triviaQuestions.map((qItem, qIdx) => (
                       <div
                         key={qIdx}
-                        className="border border-gray-100 rounded-2xl bg-white p-5 sm:p-6 relative shadow-sm"
+                        className="border border-gray-100 rounded-2xl bg-white p-5 sm:p-6 relative shadow-sm dark:bg-slate-950"
                       >
                         <button
                           type="button"
@@ -1196,7 +1196,7 @@ export default function AdminDashboard() {
                               required
                               value={qItem.q}
                               onChange={(e) => updateQuestionTitle(qIdx, e.target.value)}
-                              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-colors"
+                              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-colors dark:text-white dark:bg-slate-900/50"
                             />
                           </div>
 
@@ -1240,7 +1240,7 @@ export default function AdminDashboard() {
                                       <button
                                         type="button"
                                         onClick={() => deleteOption(qIdx, oIdx)}
-                                        className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-white"
+                                        className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-white dark:bg-slate-950"
                                       >
                                         <Trash2 size={16} />
                                       </button>
@@ -1277,7 +1277,7 @@ export default function AdminDashboard() {
                                 }}
                                 className="h-5 w-5 rounded border-gray-300 text-amber-600 focus:ring-amber-600 cursor-pointer"
                               />
-                              <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900 transition-colors">
+                              <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900 transition-colors dark:text-white">
                                 تفعيل خيار الفخ (خدعة للمرح) 🪤
                               </span>
                             </label>
@@ -1300,7 +1300,7 @@ export default function AdminDashboard() {
                                         return next;
                                       });
                                     }}
-                                    className="w-full rounded-lg border border-amber-200/50 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium text-amber-900"
+                                    className="w-full rounded-lg border border-amber-200/50 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium text-amber-900 dark:bg-slate-950"
                                   >
                                     {qItem.options.map((opt, idx) => (
                                       <option key={idx} value={opt}>
@@ -1323,7 +1323,7 @@ export default function AdminDashboard() {
                                         return next;
                                       });
                                     }}
-                                    className="w-full rounded-lg border border-amber-200/50 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium text-amber-900"
+                                    className="w-full rounded-lg border border-amber-200/50 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium text-amber-900 dark:bg-slate-950"
                                   />
                                 </div>
                               </motion.div>
@@ -1343,37 +1343,37 @@ export default function AdminDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex flex-col gap-6"
                 >
-                  <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6">
-                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6 dark:bg-slate-900/50">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2 dark:text-white">
                       <Gavel size={18} className="text-amber-800" />
                       الحكم الافتراضي للمحكمة (إذا لم يتم استخدام الذكاء الاصطناعي)
                     </h3>
                     <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 mb-1.5">عنوان الحكم</label>
+                        <label className="block text-xs font-bold text-gray-600 mb-1.5 dark:text-slate-200">عنوان الحكم</label>
                         <input
                           type="text"
                           required
                           value={formData.judgeText.title}
                           onChange={(e) => updateField("judgeText.title", e.target.value)}
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 dark:bg-slate-950"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-600 mb-1.5">تفاصيل الحكم</label>
+                        <label className="block text-xs font-bold text-gray-600 mb-1.5 dark:text-slate-200">تفاصيل الحكم</label>
                         <textarea
                           rows={3}
                           required
                           value={formData.judgeText.details}
                           onChange={(e) => updateField("judgeText.details", e.target.value)}
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 resize-none dark:bg-slate-950"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
-                    <span className="block text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6 flex flex-col gap-5 dark:bg-slate-900/50">
+                    <span className="block text-sm font-bold text-gray-900 flex items-center gap-2 dark:text-white">
                       <Sparkles size={18} className="text-amber-500" />
                       ردود تقييم النجوم (بعد المحكمة)
                     </span>
@@ -1392,14 +1392,14 @@ export default function AdminDashboard() {
                             required
                             value={formData.feedbackTexts[star.key]}
                             onChange={(e) => updateField(`feedbackTexts.${star.key}`, e.target.value)}
-                            className="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 resize-none transition-colors"
+                            className="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 resize-none transition-colors dark:bg-slate-900/50"
                           />
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6">
+                  <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6 dark:bg-slate-900/50">
                     <label className="mb-4 flex items-center cursor-pointer gap-3 w-fit group">
                       <input
                         type="checkbox"
@@ -1407,7 +1407,7 @@ export default function AdminDashboard() {
                         onChange={(e) => updateField("enableFunnyText", e.target.checked)}
                         className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                       />
-                      <span className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors">تفعيل الرسالة الساخرة في النهاية 😈</span>
+                      <span className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors dark:text-white">تفعيل الرسالة الساخرة في النهاية 😈</span>
                     </label>
 
                     {formData.enableFunnyText && (
@@ -1416,14 +1416,14 @@ export default function AdminDashboard() {
                         animate={{ opacity: 1, height: "auto" }}
                         className="mt-4"
                       >
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider dark:text-slate-300">
                           النص الساخر (مثال: احا انتي لسه هنا؟)
                         </label>
                         <input
                           type="text"
                           value={formData.funnyText}
                           onChange={(e) => updateField("funnyText", e.target.value)}
-                          className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                          className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm dark:bg-slate-950"
                         />
                       </motion.div>
                     )}
@@ -1438,30 +1438,30 @@ export default function AdminDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex flex-col gap-6"
                 >
-                  <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6">
-                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6 dark:bg-slate-900/50">
+                    <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2 dark:text-white">
                       <FileText size={18} className="text-amber-800" />
                       رسالة النهاية (الجواب)
                     </h3>
                     
                     <div className="mb-5">
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">عنوان الجواب</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 dark:text-slate-300">عنوان الجواب</label>
                       <input
                         type="text"
                         required
                         value={formData.finalLetter.title}
                         onChange={(e) => updateField("finalLetter.title", e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500 dark:bg-slate-950"
                       />
                     </div>
 
                     <div className="flex flex-col gap-3 mb-6 border-y border-gray-100 py-5">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">محتوى الجواب (فقرات)</span>
+                        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider dark:text-slate-300">محتوى الجواب (فقرات)</span>
                         <button
                           type="button"
                           onClick={addParagraph}
-                          className="text-xs text-amber-800 hover:text-amber-950 flex items-center gap-1 font-bold bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm"
+                          className="text-xs text-amber-800 hover:text-amber-950 flex items-center gap-1 font-bold bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm dark:bg-slate-950"
                         >
                           <Plus size={12} /> إضافة فقرة
                         </button>
@@ -1470,7 +1470,7 @@ export default function AdminDashboard() {
                         {formData.finalLetter.body.map((para, idx) => (
                           <div
                             key={idx}
-                            className="flex gap-3 items-start bg-white p-3 rounded-xl border border-gray-200 shadow-sm"
+                            className="flex gap-3 items-start bg-white p-3 rounded-xl border border-gray-200 shadow-sm dark:bg-slate-950"
                           >
                             <span className="text-xs font-bold text-gray-300 pt-2">{idx + 1}</span>
                             <textarea
@@ -1478,13 +1478,13 @@ export default function AdminDashboard() {
                               required
                               onChange={(e) => updateParagraph(idx, e.target.value)}
                               rows={3}
-                              className="flex-1 border-0 bg-transparent py-1 text-sm font-medium outline-none focus:ring-0 resize-none leading-relaxed text-gray-800"
+                              className="flex-1 border-0 bg-transparent py-1 text-sm font-medium outline-none focus:ring-0 resize-none leading-relaxed text-gray-800 dark:text-white"
                             />
                             {formData.finalLetter.body.length > 1 && (
                               <button
                                 type="button"
                                 onClick={() => deleteParagraph(idx)}
-                                className="text-gray-300 hover:text-red-500 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="text-gray-300 hover:text-red-500 p-2 rounded-lg hover:bg-gray-50 transition-colors dark:bg-slate-900/50"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -1496,23 +1496,23 @@ export default function AdminDashboard() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">جملة الختام (اليمين)</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 dark:text-slate-300">جملة الختام (اليمين)</label>
                         <input
                           type="text"
                           required
                           value={formData.finalLetter.loveSignature}
                           onChange={(e) => updateField("finalLetter.loveSignature", e.target.value)}
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 dark:bg-slate-950"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">اسمك (اليسار)</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 dark:text-slate-300">اسمك (اليسار)</label>
                         <input
                           type="text"
                           required
                           value={formData.finalLetter.boySignature}
                           onChange={(e) => updateField("finalLetter.boySignature", e.target.value)}
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 dark:bg-slate-950"
                         />
                       </div>
                     </div>
@@ -1541,7 +1541,7 @@ export default function AdminDashboard() {
                       {formData.giftCoupons.map((coupon, idx) => (
                         <div
                           key={idx}
-                          className="flex gap-2 items-center bg-white p-2.5 rounded-xl border border-indigo-100 shadow-sm"
+                          className="flex gap-2 items-center bg-white p-2.5 rounded-xl border border-indigo-100 shadow-sm dark:bg-slate-950"
                         >
                           <Gift size={16} className="text-indigo-300 shrink-0 ml-1" />
                           <input

@@ -501,7 +501,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <link rel="icon" href="/src/__create/favicon.png" />
         {LoadFontsSSR ? <LoadFontsSSR /> : null}
       </head>
-      <body>
+      <body className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300 ease-in-out">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <LanguageProvider>
             <ThemeLanguageHeader />
@@ -509,7 +509,7 @@ export function Layout({ children }: { children: ReactNode }) {
               <div className="flex-1">
                 <ClientOnly loader={() => children} />
               </div>
-              <footer className="text-sm text-gray-500 text-center py-4 bg-[#F8F9FA] dark:bg-gray-950 w-full z-50 border-t border-gray-200 dark:border-gray-800">
+              <footer className="text-sm text-gray-500 dark:text-slate-400 text-center py-4 bg-[#F8F9FA] dark:bg-slate-950 w-full z-50 border-t border-gray-200 dark:border-slate-800 transition-colors duration-300">
                 © 2026 جميع الحقوق محفوظة لشركة Safi.io التقنية. المنصة محمية بموجب قوانين الملكية الفكرية.
               </footer>
             </div>

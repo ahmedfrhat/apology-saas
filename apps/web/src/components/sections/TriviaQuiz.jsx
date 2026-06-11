@@ -98,14 +98,19 @@ export default function TriviaQuiz({ onNext }) {
           ...(state?.details || {}),
           quizChoices: [...currentChoices, { q: currentQ.q, answer: option }]
         };
-        updateState({ details: updatedDetails });
 
         if (currentQ.trap && option === currentQ.trap.option) {
+          updatedDetails.trapCount = (updatedDetails.trapCount || 0) + 1;
+          updateState({ details: updatedDetails });
+          
           setShake(true);
           setTrapMsg(currentQ.trap.msg);
           setTimeout(() => setShake(false), 500);
           return;
         }
+        
+        updateState({ details: updatedDetails });
+
         const isCorrect = Array.isArray(currentQ.correct)
           ? currentQ.correct.includes(option)
           : option === currentQ.correct;
