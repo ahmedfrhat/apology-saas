@@ -25,6 +25,52 @@ export default function SaaSOnboardingPage() {
  const [success, setSuccess] = useState(false);
  const [origin, setOrigin] = useState("");
  const [isMounted, setIsMounted] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginSlug, setLoginSlug] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  const handleLoginSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setLoginError("");
+      setLoginLoading(true);
+
+      try {
+        const res = await fetch(`/api/sites/${loginSlug}/verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: loginPassword }),
+        });
+        
+        const data = await res.json();
+        if (res.ok && data.success) {
+          // Store auth state
+          sessionStorage.setItem(`unlocked_${loginSlug}`, "true");
+          sessionStorage.setItem(`auth_pwd_${loginSlug}`, loginPassword);
+          
+          // Ensure kvow_session_id is initialized
+          let sessionId = sessionStorage.getItem("kvow_session_id");
+          if (!sessionId) {
+            sessionId = `kvow-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            sessionStorage.setItem("kvow_session_id", sessionId);
+          }
+          
+          // Redirect to dashboard
+          window.location.href = `/${loginSlug}/dashboard`;
+        } else {
+          setLoginError(data.error || (locale === "en" ? "Invalid slug or password" : "رابط الصفحة أو الرقم السري غير صحيح"));
+        }
+      } catch (err) {
+        console.error("Login verification failed:", err);
+        setLoginError(locale === "en" ? "Connection error. Please try again." : "فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.");
+      } finally {
+        setLoginLoading(false);
+      }
+    },
+    [loginSlug, loginPassword, locale]
+  );
 
  useEffect(() => {
  setIsMounted(true);
@@ -84,8 +130,25 @@ export default function SaaSOnboardingPage() {
  [slug, password, passwordHint, telegramChatId, boyName, girlName, petName, locale]
  );
 
- return (
- <div className="flex min-h-screen flex-col bg-[#FCFBF7] font-sans antialiased text-[#4A3E3D] ">
+  return (
+  <div className="flex min-h-screen flex-col bg-[#FCFBF7] dark:bg-gray-950 font-sans antialiased text-[#4A3E3D] dark:text-gray-200 relative">
+    
+    {/* Top Navigation / Header */}
+    <header className="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between z-40 relative">
+      <div className="flex items-center gap-2 font-bold text-lg text-[#1A1A1A] dark:text-white">
+        <Heart size={20} fill="#B45309" className="text-amber-800 dark:text-amber-500" />
+        <span>Safi.io</span>
+      </div>
+      {/* me-32 shifts the button on mobile to prevent overlapping with the absolute floating theme/lang pill */}
+      <div className="me-32 sm:me-0">
+        <button
+          onClick={() => setShowLoginModal(true)}
+          className="px-5 py-2.5 rounded-full text-xs font-bold transition-all bg-white/80 dark:bg-gray-800/80 border border-[#1A1A1A]/10 dark:border-gray-700/50 hover:bg-amber-800 hover:text-white dark:hover:bg-amber-800 dark:hover:text-white hover:scale-105 active:scale-95 shadow-sm cursor-pointer"
+        >
+          {locale === "en" ? "Sign In" : "تسجيل الدخول"}
+        </button>
+      </div>
+    </header>
  
  <AnimatePresence>
  {adBlockDetected && !hideAdBanner && (
@@ -205,8 +268,103 @@ export default function SaaSOnboardingPage() {
  </form>
  )}
  </motion.div>
- </div>
- <Footer />
- </div>
+  </div>
+
+  {/* Login Modal */}
+  <AnimatePresence>
+    {showLoginModal && (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center p-5">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowLoginModal(false)}
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        />
+        
+        {/* Modal Card */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: "spring", duration: 0.5 }}
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid var(--border-base)",
+            boxShadow: "var(--shadow-card)",
+          }}
+          className="w-full max-w-md p-8 sm:p-10 rounded-[2.5rem] relative overflow-hidden z-10 text-center"
+        >
+          <button
+            onClick={() => setShowLoginModal(false)}
+            className="absolute top-5 right-5 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
+          >
+            <X size={18} />
+          </button>
+
+          <div className="mb-6 flex h-16 w-16 mx-auto items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200/50 dark:border-amber-700/50">
+            <Heart size={28} fill="#B45309" className="text-amber-800 dark:text-amber-500" />
+          </div>
+
+          <h2 className="text-xl font-bold text-[#1A1A1A] dark:text-white mb-2">
+            {locale === "en" ? "Access Dashboard 🔒" : "دخول لوحة التحكم 🔒"}
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+            {locale === "en"
+              ? "Enter your unique link identifier and password to manage your apology page."
+              : "أدخل معرف الرابط الفريد والرقم السري لإدارة صفحة الاعتذار الخاصة بك."}
+          </p>
+
+          <form onSubmit={handleLoginSubmit} className="space-y-4 text-start">
+            {loginError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+                ⚠️ {loginError}
+              </div>
+            )}
+            
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                {locale === "en" ? "Link Slug" : "رابط الصفحة (Slug)"}
+              </label>
+              <input
+                type="text"
+                required
+                value={loginSlug}
+                onChange={(e) => setLoginSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+                placeholder="e.g. mar-iem"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 p-3 text-sm outline-none transition-all focus:bg-white dark:focus:bg-gray-900 focus:border-[#C9956C] dark:focus:border-amber-500 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                {locale === "en" ? "Password" : "الرقم السري"}
+              </label>
+              <input
+                type="password"
+                required
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-900/50 p-3 text-sm outline-none transition-all focus:bg-white dark:focus:bg-gray-900 focus:border-[#C9956C] dark:focus:border-amber-500 dark:text-white"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loginLoading}
+              className="w-full bg-amber-800 text-white py-3.5 rounded-xl font-bold text-sm transition-all hover:bg-amber-900 active:scale-95 disabled:opacity-50 mt-2 cursor-pointer"
+            >
+              {loginLoading ? (locale === "en" ? "Verifying..." : "جاري التحقق...") : (locale === "en" ? "Sign In" : "تسجيل الدخول")}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    )}
+  </AnimatePresence>
+
+  <Footer />
+  </div>
  );
 }

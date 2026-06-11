@@ -201,10 +201,12 @@ html.theme-transitioning *::after {
   & .bg-slate-900            { background-color: var(--bg-surface) !important; }
   & .bg-slate-900\/50        { background-color: var(--bg-white-50-override) !important; }
   & .bg-\[\#FAF8F3\]         { background-color: var(--bg-base) !important; }
+  & .bg-\[\#FCFBF7\]         { background-color: var(--bg-base) !important; }
   & .bg-\[\#141622\]         { background-color: var(--bg-surface) !important; }
   & .bg-\[\#141622\]\/85      { background-color: var(--bg-white-80-override) !important; }
   & .bg-\[\#1C1F30\]         { background-color: var(--bg-surface-2) !important; }
   & .bg-\[\#1C1F30\]\/40      { background-color: var(--bg-white-50-override) !important; }
+  & .bg-\[\#F4F3EF\]\/70     { background-color: var(--bg-white-80-override) !important; }
 
   & .border-gray-50          { border-color: var(--border-base) !important; }
   & .border-gray-100         { border-color: var(--border-base) !important; }
