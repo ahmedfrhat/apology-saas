@@ -491,41 +491,65 @@ export function Layout({ children }: { children: ReactNode }) {
  );
  }
  }, [pathname]);
- return (
- <html lang="en">
- <head>
- <meta charSet="utf-8" />
- <meta name="viewport" content="width=device-width, initial-scale=1" />
- <Meta />
- <Links />
- <link rel="icon" href="/src/__create/favicon.png" />
- {LoadFontsSSR ? <LoadFontsSSR /> : null}
- </head>
- <body>
- <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
- <LanguageProvider>
- <ThemeLanguageHeader />
- <div className="flex flex-col min-h-screen">
- <div className="flex-1">
- <ClientOnly loader={() => children} />
- </div>
- <footer className="text-sm text-gray-500 text-center py-4 bg-[#F8F9FA] w-full z-50 border-t border-gray-200 ">
- © 2026 جميع الحقوق محفوظة لشركة Safi.io التقنية. المنصة محمية بموجب قوانين الملكية الفكرية.
- </footer>
- </div>
- <CookieBanner />
- <Analytics />
- <Toaster position={toasterPosition} />
- <ScrollRestoration />
- <Scripts />
- {import.meta.env.DEV && <div id="create-designer-overlay" />}
- </LanguageProvider>
- </ThemeProvider>
- <link rel="preconnect" href="https://ka-p.fontawesome.com" crossOrigin="anonymous" />
- <link rel="stylesheet" href="https://ka-p.fontawesome.com/releases/v6.3.0/css/pro.min.css?token=2c15cc0cc7" crossOrigin="anonymous" />
- </body>
- </html>
- );
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <Meta />
+        <Links />
+        <link rel="icon" href="/src/__create/favicon.png" />
+        {LoadFontsSSR ? <LoadFontsSSR /> : null}
+        {/* Google Fonts — Cinematic Typography */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body style={{ background: "var(--gradient-bg)", backgroundAttachment: "fixed", color: "var(--text-primary)", minHeight: "100vh" }}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <LanguageProvider>
+            <ThemeLanguageHeader />
+            <div className="flex flex-col min-h-screen">
+              <div className="flex-1">
+                <ClientOnly loader={() => children} />
+              </div>
+              <footer
+                style={{
+                  background: "var(--bg-surface)",
+                  color: "var(--text-muted)",
+                  borderTop: "1px solid var(--border-base)",
+                  fontSize: "0.75rem",
+                  textAlign: "center",
+                  padding: "1rem",
+                  zIndex: 50,
+                }}
+              >
+                © 2026 جميع الحقوق محفوظة لشركة Safi.io التقنية. المنصة محمية بموجب قوانين الملكية الفكرية.
+              </footer>
+            </div>
+            <CookieBanner />
+            <Analytics />
+            <Toaster
+              position={toasterPosition}
+              toastOptions={{
+                style: {
+                  background: "var(--bg-card)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border-base)",
+                  backdropFilter: "blur(20px)",
+                },
+              }}
+            />
+            <ScrollRestoration />
+            <Scripts />
+            {import.meta.env.DEV && <div id="create-designer-overlay" />}
+          </LanguageProvider>
+        </ThemeProvider>
+        <link rel="preconnect" href="https://ka-p.fontawesome.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://ka-p.fontawesome.com/releases/v6.3.0/css/pro.min.css?token=2c15cc0cc7" crossOrigin="anonymous" />
+      </body>
+    </html>
+  );
 }
 
 export const ErrorBoundary = InternalErrorBoundary;
