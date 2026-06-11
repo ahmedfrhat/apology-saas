@@ -4,9 +4,9 @@ import { Trophy } from "lucide-react";
 import TiltWrapper from "@/components/TiltWrapper";
 import { useApp } from "@/context/AppContext";
 import { fireConfetti } from "@/utils/confetti";
+import useSpatialAudio from "@/hooks/useSpatialAudio";
 
-const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card";
 
 const QUESTIONS = [
   {
@@ -36,6 +36,7 @@ export default function TriviaQuiz({ onNext }) {
   const [trapMsg, setTrapMsg] = useState("");
   const [finished, setFinished] = useState(false);
   const firstWrongHoverTime = useRef(null);
+  const { clickSound, hoverSound, errorSound, successSound } = useSpatialAudio();
 
   const rawQuestions = config?.triviaQuestions || QUESTIONS;
 
@@ -83,6 +84,7 @@ export default function TriviaQuiz({ onNext }) {
   }, [current]);
 
   const handleMouseEnterOption = useCallback((opt) => {
+    hoverSound();
     if (!isCorrectOption(opt)) {
       if (!firstWrongHoverTime.current) {
         firstWrongHoverTime.current = Date.now();
@@ -91,10 +93,11 @@ export default function TriviaQuiz({ onNext }) {
         }
       }
     }
-  }, [isCorrectOption, logLedgerEvent]);
+  }, [isCorrectOption, logLedgerEvent, hoverSound]);
 
     const handleAnswer = useCallback(
       (option) => {
+        clickSound();
         const currentQ = questions[index];
         if (!currentQ) return;
 
@@ -106,6 +109,7 @@ export default function TriviaQuiz({ onNext }) {
         };
 
         if (currentQ.trap && option === currentQ.trap.option) {
+          errorSound();
           updatedDetails.trapCount = (updatedDetails.trapCount || 0) + 1;
           updateState({ details: updatedDetails });
           
@@ -130,6 +134,7 @@ export default function TriviaQuiz({ onNext }) {
           : option === currentQ.correct;
   
         if (!isCorrect) {
+          errorSound();
           if (typeof navigator !== "undefined" && navigator.vibrate) {
             navigator.vibrate([100, 50, 100]); // double buzz for wrong answer
           }
@@ -145,6 +150,7 @@ export default function TriviaQuiz({ onNext }) {
         }
 
       // Correct answer haptic
+      successSound();
       if (typeof navigator !== "undefined" && navigator.vibrate) {
         navigator.vibrate(40); // clean short buzz
       }

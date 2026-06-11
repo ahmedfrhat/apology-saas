@@ -4,8 +4,7 @@ import { Fingerprint } from "lucide-react";
 import TiltWrapper from "@/components/TiltWrapper";
 import { useApp } from "@/context/AppContext";
 
-const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card";
 
 const RADIUS = 56;
 const CIRC = 2 * Math.PI * RADIUS;

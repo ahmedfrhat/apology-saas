@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useContext } from "react";
 import { useTheme } from "next-themes";
 import { useLanguage } from "../context/LanguageContext";
-import { useApp } from "@/context/AppContext";
+import AppContext from "@/context/AppContext";
 import { Sun, Moon, Globe, Flame } from "lucide-react";
 
 /**
@@ -15,7 +15,8 @@ export default function ThemeLanguageHeader() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { locale, setLocale } = useLanguage();
-  const { logLedgerEvent } = useApp() || {};
+  const appContext = useContext(AppContext);
+  const { logLedgerEvent } = appContext || {};
   const btnRef = useRef(null);
 
   useEffect(() => {

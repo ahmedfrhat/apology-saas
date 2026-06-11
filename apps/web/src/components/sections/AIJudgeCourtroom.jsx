@@ -4,8 +4,7 @@ import { Scale, Gavel, FileText, CheckSquare, Square } from "lucide-react";
 import DecryptedText from "@/components/DecryptedText";
 import { useApp } from "@/context/AppContext";
 
-const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card";
 
 const DEFENSE_CONDITIONS = [
   { key: "dinner", label: "🍽️ عشاء رومانسي فخم لتصفية النفوس" },
@@ -232,7 +231,7 @@ export default function AIJudgeCourtroom({ onNext }) {
                   type="button"
                   onClick={handleGrievanceSubmit}
                   disabled={!text.trim() || isJudging}
-                  className={`inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-8 py-3.5 text-sm font-medium text-[#F4F3EF] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] cursor-pointer ${
+                  className={`mood-glow-btn inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] px-8 py-3.5 text-sm font-medium text-[#F4F3EF] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] cursor-pointer ${
                     !text.trim() || isJudging
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-[#DFBA73]"
@@ -325,7 +324,7 @@ export default function AIJudgeCourtroom({ onNext }) {
                   type="button"
                   onClick={handleFinalSubmit}
                   disabled={!followupResponse.trim() || isJudging}
-                  className={`inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] dark:bg-white dark:text-[#1A1A1A] px-10 py-3.5 text-sm font-bold shadow-md transition-all cursor-pointer ${
+                  className={`mood-glow-btn inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] dark:bg-white dark:text-[#1A1A1A] px-10 py-3.5 text-sm font-bold shadow-md transition-all cursor-pointer ${
                     !followupResponse.trim() || isJudging
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-[#DFBA73] hover:text-white"
@@ -361,7 +360,7 @@ export default function AIJudgeCourtroom({ onNext }) {
                 <button
                   type="button"
                   onClick={onNext}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] dark:bg-white dark:text-[#1A1A1A] px-8 py-3.5 text-sm font-bold text-[#F4F3EF] hover:bg-[#DFBA73] hover:text-white cursor-pointer transition-colors"
+                  className="mood-glow-btn inline-flex items-center gap-2 rounded-full bg-[#1A1A1A] dark:bg-white dark:text-[#1A1A1A] px-8 py-3.5 text-sm font-bold text-[#F4F3EF] hover:bg-[#DFBA73] hover:text-white cursor-pointer transition-colors"
                 >
                   {config?.locale === 'en' ? "Read Verdict, Continue" : "قرأت الحكم، استمرار"} <Gavel size={16} />
                 </button>

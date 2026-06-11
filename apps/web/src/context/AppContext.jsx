@@ -561,11 +561,60 @@ export function AppProvider({ children }) {
 
   if (isLoadingConfig) {
     return (
-      <div className="min-h-screen bg-[#FCFBF7] flex flex-col items-center justify-center font-sans antialiased text-[#4A3E3D]">
+      <div className="min-h-screen flex flex-col items-center justify-center font-sans antialiased" style={{ background: "var(--gradient-bg, #FAF8F3)", color: "var(--text-primary, #4A3E3D)" }}>
         <div className="relative flex flex-col items-center">
-          <div className="absolute w-24 h-24 border border-amber-800/10 rounded-full animate-ping duration-1000 opacity-75"></div>
-          <div className="relative w-16 h-16 border-2 border-t-amber-800 border-amber-800/10 rounded-full animate-spin"></div>
-          <p className="mt-8 text-sm tracking-wider font-light text-[#8A7E72] animate-pulse">
+          {/* Outer glow ring */}
+          <div
+            className="absolute w-32 h-32 rounded-full"
+            style={{
+              background: "conic-gradient(from 0deg, transparent 0%, var(--mood-accent, #FF6B9D) 25%, transparent 50%, var(--mood-accent-alt, #E84393) 75%, transparent 100%)",
+              animation: "holoRotate 3s linear infinite",
+              opacity: 0.3,
+              filter: "blur(8px)",
+            }}
+          />
+          {/* Middle ring */}
+          <div
+            className="absolute w-24 h-24 rounded-full"
+            style={{
+              border: "2px solid transparent",
+              backgroundImage: "conic-gradient(from 120deg, var(--mood-gradient-start, #FF6B9D), var(--mood-gradient-mid, #A855F7), var(--mood-gradient-end, #EC4899), var(--mood-gradient-start, #FF6B9D))",
+              backgroundOrigin: "border-box",
+              backgroundClip: "border-box",
+              WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              WebkitMaskComposite: "xor",
+              mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              maskComposite: "exclude",
+              padding: "2px",
+              animation: "holoRotate 2s linear infinite reverse",
+            }}
+          />
+          {/* Inner core */}
+          <div
+            className="relative w-16 h-16 rounded-full"
+            style={{
+              background: "conic-gradient(from 240deg, var(--mood-accent, #FF6B9D) 0%, transparent 30%, var(--mood-accent-alt, #E84393) 60%, transparent 100%)",
+              animation: "holoRotate 1.5s linear infinite, glowBreath 2s ease-in-out infinite",
+              WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              WebkitMaskComposite: "xor",
+              mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+              maskComposite: "exclude",
+              padding: "2px",
+            }}
+          />
+          {/* Center dot */}
+          <div
+            className="absolute w-3 h-3 rounded-full"
+            style={{
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              background: "var(--mood-accent, #FF6B9D)",
+              boxShadow: "0 0 20px var(--mood-glow-strong, rgba(255,107,157,0.5))",
+              animation: "holoPulse 1.5s ease-in-out infinite",
+            }}
+          />
+          <p className="mt-12 text-sm tracking-wider font-light animate-pulse" style={{ color: "var(--text-muted, #8A7E72)" }}>
             جاري تحضير التجربة...
           </p>
         </div>

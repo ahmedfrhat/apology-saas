@@ -1,8 +1,22 @@
 import { useEffect, useRef } from "react";
+import { useMood } from "@/context/MoodProvider";
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { r, g, b };
+}
 
 export default function AmbientParticles() {
   const canvasRef = useRef(null);
   const mouseRef = useRef({ x: -1000, y: -1000, active: false });
+  const { moodColors } = useMood();
+  const moodColorsRef = useRef(moodColors);
+
+  useEffect(() => {
+    moodColorsRef.current = moodColors;
+  }, [moodColors]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -11,7 +25,7 @@ export default function AmbientParticles() {
     const ctx = canvas.getContext("2d");
     let animationFrameId;
     let particles = [];
-    const maxParticles = 120;
+    const maxParticles = 80;
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
@@ -34,6 +48,17 @@ export default function AmbientParticles() {
       }
 
       update() {
+        // Magnetic pull for background particles near the mouse
+        if (!this.isMouseFollower) {
+          const dx = mouseRef.current.x - this.x;
+          const dy = mouseRef.current.y - this.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 200 && dist > 0) {
+            const force = 0.3 / dist;
+            this.speedX += dx * force;
+            this.speedY += dy * force;
+          }
+        }
         this.x += this.speedX;
         this.y += this.speedY;
         this.life -= this.decay;
@@ -43,13 +68,14 @@ export default function AmbientParticles() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         
-        // Glowing gold dust color
+        // Mood-aware particle color
         const alpha = Math.max(0, this.life * this.opacity);
-        ctx.fillStyle = `rgba(223, 186, 115, ${alpha})`;
+        const { r, g, b } = hexToRgb(moodColorsRef.current.particle);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
         
         // Shadow/glow properties (soft blur on canvas)
         ctx.shadowBlur = this.isMouseFollower ? 8 : 4;
-        ctx.shadowColor = "rgba(223, 186, 115, 0.8)";
+        ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
         
         ctx.fill();
         ctx.shadowBlur = 0; // reset to prevent drawing lag

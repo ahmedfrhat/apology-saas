@@ -1,18 +1,20 @@
 import AdminDashboard from "@/components/AdminDashboard";
 import { AppProvider } from "@/context/AppContext";
+import { MoodProvider } from "@/context/MoodProvider";
+import AuthGate from "@/components/AuthGate";
 
 export function meta() {
   return [{ name: "robots", content: "noindex, nofollow" }];
 }
 
-import AuthGate from "@/components/AuthGate";
-
 export default function DashboardPage() {
   return (
     <AppProvider>
-      <AuthGate>
-        <AdminDashboard />
-      </AuthGate>
+      <MoodProvider>
+        <AuthGate>
+          <AdminDashboard />
+        </AuthGate>
+      </MoodProvider>
     </AppProvider>
   );
 }

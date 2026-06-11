@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AppProvider, useApp } from "@/context/AppContext";
+import { MoodProvider } from "@/context/MoodProvider";
 import { sectionContainer } from "@/utils/motionVariants";
 import HiddenMultiSourcePlayer from "@/components/HiddenMultiSourcePlayer";
+import useSpatialAudio from "@/hooks/useSpatialAudio";
 
 import TerminalLoader from "@/components/TerminalLoader";
 import AmbientParticles from "@/components/AmbientParticles";
@@ -77,11 +79,20 @@ const SECTIONS = [
   EternalVoidCanvas,
 ];
 
-function Experience() {
+function Experience({ stepState }) {
   const { config, playMusic } = useApp();
   const [booted, setBooted] = useState(false);
-  const [step, setStep] = useState(0);
+  const [step, setStep] = stepState;
   const [showMusicPrompt, setShowMusicPrompt] = useState(false);
+  const { transitionSound } = useSpatialAudio();
+  const prevStepRef = useRef(step);
+
+  useEffect(() => {
+    if (step > prevStepRef.current) {
+      transitionSound();
+    }
+    prevStepRef.current = step;
+  }, [step, transitionSound]);
 
   useEffect(() => {
     if (booted) {
@@ -91,7 +102,7 @@ function Experience() {
 
   const next = useCallback(() => {
     setStep((s) => Math.min(s + 1, SECTIONS.length - 1));
-  }, []);
+  }, [setStep]);
 
   const handlePlayMusic = useCallback(() => {
     playMusic();
@@ -103,6 +114,9 @@ function Experience() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden">
+      {/* Aurora ambient glow — mood-reactive background layer */}
+      <div className="aurora-bg" aria-hidden="true" />
+
       {!booted && <TerminalLoader onDone={() => setBooted(true)} />}
 
       {booted && (
@@ -119,18 +133,18 @@ function Experience() {
           )}
 
           {showMusicPrompt && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-md">
               <motion.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.9, filter: "blur(8px)" }}
+                animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, scale: 0.9, filter: "blur(8px)" }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handlePlayMusic}
-                className="bg-[#F4F3EF]/95 backdrop-blur-xl border border-[#DFBA73] shadow-[0_20px_50px_rgba(223,186,115,0.5)] px-8 py-4 rounded-full text-base font-semibold text-[#1A1A1A] flex items-center gap-3 cursor-pointer transition-all hover:bg-[#DFBA73]/10"
+                className="glass-card-elevated mood-glow-btn px-8 py-4 rounded-full text-base font-semibold text-[#1A1A1A] flex items-center gap-3 cursor-pointer"
               >
                 <span className="animate-bounce text-xl">🎵</span>
-                تشغيل الموسيقى المفضلة
+                <span className="glow-text font-bold">تشغيل الموسيقى المفضلة</span>
               </motion.button>
             </div>
           )}
@@ -142,7 +156,7 @@ function Experience() {
               initial="hidden"
               animate="show"
               exit="exit"
-              className="relative z-10"
+              className="relative z-10 gpu-accelerated"
             >
               <Current onNext={next} />
             </motion.div>
@@ -160,12 +174,22 @@ export default function ExperiencePage() {
   return (
     <AppProvider>
       <AuthGate>
-        <Experience />
+        <ExperienceWithMood />
         <HiddenMultiSourcePlayer />
         <BroadcastToast />
         <StealthChatWidget />
       </AuthGate>
     </AppProvider>
+  );
+}
+
+/** Wrapper that provides MoodProvider with the current stage index */
+function ExperienceWithMood() {
+  const [step, setStep] = useState(0);
+  return (
+    <MoodProvider stageIndex={step}>
+      <Experience stepState={[step, setStep]} />
+    </MoodProvider>
   );
 }
 

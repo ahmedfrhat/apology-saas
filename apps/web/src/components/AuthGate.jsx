@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Lock, AlertCircle, Sparkles } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useApp } from "@/context/AppContext";
+import useSpatialAudio from "@/hooks/useSpatialAudio";
 
 export default function AuthGate({ children }) {
   const { slug } = useParams();
@@ -15,6 +16,7 @@ export default function AuthGate({ children }) {
   const [error, setError] = useState(null);
   const [hint, setHint] = useState(null);
   const [lockoutTime, setLockoutTime] = useState(0);
+  const { clickSound, hoverSound, errorSound, successSound } = useSpatialAudio();
   
   // Check session storage first
   useEffect(() => {
@@ -92,6 +94,7 @@ export default function AuthGate({ children }) {
 
   const handleUnlock = async (e) => {
     e.preventDefault();
+    clickSound();
     if (!password) return;
     if (lockoutTime > 0) return;
     setLoading(true);
@@ -104,6 +107,7 @@ export default function AuthGate({ children }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        successSound();
         sessionStorage.setItem(`unlocked_${slug}`, "true");
         sessionStorage.setItem(`auth_pwd_${slug}`, password);
         localStorage.removeItem(`attempts_${slug}`);
@@ -113,6 +117,7 @@ export default function AuthGate({ children }) {
           logLedgerEvent("قامت بفك كلمة مرور البوابة بنجاح 🔓");
         }
       } else {
+        errorSound();
         const attemptsKey = `attempts_${slug}`;
         const attempts = parseInt(localStorage.getItem(attemptsKey) || "0") + 1;
         localStorage.setItem(attemptsKey, attempts.toString());
@@ -145,7 +150,7 @@ export default function AuthGate({ children }) {
         className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-2xl"
         dir={locale === "ar" ? "rtl" : "ltr"}
       >
-        <div className="w-full max-w-sm rounded-[2.5rem] border border-[#DFBA73]/30 bg-black/40 backdrop-blur-xl p-8 text-center shadow-[0_30px_70px_rgba(223,186,115,0.2)]">
+        <div className="w-full max-w-sm glass-card p-8 text-center shadow-[0_30px_70px_rgba(223,186,115,0.2)]" style={{ borderColor: 'var(--mood-accent, #DFBA73)' }}>
           <div className="h-16 w-16 mx-auto rounded-full bg-red-950/20 border border-red-500/30 flex items-center justify-center text-red-500 animate-pulse mb-4">
             <Lock size={28} />
           </div>
@@ -177,7 +182,7 @@ export default function AuthGate({ children }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md bg-[#F4F3EF]/70 dark:bg-gray-800/70 backdrop-blur-3xl border border-[#1A1A1A]/10 dark:border-gray-700/50 shadow-[0_30px_70px_rgba(0,0,0,0.4)] rounded-[2.5rem] p-8 sm:p-10 text-center relative overflow-hidden z-10"
+        className="w-full max-w-md glass-card p-8 sm:p-10 text-center relative overflow-hidden z-10"
       >
         <div className="mb-6 flex h-20 w-20 mx-auto items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200/50 dark:border-amber-700/50 relative">
           <Lock size={36} className="text-amber-800 dark:text-amber-500 animate-pulse" />

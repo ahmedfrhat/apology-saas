@@ -3,9 +3,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { AlertTriangle, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { celebrate } from "@/utils/confetti";
+import useSpatialAudio from "@/hooks/useSpatialAudio";
 
-const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card";
 
 export default function DeadlyTrapQuestion({ onNext }) {
   const { updateState, appendWrongClick, t } = useApp();
@@ -15,6 +15,7 @@ export default function DeadlyTrapQuestion({ onNext }) {
   const [success, setSuccess] = useState(false);
   const [showComplaint, setShowComplaint] = useState(false);
   const firstNoHoverTime = useRef(null);
+  const { clickSound, hoverSound, errorSound, successSound } = useSpatialAudio();
 
   useEffect(() => {
     updateState({
@@ -27,6 +28,7 @@ export default function DeadlyTrapQuestion({ onNext }) {
 
   // Jump the runaway button to a random spot that stays fully inside the card.
   const jump = useCallback(() => {
+    errorSound();
     if (!firstNoHoverTime.current) {
       firstNoHoverTime.current = Date.now();
     }
@@ -45,9 +47,10 @@ export default function DeadlyTrapQuestion({ onNext }) {
       x: x - (btnRect.left - cardRect.left),
       y: y - (btnRect.top - cardRect.top),
     });
-  }, []);
+  }, [errorSound]);
 
   const handleYes = useCallback(() => {
+    successSound();
     setSuccess(true);
     celebrate();
 
@@ -64,12 +67,13 @@ export default function DeadlyTrapQuestion({ onNext }) {
 
     updateState({ lastAction: "forgiven" });
     setTimeout(onNext, 2400);
-  }, [onNext, updateState]);
+  }, [onNext, updateState, successSound]);
 
   const openComplaint = useCallback(() => {
+    clickSound();
     setShowComplaint(true);
     appendWrongClick("complaint-to-mama");
-  }, [appendWrongClick]);
+  }, [appendWrongClick, clickSound]);
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-5">
@@ -123,7 +127,8 @@ export default function DeadlyTrapQuestion({ onNext }) {
               <button
                 type="button"
                 onClick={handleYes}
-                className="z-10 rounded-full bg-[#1A1A1A] px-8 py-3.5 text-base font-medium text-[#F4F3EF] transition-colors hover:bg-[#DFBA73] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
+                onMouseEnter={hoverSound}
+                className="mood-glow-btn z-10 rounded-full bg-[#1A1A1A] px-8 py-3.5 text-base font-medium text-[#F4F3EF] transition-colors hover:bg-[#DFBA73] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
               >
                 {t("أه يا قلبي طبعاً 🥺❤️")}
               </button>
@@ -173,7 +178,7 @@ export default function DeadlyTrapQuestion({ onNext }) {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.85, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-xs rounded-3xl border border-[#1A1A1A]/10 bg-[#F4F3EF] p-7 text-center"
+                className="glass-card relative w-full max-w-xs p-7 text-center"
               >
                 <button
                   type="button"

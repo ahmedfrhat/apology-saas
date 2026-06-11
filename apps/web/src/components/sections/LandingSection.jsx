@@ -3,15 +3,16 @@ import { motion } from "motion/react";
 import { Headphones } from "lucide-react";
 import TiltWrapper from "@/components/TiltWrapper";
 import { useApp } from "@/context/AppContext";
+import useSpatialAudio from "@/hooks/useSpatialAudio";
 
-const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card-elevated";
 
 const DEFAULT_FULL_TEXT = "في وسط أي زعل.. فيه حاجات تانية مستحيل تضيع.. انزلي شوفي";
 
 export default function LandingSection({ onNext }) {
   const { updateState, config, t } = useApp();
   const [typed, setTyped] = useState("");
+  const { clickSound, hoverSound } = useSpatialAudio();
 
   const landingText = t(config?.landingText || DEFAULT_FULL_TEXT);
 
@@ -59,9 +60,10 @@ export default function LandingSection({ onNext }) {
         <div className="flex justify-center">
           <button
             type="button"
-            onClick={handleStart}
+            onClick={() => { clickSound(); handleStart(); }}
+            onMouseEnter={hoverSound}
             aria-label="ابدأي"
-            className="group relative flex h-20 w-20 items-center justify-center rounded-full bg-[#1A1A1A] text-[#F4F3EF] transition-colors hover:bg-[#DFBA73] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
+            className="mood-glow-btn group relative flex h-20 w-20 items-center justify-center rounded-full bg-[#1A1A1A] text-[#F4F3EF] transition-colors hover:bg-[#DFBA73] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
           >
             <span
               className="absolute inset-0 rounded-full"

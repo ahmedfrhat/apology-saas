@@ -138,7 +138,7 @@ function ScratchCard({ index, text, revealed, onReveal, locale }) {
   return (
     <div 
       ref={containerRef}
-      className="relative h-52 w-full select-none rounded-[2rem] border border-[#1A1A1A]/10 bg-[#FAF8F3] dark:bg-[#1C1F30]/40 overflow-hidden shadow-md"
+      className="glass-card relative h-52 w-full select-none overflow-hidden"
     >
       {/* Underlying revealed content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center p-5 text-center bg-[#DFBA73]/15 dark:bg-[#DFBA73]/10 border border-[#DFBA73]/40 rounded-[2rem]">
@@ -243,7 +243,7 @@ export default function GiftCoupons({ onNext }) {
           <button
             type="button"
             onClick={onNext}
-            className="rounded-full bg-[#1A1A1A] dark:bg-[#EDE8E0] px-8 py-3.5 text-sm font-bold text-[#F4F3EF] dark:text-[#1A1510] transition-colors hover:bg-[var(--accent)] dark:hover:bg-[var(--accent)] hover:text-white dark:hover:text-white cursor-pointer shadow-md"
+            className="mood-glow-btn rounded-full bg-[#1A1A1A] dark:bg-[#EDE8E0] px-8 py-3.5 text-sm font-bold text-[#F4F3EF] dark:text-[#1A1510] transition-colors hover:bg-[var(--accent)] dark:hover:bg-[var(--accent)] hover:text-white dark:hover:text-white cursor-pointer shadow-md"
           >
             {t("استلام الهدايا وتفعيل الحماية 🔐")}
           </button>

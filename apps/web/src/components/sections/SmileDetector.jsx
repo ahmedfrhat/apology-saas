@@ -4,8 +4,7 @@ import { Camera, Check } from "lucide-react";
 import TiltWrapper from "@/components/TiltWrapper";
 import { useApp } from "@/context/AppContext";
 
-const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card";
 
 export default function SmileDetector({ onNext }) {
   const { updateState, t } = useApp();
@@ -80,7 +79,7 @@ export default function SmileDetector({ onNext }) {
             type="button"
             onClick={startScan}
             disabled={scanning}
-            className="rounded-full bg-[#1A1A1A] px-8 py-3 text-sm font-medium text-[#F4F3EF] transition-colors hover:bg-[#DFBA73] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
+            className="mood-glow-btn rounded-full bg-[#1A1A1A] px-8 py-3 text-sm font-medium text-[#F4F3EF] transition-colors hover:bg-[#DFBA73] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
           >
             {scanning ? t("جاري الفحص...") : t("ابدأي الفحص 📸")}
           </button>

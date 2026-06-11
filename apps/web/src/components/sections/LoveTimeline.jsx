@@ -149,7 +149,7 @@ export default function LoveTimeline({ onNext }) {
               transformStyle: "preserve-3d",
               transformOrigin: "center center"
             }}
-            className="w-full h-full flex flex-col md:flex-row bg-[#F4F3EF]/75 dark:bg-[#141622]/85 backdrop-blur-3xl border border-[#1A1A1A]/10 dark:border-[#C9956C]/15 shadow-[0_30px_70px_rgba(0,0,0,0.4)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.7)] rounded-[2.5rem] overflow-hidden"
+            className="glass-card w-full h-full flex flex-col md:flex-row overflow-hidden"
           >
             {/* Left Page/Panel (The Photo with Scratch/Glow) */}
             <div className="w-full md:w-1/2 h-1/2 md:h-full p-6 flex items-center justify-center relative bg-black/5 dark:bg-black/20">
@@ -257,7 +257,7 @@ export default function LoveTimeline({ onNext }) {
               triggerHaptic();
               onNext();
             }}
-            className="rounded-full bg-[#1A1A1A] dark:bg-[#EDE8E0] px-8 py-3.5 text-sm font-bold text-[#F4F3EF] dark:text-[#1A1510] shadow-md hover:bg-[var(--accent)] dark:hover:bg-[var(--accent)] hover:text-white dark:hover:text-white transition-all cursor-pointer transform hover:scale-105 active:scale-95 focus-visible:outline-none"
+            className="mood-glow-btn rounded-full bg-[#1A1A1A] dark:bg-[#EDE8E0] px-8 py-3.5 text-sm font-bold text-[#F4F3EF] dark:text-[#1A1510] shadow-md hover:bg-[var(--accent)] dark:hover:bg-[var(--accent)] hover:text-white dark:hover:text-white transition-all cursor-pointer transform hover:scale-105 active:scale-95 focus-visible:outline-none"
           >
             {t("دخلنا على الجد؟ 🫣")}
           </button>

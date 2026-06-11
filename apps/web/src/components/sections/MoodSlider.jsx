@@ -2,8 +2,7 @@ import { useState, useCallback } from "react";
 import { motion } from "motion/react";
 import { useApp } from "@/context/AppContext";
 
-const CARD =
-  "backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card";
 
 const STAGES = [
   {

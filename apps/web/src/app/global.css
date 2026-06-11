@@ -137,6 +137,20 @@ html.theme-transitioning *::after {
 }
 
 /* =============================================
+   MOOD CROSSFADE TRANSITION (300ms palette shift)
+ ============================================= */
+html.mood-transitioning *,
+html.mood-transitioning *::before,
+html.mood-transitioning *::after {
+  transition:
+    background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    color            250ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color     250ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow       300ms cubic-bezier(0.4, 0, 0.2, 1),
+    filter           300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* =============================================
    BASE STYLES
  ============================================= */
 @layer base {
@@ -375,4 +389,323 @@ html.theme-transitioning *::after {
 }
 .vinyl-pause {
   animation-play-state: paused;
+}
+
+/* =============================================
+   MOOD-ADAPTIVE ENGINE — State-Driven UI
+   Layers ON TOP of existing themes via [data-mood]
+ ============================================= */
+
+/* Default mood variables (love) — these are also set dynamically via JS */
+:root {
+  --mood-accent: #FF6B9D;
+  --mood-accent-alt: #E84393;
+  --mood-glow: rgba(255,107,157,0.30);
+  --mood-glow-strong: rgba(255,107,157,0.50);
+  --mood-particle: #FF6B9D;
+  --mood-particle-alt: #E84393;
+  --mood-gradient-start: #FF6B9D;
+  --mood-gradient-mid: #A855F7;
+  --mood-gradient-end: #EC4899;
+  --holo-angle: 0deg;
+}
+
+[data-mood="love"] {
+  --mood-accent: #FF6B9D;
+  --mood-accent-alt: #E84393;
+  --mood-glow: rgba(255,107,157,0.30);
+  --mood-glow-strong: rgba(255,107,157,0.50);
+  --mood-particle: #FF6B9D;
+  --mood-particle-alt: #E84393;
+  --mood-gradient-start: #FF6B9D;
+  --mood-gradient-mid: #A855F7;
+  --mood-gradient-end: #EC4899;
+}
+
+[data-mood="anger"] {
+  --mood-accent: #FF4444;
+  --mood-accent-alt: #FF6B35;
+  --mood-glow: rgba(255,68,68,0.25);
+  --mood-glow-strong: rgba(255,68,68,0.45);
+  --mood-particle: #FF4444;
+  --mood-particle-alt: #FF8C00;
+  --mood-gradient-start: #FF4444;
+  --mood-gradient-mid: #DC2626;
+  --mood-gradient-end: #EA580C;
+}
+
+[data-mood="reconciliation"] {
+  --mood-accent: #4ECDC4;
+  --mood-accent-alt: #45B7D1;
+  --mood-glow: rgba(78,205,196,0.30);
+  --mood-glow-strong: rgba(78,205,196,0.50);
+  --mood-particle: #4ECDC4;
+  --mood-particle-alt: #06B6D4;
+  --mood-gradient-start: #4ECDC4;
+  --mood-gradient-mid: #06B6D4;
+  --mood-gradient-end: #34D399;
+}
+
+/* =============================================
+   FUTURISTIC KEYFRAMES
+ ============================================= */
+@keyframes holoPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.02); }
+}
+
+@keyframes auroraShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes floatGently {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-8px); }
+}
+
+@keyframes glowBreath {
+  0%, 100% { box-shadow: 0 0 15px var(--mood-glow), 0 0 30px transparent; }
+  50%      { box-shadow: 0 0 25px var(--mood-glow-strong), 0 0 50px var(--mood-glow); }
+}
+
+@keyframes holoRotate {
+  0%   { --holo-angle: 0deg; }
+  100% { --holo-angle: 360deg; }
+}
+
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  33%      { transform: translateY(-4px) rotate(0.5deg); }
+  66%      { transform: translateY(2px) rotate(-0.3deg); }
+}
+
+@keyframes glowLine {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: var(--mood-glow); }
+  50%      { border-color: var(--mood-glow-strong); }
+}
+
+/* =============================================
+   GLASSMORPHISM CARD SYSTEM
+ ============================================= */
+@layer components {
+  .glass-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid var(--border-base);
+    border-radius: 1.5rem;
+    box-shadow:
+      var(--shadow-card),
+      inset 0 0 30px rgba(255,255,255,0.03),
+      0 0 0 1px rgba(255,255,255,0.05);
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+    contain: layout style paint;
+    transition: box-shadow 0.4s ease, border-color 0.4s ease;
+  }
+
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--holo-angle, 0deg),
+      transparent 0%,
+      var(--mood-glow) 10%,
+      transparent 20%,
+      var(--mood-glow) 50%,
+      transparent 60%,
+      var(--mood-glow) 80%,
+      transparent 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    animation: holoRotate 8s linear infinite;
+  }
+
+  .glass-card:hover::before {
+    opacity: 0.6;
+  }
+
+  .glass-card:hover {
+    box-shadow:
+      var(--shadow-card),
+      0 0 40px var(--mood-glow),
+      inset 0 0 30px rgba(255,255,255,0.05);
+  }
+
+  .glass-card-elevated {
+    background: var(--bg-card);
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    border: 1px solid var(--border-base);
+    border-radius: 2rem;
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.15),
+      0 0 0 1px rgba(255,255,255,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+    contain: layout style paint;
+  }
+
+  .glass-card-elevated::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--holo-angle, 0deg),
+      var(--mood-gradient-start) 0%,
+      var(--mood-gradient-mid) 33%,
+      var(--mood-gradient-end) 66%,
+      var(--mood-gradient-start) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.4;
+    pointer-events: none;
+    animation: holoRotate 6s linear infinite;
+  }
+
+  /* Holographic border utility */
+  .holo-border {
+    position: relative;
+  }
+
+  .holo-border::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(
+      135deg,
+      var(--mood-gradient-start),
+      var(--mood-gradient-mid),
+      var(--mood-gradient-end),
+      var(--mood-gradient-start)
+    );
+    background-size: 300% 300%;
+    animation: auroraShift 4s ease infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  /* Aurora ambient background */
+  .aurora-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      ellipse at 30% 20%,
+      var(--mood-glow) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 70% 80%,
+      rgba(var(--mood-gradient-mid), 0.1) 0%,
+      transparent 50%
+    );
+    opacity: 0.3;
+    animation: auroraShift 12s ease infinite;
+    background-size: 200% 200%;
+  }
+
+  /* Glowing text utility */
+  .glow-text {
+    background: linear-gradient(
+      90deg,
+      var(--mood-gradient-start) 0%,
+      var(--mood-gradient-mid) 50%,
+      var(--mood-gradient-end) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: glowLine 4s linear infinite;
+    filter: drop-shadow(0 0 8px var(--mood-glow));
+  }
+
+  /* Mood-aware glow button */
+  .mood-glow-btn {
+    position: relative;
+    overflow: visible;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+  }
+
+  .mood-glow-btn::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      var(--mood-gradient-start),
+      var(--mood-gradient-mid),
+      var(--mood-gradient-end)
+    );
+    opacity: 0;
+    filter: blur(12px);
+    transition: opacity 0.3s ease;
+    z-index: -1;
+  }
+
+  .mood-glow-btn:hover::before {
+    opacity: 0.6;
+  }
+
+  .mood-glow-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--mood-glow);
+  }
+
+  .mood-glow-btn:active {
+    transform: translateY(0px) scale(0.98);
+  }
+}
+
+/* =============================================
+   PERFORMANCE HINTS
+ ============================================= */
+@layer base {
+  .gpu-accelerated {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+}
+
+/* =============================================
+   @property for Holo Angle (Chrome/Edge support)
+ ============================================= */
+@property --holo-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
 }

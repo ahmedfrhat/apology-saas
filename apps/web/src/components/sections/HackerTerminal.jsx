@@ -3,8 +3,7 @@ import { motion } from "motion/react";
 import DecryptedText from "@/components/DecryptedText";
 import { useApp } from "@/context/AppContext";
 
-const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card";
 
 const DEFAULT_LINES = [
   "$ ssh {girlName}@heart.local",

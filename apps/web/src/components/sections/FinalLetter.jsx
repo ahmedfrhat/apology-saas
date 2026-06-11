@@ -6,8 +6,7 @@ import { grandConfetti } from "@/utils/confetti";
 import FinalFeedback from "@/components/sections/FinalFeedback";
 import { motionVariantsLetter } from "@/utils/motionVariants";
 
-const CARD =
-  "bg-[#F4F3EF]/60 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.6)] rounded-[2.5rem]";
+const CARD = "glass-card";
 
 const BODY = [
   "{girlNickname} الجميلة اللي ماليش غيرها،",
@@ -67,7 +66,7 @@ export default function FinalLetter({ onNext }) {
             <button
               type="button"
               onClick={openLetter}
-              className="group relative flex h-56 w-full max-w-md items-center justify-center rounded-[2rem] border border-[#1A1A1A]/10 bg-[#DFBA73]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
+              className="mood-glow-btn group relative flex h-56 w-full max-w-md items-center justify-center rounded-[2rem] bg-[#DFBA73]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] focus-visible:ring-offset-2"
             >
               <div className="absolute inset-x-0 top-0 h-1/2 origin-top rounded-t-[2rem] border-b border-[#1A1A1A]/10 bg-[#DFBA73]/25" />
               <motion.div

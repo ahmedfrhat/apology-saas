@@ -263,7 +263,7 @@ export default function EternalVoidCanvas() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 100, damping: 15 }}
-            className="w-full max-w-lg mt-8 rounded-[2.5rem] border border-[#DFBA73]/20 bg-black/40 backdrop-blur-xl p-8 shadow-[0_30px_70px_rgba(223,186,115,0.15)] relative z-35 text-center flex flex-col gap-6"
+            className="glass-card w-full max-w-lg mt-8 p-8 relative z-35 text-center flex flex-col gap-6"
           >
             {/* Tabs */}
             <div className="flex rounded-full bg-white/5 p-1 border border-white/5">
@@ -313,7 +313,7 @@ export default function EternalVoidCanvas() {
                         type="button"
                         onClick={handleLockCapsule}
                         disabled={!capsuleInput.trim()}
-                        className={`w-full py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all ${
+                        className={`mood-glow-btn w-full py-3 rounded-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all ${
                           !capsuleInput.trim() ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                       >
@@ -379,7 +379,7 @@ export default function EternalVoidCanvas() {
                     type="button"
                     onClick={downloadCertificate}
                     disabled={isGenerating}
-                    className="w-full max-w-xs py-3 rounded-full bg-[#DFBA73] hover:bg-[#C9956C] text-black font-bold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
+                    className="mood-glow-btn w-full max-w-xs py-3 rounded-full bg-[#DFBA73] hover:bg-[#C9956C] text-black font-bold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
                   >
                     <Download size={14} /> {isGenerating ? t("جاري توليد صك الصلح...") : t("تحميل الوثيقة الرسمية (PDF) 📥")}
                   </button>

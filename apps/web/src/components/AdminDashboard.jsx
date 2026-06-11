@@ -91,9 +91,9 @@ const T = {
   card: {
     background: "var(--bg-card)",
     border: "1px solid var(--border-base)",
-    backdropFilter: "blur(24px)",
-    WebkitBackdropFilter: "blur(24px)",
-    boxShadow: "var(--shadow-card)",
+    backdropFilter: "blur(40px) saturate(180%)",
+    WebkitBackdropFilter: "blur(40px) saturate(180%)",
+    boxShadow: "var(--shadow-card), inset 0 0 30px rgba(255,255,255,0.03)",
   },
   surface: {
     background: "var(--bg-surface)",
@@ -161,7 +161,7 @@ function FormField({ label, children }) {
 
 function SectionCard({ children, className = "" }) {
   return (
-    <div style={{ ...T.surface }} className={`rounded-2xl p-5 space-y-4 ${className}`}>
+    <div className={`glass-card rounded-2xl p-5 space-y-4 ${className}`}>
       {children}
     </div>
   );
@@ -223,10 +223,10 @@ function JourneyMap({ currentSection, t }) {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: "0.6rem", fontWeight: 700,
                   background: isCurrent
-                    ? "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%)"
+                    ? "linear-gradient(135deg, var(--mood-accent, var(--accent)) 0%, var(--mood-accent-alt, var(--accent-2)) 100%)"
                     : isPast ? "rgba(34,197,94,0.18)" : "var(--bg-base)",
-                  border: `1px solid ${isCurrent ? "var(--accent)" : isPast ? "rgba(34,197,94,0.35)" : "var(--border-base)"}`,
-                  boxShadow: isCurrent ? "0 0 10px var(--accent-glow)" : "none",
+                  border: `1px solid ${isCurrent ? "var(--mood-accent, var(--accent))" : isPast ? "rgba(34,197,94,0.35)" : "var(--border-base)"}`,
+                  boxShadow: isCurrent ? "0 0 12px var(--mood-glow, var(--accent-glow))" : "none",
                   color: isCurrent ? "#1A1510" : isPast ? "#4ADE80" : "var(--text-muted)",
                   transition: "all 500ms ease",
                 }}
@@ -329,19 +329,15 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t, cursor, toggleFreez
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      className="glass-card p-5 space-y-4"
       style={{
-        background: "var(--bg-card)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
         border: isOnline
-          ? "1px solid rgba(34,197,94,0.35)"
+          ? "1px solid rgba(34,197,94,0.45)"
           : "1px solid var(--border-base)",
         boxShadow: isOnline
-          ? "0 0 0 1px rgba(34,197,94,0.08), var(--shadow-card)"
+          ? "0 0 25px rgba(34,197,94,0.15), var(--shadow-card)"
           : "var(--shadow-card)",
-        transition: "border-color 600ms ease",
       }}
-      className="rounded-2xl p-4 space-y-4"
     >
       {/* Header row */}
       <div className="flex items-center justify-between">
@@ -1297,7 +1293,21 @@ export default function AdminDashboard() {
         {/* ══════════════════════════════════════════════
             BLOCK 1 — HERO HEADER
         ══════════════════════════════════════════════ */}
-        <div style={T.card} className="rounded-3xl p-6 sm:p-8">
+        <div className="glass-card-elevated rounded-3xl p-6 sm:p-8" style={{ position: "relative", overflow: "hidden" }}>
+          {/* Aurora header backdrop */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(135deg, var(--mood-gradient-start, var(--accent)) 0%, var(--mood-gradient-mid, var(--accent-2)) 50%, var(--mood-gradient-end, var(--accent)) 100%)",
+              opacity: 0.04,
+              backgroundSize: "200% 200%",
+              animation: "auroraShift 8s ease infinite",
+              pointerEvents: "none",
+              borderRadius: "inherit",
+            }}
+          />
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
 
             {/* Identity */}
@@ -1371,8 +1381,8 @@ export default function AdminDashboard() {
             BLOCK 2 — PREMIUM TAB BAR
         ══════════════════════════════════════════════ */}
         <div
-          style={{ background: "var(--bg-card)", border: "1px solid var(--border-base)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
-          className="rounded-2xl p-1.5 flex gap-1"
+          className="holo-border rounded-2xl p-1.5 flex gap-1"
+          style={{ background: "var(--bg-card)", backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)" }}
         >
           {MAIN_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -1383,10 +1393,10 @@ export default function AdminDashboard() {
                 onClick={() => setActiveTab(tab.id)}
                 style={
                   isActive
-                    ? { background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%)", color: "#1A1510", boxShadow: "0 4px 16px var(--accent-glow)" }
+                    ? { background: "linear-gradient(135deg, var(--mood-accent, var(--accent)) 0%, var(--mood-accent-alt, var(--accent-2)) 100%)", color: "#1A1510", boxShadow: "0 4px 16px var(--mood-glow, var(--accent-glow))" }
                     : { color: "var(--text-muted)" }
                 }
-                className={`flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${!isActive ? "hover:bg-gray-50" : ""}`}
+                className={`flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${!isActive ? "hover:bg-neutral-500/10" : ""}`}
               >
                 <Icon size={16} />
                 <span className="hidden sm:inline">{tab.label}</span>
