@@ -204,7 +204,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiSuccessMsg, setAiSuccessMsg] = useState("");
   const [coreIntent, setCoreIntent] = useState("apology");
-  const [textVibe, setTextVibe] = useState("affectionate");
+  const [textVibe, setTextVibe] = useState("standard");
   const [vibeIntensity, setVibeIntensity] = useState("medium");
 
   const handleGenerateAI = async (e) => {
@@ -284,9 +284,9 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
           <label className="block text-xs font-bold text-amber-900/70">الروح العامة (Text Vibe):</label>
           <div className="flex flex-wrap gap-2">
             {[
-              { id: 'affectionate', label: 'حنين ومرهم حنان' },
-              { id: 'playful_banter', label: 'رخامة وهزار كرتوني' },
-              { id: 'gentle_reproach', label: 'عتاب راقٍ ومشرّف' }
+              { id: 'standard', label: 'عادي' },
+              { id: 'funny', label: 'ضحك' },
+              { id: 'sarcastic_egyptian', label: 'ضحك وسخرية بالعامية المصرية' }
             ].map(opt => (
               <button
                 key={opt.id}

@@ -46,13 +46,14 @@ Your task is to generate a custom configuration in JSON format based on the boyf
 
 Additional parameters guiding the generation:
 - Core Intent: ${coreIntent} (Options: apology, love, joy)
-- Text Vibe: ${textVibe} (Options: affectionate, playful_banter, gentle_reproach)
+- Text Vibe: ${textVibe} (Options: standard, funny, sarcastic_egyptian)
 - Vibe Intensity: ${vibeIntensity} (Options: low, medium, high)
 
 Follow these instructions strictly:
 1. Deep Semantic Analyzer & Dynamic Tone:
-   - Extreme Slang Injection: If Text Vibe is "playful_banter", you MUST leverage highly relatable, genuinely funny Egyptian pop-culture wit and lighthearted teasing. However, ensure it remains STRICTLY loving, cute, and completely safe. Never use actual insults or toxic behavior. (إيفيهات أفلام خفيفة، ألش مصري لذيذ، ومناوشات كوميدية تغلفها الرومانسية).
-   - Intensity Scaling: Dynamically morph sentence structure and emotional weight based on Vibe Intensity. If set to 'high', deliver maximum dramatic impact but maintain a perfectly balanced romantic undertone.
+   - Sarcastic Egyptian Comedy: If Text Vibe is "sarcastic_egyptian", you MUST inject sharp, laugh-out-loud sarcastic Egyptian humor. Playfully roast and mock the boyfriend (تنمر كوميدي ضاحك على الولد) while heavily praising and hyping the girl (تطبيل كامل للبنت).
+   - Light Funny Tone: If Text Vibe is "funny", leverage highly relatable, genuinely funny Egyptian pop-culture wit and lighthearted teasing.
+   - Intensity Scaling: Dynamically morph sentence structure and emotional weight based on Vibe Intensity. If set to 'high', deliver maximum dramatic impact.
    - If Core Intent is "love" or "joy", frame the text entirely around affection, happiness, and appreciation rather than apology.
    - ABSOLUTE BAN ON STATIC PREFIXES: Strictly forbid using hardcoded templates, quotes, or sentence starters.
    - 100% ORGANIC SYNTHESIS: The input reason must ONLY be treated as "semantic context". Never copy the exact phrase.

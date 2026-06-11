@@ -8,6 +8,7 @@ const CARD =
 export default function SaaSOnboardingPage() {
   const [boyName, setBoyName] = useState("");
   const [girlName, setGirlName] = useState("");
+  const [petName, setPetName] = useState("");
   const [slug, setSlug] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,7 @@ export default function SaaSOnboardingPage() {
         const res = await fetch("/api/sites", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ slug, password, boyName, girlName }),
+          body: JSON.stringify({ slug, password, boyName, girlName, petName }),
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
@@ -71,7 +72,7 @@ export default function SaaSOnboardingPage() {
         setLoading(false);
       }
     },
-    [slug, password, boyName, girlName]
+    [slug, password, boyName, girlName, petName]
   );
 
   return (
@@ -110,6 +111,7 @@ export default function SaaSOnboardingPage() {
               <input type="text" required value={boyName} onChange={(e) => setBoyName(e.target.value)} placeholder="اسمك" className="w-full rounded-xl border p-2.5" />
               <input type="text" required value={girlName} onChange={(e) => setGirlName(e.target.value)} placeholder="اسمها" className="w-full rounded-xl border p-2.5" />
             </div>
+            <input type="text" value={petName} onChange={(e) => setPetName(e.target.value)} placeholder="اسم الدلع (اختياري، مثلاً: كوكيتي)" className="w-full rounded-xl border p-2.5" />
             <div className="flex items-center rounded-xl border bg-white overflow-hidden" dir="ltr">
               <span className="px-3 bg-gray-50 text-gray-500 text-xs py-3">{isMounted ? origin : "loading..."}</span>
               <input type="text" required value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="link" className="flex-1 p-2.5 outline-none" />

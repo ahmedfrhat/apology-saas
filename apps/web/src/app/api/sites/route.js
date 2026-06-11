@@ -130,7 +130,7 @@ export async function POST(request, context, c) {
       return Response.json({ error: "فشل قراءة البيانات. قد يكون الاتصال بطيئاً." }, { status: 400 });
     }
 
-    const { slug, password, boyName, girlName } = body || {};
+    const { slug, password, boyName, girlName, petName } = body || {};
 
     if (!slug || !password || !boyName || !girlName) {
       console.log("[sites/POST] 4. Missing fields validation failed.");
@@ -157,13 +157,14 @@ export async function POST(request, context, c) {
       return Response.json({ error: "الرابط ده محجوز يا هندسة ❌" }, { status: 409 });
     }
 
-    const girlNickname = getGirlNickname(girlName);
+    const girlNickname = petName && petName.trim() ? petName.trim() : getGirlNickname(girlName);
 
     const configBase = {
       ...DEFAULT_CONFIG_TEMPLATE,
       boyName,
       girlName,
-      girlNickname
+      girlNickname,
+      petNameOverride: petName && petName.trim() ? petName.trim() : null
     };
 
     // Deep replace template strings so dashboard shows actual names
