@@ -14,11 +14,14 @@ export default function useSpatialAudio() {
   // Lazy-init AudioContext on first interaction
   const getCtx = useCallback(() => {
     if (!enabledRef.current || !audioPlaying) return null;
-    if (typeof window === "undefined" || typeof AudioContext === "undefined") return null;
+    if (typeof window === "undefined") return null;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
 
     if (!ctxRef.current) {
       try {
-        ctxRef.current = new AudioContext();
+        ctxRef.current = new AudioContextClass();
       } catch {
         enabledRef.current = false;
         return null;

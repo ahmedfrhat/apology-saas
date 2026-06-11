@@ -5,6 +5,7 @@ const SCRAMBLE =
 
 let audioCtx = null;
 function playKeyboardClickSound() {
+  if (typeof window === "undefined") return;
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
