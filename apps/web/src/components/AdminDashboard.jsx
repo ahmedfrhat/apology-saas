@@ -1,1597 +1,1372 @@
 import { useState, useEffect, useCallback, useRef, memo } from "react";
 import {
- Activity,
- Radio,
- RefreshCw,
- Send,
- Battery,
- CheckCircle,
- Settings,
- Plus,
- Trash2,
- Save,
- Check,
- HelpCircle,
- Gavel,
- Gift,
- FileText,
- AlertCircle,
- Sparkles,
- Copy
+  Activity,
+  Radio,
+  RefreshCw,
+  Send,
+  Battery,
+  CheckCircle,
+  Settings,
+  Plus,
+  Trash2,
+  Save,
+  Check,
+  HelpCircle,
+  Gavel,
+  Gift,
+  FileText,
+  AlertCircle,
+  Sparkles,
+  Copy,
+  Zap,
+  BarChart2,
+  MapPin,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import Footer from "@/components/Footer";
 
-const SECTION_LABELS = {
- loader: "شاشة التحميل",
- terminal: "التيرمنال",
- smile: "كاشف الابتسامة",
- mood: "مؤشر المزاج",
- timeline: "خط الذكريات",
- trivia: "الاختبار",
- judge: "المحكمة",
- gifts: "كروت الهدايا",
- fingerprint: "البصمة",
- trap: "سؤال الموت",
- letter: "الجواب",
- "eternal-void": "اللانهاية",
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const JOURNEY_STAGES = [
+  { key: "loader",      icon: "⚡", label: "التحميل" },
+  { key: "landing",     icon: "🌸", label: "البداية" },
+  { key: "terminal",    icon: "💻", label: "الهاكر" },
+  { key: "smile",       icon: "😊", label: "الابتسامة" },
+  { key: "mood",        icon: "💭", label: "المزاج" },
+  { key: "timeline",    icon: "📸", label: "الذكريات" },
+  { key: "trivia",      icon: "🎯", label: "الاختبار" },
+  { key: "court",       icon: "⚖️", label: "المحكمة" },
+  { key: "gifts",       icon: "🎁", label: "الهدايا" },
+  { key: "fingerprint", icon: "🔐", label: "البصمة" },
+  { key: "trap",        icon: "🪤", label: "الفخ" },
+  { key: "letter",      icon: "💌", label: "الجواب" },
+];
+
+const SECTION_MAP = {
+  loader: "شاشة التحميل", landing: "البداية", terminal: "الهاكر",
+  smile: "كاشف الابتسامة", mood: "مؤشر الزعل", timeline: "ذكرياتنا",
+  trivia: "اختبار الذاكرة", court: "المحكمة", gifts: "الهدايا",
+  fingerprint: "البصمة", trap: "سؤال الفخ", letter: "رسالة النهاية",
+  void: "شاشة الفضاء", at_gate: "عند البوابة 🔒",
 };
 
+const ACTION_MAP = {
+  "session_start": "بدأت التصفح",
+  "plea-submitted": "قدمت الدفاع في المحكمة",
+  "rated-1": "قيمت بـ 1 نجمة 😡",
+  "rated-2": "قيمت بـ 2 نجمة 😟",
+  "rated-3": "قيمت بـ 3 نجوم 😐",
+  "rated-4": "قيمت بـ 4 نجوم 🙂",
+  "rated-5": "قيمت بـ 5 نجوم 😍",
+  "eternal-void": "وصلت للنهاية",
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function timeAgo(iso) {
- if (!iso) return "—";
- const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
- if (diff < 60) return `من ${diff} ثانية`;
- if (diff < 3600) return `من ${Math.floor(diff / 60)} دقيقة`;
- return `من ${Math.floor(diff / 3600)} ساعة`;
+  if (!iso) return "—";
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return `منذ ${diff} ثانية`;
+  if (diff < 3600) return `منذ ${Math.floor(diff / 60)} دقيقة`;
+  return `منذ ${Math.floor(diff / 3600)} ساعة`;
 }
 
-function SessionRow({ row, onBroadcast }) {
- const [msg, setMsg] = useState("");
- const [sending, setSending] = useState(false);
- const d = new Date(row.updated_at);
- const timeStr = d.toLocaleTimeString("ar-EG", {
- hour: "2-digit",
- minute: "2-digit",
- });
-
- const send = useCallback(async () => {
- if (!msg.trim()) return;
- setSending(true);
- await onBroadcast(row.session_id, msg.trim());
- setMsg("");
- setSending(false);
- }, [msg, row.session_id, onBroadcast]);
-
- // Translator for sections and actions
- const actionMap = {
- "session_start": "بدأت التصفح",
- "plea-submitted": "قدمت الدفاع في المحكمة",
- "rated-1": "قيمت بـ 1 نجمة 😡",
- "rated-2": "قيمت بـ 2 نجمة 😟",
- "rated-3": "قيمت بـ 3 نجوم 😐",
- "rated-4": "قيمت بـ 4 نجوم 🙂",
- "rated-5": "قيمت بـ 5 نجوم 😍",
- "eternal-void": "وصلت للنهاية",
- };
- const sectionMap = {
- loader: "شاشة التحميل",
- landing: "البداية",
- terminal: "الهاكر",
- smile: "كاشف الابتسامة",
- mood: "مؤشر الزعل",
- timeline: "ذكرياتنا",
- trivia: "اختبار الذاكرة",
- court: "المحكمة",
- gifts: "الهدايا",
- fingerprint: "البصمة",
- trap: "سؤال الفخ",
- letter: "رسالة النهاية",
- void: "شاشة الفضاء",
- };
-
- const getActionStr = (action) => {
- if (!action) return "غير معروف";
- if (action.startsWith("wrong:")) return `ضغطت زر خطأ: ${action.replace("wrong:", "")}`;
- return actionMap[action] || action;
- };
-
- const getSectionStr = (section) => sectionMap[section] || section || "غير معروف";
-
- const battery = row.battery_level ?? 0;
- const batteryColor =
- battery < 20
- ? "#EF4444"
- : battery < 50
- ? "#F97316"
- : battery < 80
- ? "#EC4899"
- : "#22C55E";
-
- const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 15000;
-
- return (
- <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 text-sm shadow-sm">
- <div className="flex items-center justify-between border-b border-gray-50 pb-3">
- <div className="flex items-center gap-2">
- <span className="font-mono text-xs text-gray-400">
- {row.session_id.slice(0, 8)}...
- </span>
- <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">
- {timeStr}
- </span>
- <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${isOnline ? 'bg-green-100 text-green-700' : 'bg-red-50 text-red-500'}`}>
- <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
- {isOnline ? (row.current_section === "at_gate" ? "متصلة وتقف عند البوابة 🔒" : "متصلة داخل المنصة ✅") : "غير متصل"}
- </span>
- </div>
- <div className="flex items-center gap-1.5 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
- <Battery size={12} style={{ color: batteryColor }} />
- <span style={{ color: batteryColor }}>{battery}%</span>
- </div>
- </div>
-
- <div className="flex flex-col gap-1.5">
- <div className="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded-md">
- <span className="text-gray-500 text-xs font-medium">القسم الحالي:</span>
- <span className="font-bold text-gray-800 text-xs">{getSectionStr(row.current_section)}</span>
- </div>
- <div className="flex justify-between items-center bg-gray-50 px-2 py-1.5 rounded-md">
- <span className="text-gray-500 text-xs font-medium">آخر حركة:</span>
- <span className="font-bold text-blue-700 text-xs text-left" dir="ltr">{getActionStr(row.last_action)}</span>
- </div>
-
- {row.details && row.details.quizChoices && (
- <div className="mt-1 flex flex-col gap-1 rounded bg-amber-50 p-2 text-xs font-medium text-amber-900 border border-amber-100">
- <span className="font-bold">🎯 إجابات الاختبار:</span>
- {row.details.quizChoices.map((c, i) => (
- <span key={i}>- {c.q}: {c.answer}</span>
- ))}
- </div>
- )}
-
- {row.hesitation_detected && (
- <div className="mt-1 flex items-center gap-1.5 rounded bg-orange-50 p-2 text-xs font-medium text-orange-700 border border-orange-100">
- <AlertCircle size={14} className="animate-pulse" />
- ترددت لمدة {Math.round(row.hesitation_seconds)} ثانية!
- </div>
- )}
- 
- {/* User Inputs Display */}
- {row.plea_text && (
- <div className="mt-2 rounded-lg bg-indigo-50 p-3 border border-indigo-100">
- <span className="text-indigo-800 text-xs font-bold flex items-center gap-1 mb-1.5">
- ⚖️ دفاعها في المحكمة:
- </span>
- <p className="text-indigo-900 text-sm font-medium leading-relaxed">"{row.plea_text}"</p>
- </div>
- )}
- {row.final_comment && (
- <div className="mt-2 rounded-lg bg-pink-50 p-3 border border-pink-100">
- <span className="text-pink-800 text-xs font-bold flex items-center gap-1 mb-1.5">
- 💌 رسالتها النهائية (التقييم {row.star_rating} نجوم):
- </span>
- <p className="text-pink-900 text-sm font-medium leading-relaxed">"{row.final_comment}"</p>
- </div>
- )}
- </div>
-
- <div className="mt-2 flex items-center gap-2 border-t border-gray-50 pt-3">
- <input
- type="text"
- value={msg}
- onChange={(e) => setMsg(e.target.value)}
- placeholder="ابعث رسالة تظهر على شاشتها فوراً..."
- className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-800 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
- onKeyDown={(e) => {
- if (e.key === "Enter") send();
- }}
- />
- <button
- type="button"
- disabled={!msg.trim() || sending}
- onClick={send}
- className="rounded-lg bg-blue-600 px-3 py-2 text-white font-medium text-xs transition-all hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 shadow-sm disabled:shadow-none flex items-center gap-1.5"
- >
- {sending ? "جاري..." : "إرسال"} <Send size={14} />
- </button>
- </div>
- </div>
- );
+function getActionStr(action) {
+  if (!action) return "غير معروف";
+  if (action.startsWith("wrong:")) return `ضغطت زر خطأ: ${action.replace("wrong:", "")}`;
+  return ACTION_MAP[action] || action;
 }
+
+function getSectionStr(section) {
+  return SECTION_MAP[section] || section || "غير معروف";
+}
+
+// ─── Design Token Shortcuts ───────────────────────────────────────────────────
+
+const T = {
+  card: {
+    background: "var(--bg-card)",
+    border: "1px solid var(--border-base)",
+    backdropFilter: "blur(24px)",
+    WebkitBackdropFilter: "blur(24px)",
+    boxShadow: "var(--shadow-card)",
+  },
+  surface: {
+    background: "var(--bg-surface)",
+    border: "1px solid var(--border-base)",
+  },
+  base: {
+    background: "var(--bg-base)",
+    border: "1px solid var(--border-base)",
+  },
+  accentGradient: {
+    background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%)",
+    color: "#1A1510",
+    boxShadow: "0 4px 20px var(--accent-glow)",
+  },
+  input: {
+    background: "var(--bg-base)",
+    color: "var(--text-primary)",
+    border: "1px solid var(--border-base)",
+  },
+};
+
+// ─── Reusable UI Atoms ────────────────────────────────────────────────────────
+
+function FieldLabel({ children }) {
+  return (
+    <label style={{ color: "var(--text-muted)" }} className="block text-[10px] font-bold uppercase tracking-widest mb-1.5">
+      {children}
+    </label>
+  );
+}
+
+function TokenInput({ value, onChange, placeholder, rows, type = "text", required }) {
+  const baseClass = "w-full rounded-xl px-4 py-2.5 text-sm font-medium outline-none transition-all focus:ring-2 focus:ring-[var(--accent)]";
+  return rows ? (
+    <textarea
+      value={value}
+      onChange={onChange}
+      rows={rows}
+      required={required}
+      placeholder={placeholder}
+      style={T.input}
+      className={`${baseClass} resize-none`}
+    />
+  ) : (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      required={required}
+      placeholder={placeholder}
+      style={T.input}
+      className={baseClass}
+    />
+  );
+}
+
+function FormField({ label, children }) {
+  return (
+    <div>
+      <FieldLabel>{label}</FieldLabel>
+      {children}
+    </div>
+  );
+}
+
+function SectionCard({ children, className = "" }) {
+  return (
+    <div style={{ ...T.surface }} className={`rounded-2xl p-5 space-y-4 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function SectionHeading({ icon: Icon, children, accent = false }) {
+  return (
+    <h3
+      style={{ color: "var(--text-primary)" }}
+      className="text-sm font-bold flex items-center gap-2"
+    >
+      <Icon size={16} style={{ color: accent ? "var(--accent-2)" : "var(--accent)" }} />
+      {children}
+    </h3>
+  );
+}
+
+// ─── Battery Bar ──────────────────────────────────────────────────────────────
+
+function BatteryBar({ level }) {
+  const color =
+    level < 20 ? "#EF4444" :
+    level < 50 ? "#F97316" :
+    level < 80 ? "#EC4899" : "#22C55E";
+  return (
+    <div className="flex items-center gap-2">
+      <Battery size={13} style={{ color }} />
+      <div style={{ width: 40, height: 5, background: "var(--bg-base)", borderRadius: 999 }}>
+        <div
+          style={{
+            width: `${level}%`, height: "100%",
+            background: color, borderRadius: 999,
+            transition: "width 800ms cubic-bezier(0.4,0,0.2,1)",
+          }}
+        />
+      </div>
+      <span style={{ color, fontSize: "0.7rem" }} className="font-bold">{level}%</span>
+    </div>
+  );
+}
+
+// ─── Journey Progress Map ─────────────────────────────────────────────────────
+
+function JourneyMap({ currentSection }) {
+  const currentIdx = JOURNEY_STAGES.findIndex(s => s.key === currentSection);
+  return (
+    <div>
+      <p style={{ color: "var(--text-muted)", fontSize: "0.6rem" }} className="font-bold uppercase tracking-widest mb-2">خريطة الرحلة</p>
+      <div className="flex items-center gap-0.5 overflow-x-auto pb-1 scrollbar-hide">
+        {JOURNEY_STAGES.map((stage, idx) => {
+          const isPast = currentIdx >= 0 && idx < currentIdx;
+          const isCurrent = stage.key === currentSection;
+          return (
+            <div key={stage.key} className="flex items-center gap-0.5 shrink-0">
+              <div
+                title={stage.label}
+                style={{
+                  width: 24, height: 24, borderRadius: "50%",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "0.6rem", fontWeight: 700,
+                  background: isCurrent
+                    ? "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%)"
+                    : isPast ? "rgba(34,197,94,0.18)" : "var(--bg-base)",
+                  border: `1px solid ${isCurrent ? "var(--accent)" : isPast ? "rgba(34,197,94,0.35)" : "var(--border-base)"}`,
+                  boxShadow: isCurrent ? "0 0 10px var(--accent-glow)" : "none",
+                  color: isCurrent ? "#1A1510" : isPast ? "#4ADE80" : "var(--text-muted)",
+                  transition: "all 500ms ease",
+                }}
+              >
+                {isCurrent ? stage.icon : isPast ? "✓" : "·"}
+              </div>
+              {idx < JOURNEY_STAGES.length - 1 && (
+                <div style={{
+                  width: 8, height: 2, borderRadius: 999,
+                  background: isPast ? "rgba(34,197,94,0.40)" : "var(--border-base)",
+                  transition: "background 500ms ease",
+                }} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Premium Session Card ─────────────────────────────────────────────────────
+
+function PremiumSessionCard({ row, onBroadcast }) {
+  const [msg, setMsg] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const send = useCallback(async () => {
+    if (!msg.trim()) return;
+    setSending(true);
+    await onBroadcast(row.session_id, msg.trim());
+    setMsg("");
+    setSending(false);
+  }, [msg, row.session_id, onBroadcast]);
+
+  const battery = row.battery_level ?? 0;
+  const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 15000;
+  const timeStr = new Date(row.updated_at).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+  const isAtGate = row.current_section === "at_gate";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        background: "var(--bg-card)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: isOnline
+          ? "1px solid rgba(34,197,94,0.35)"
+          : "1px solid var(--border-base)",
+        boxShadow: isOnline
+          ? "0 0 0 1px rgba(34,197,94,0.08), var(--shadow-card)"
+          : "var(--shadow-card)",
+        transition: "border-color 600ms ease",
+      }}
+      className="rounded-2xl p-4 space-y-3"
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div
+            className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnline ? "bg-green-500 animate-pulse" : "bg-slate-400"}`}
+          />
+          <span style={{ color: "var(--text-muted)", fontFamily: "monospace", fontSize: "0.68rem" }}>
+            {row.session_id.slice(0, 8)}…
+          </span>
+          <span
+            style={{ background: "rgba(96,165,250,0.12)", color: "#60A5FA", border: "1px solid rgba(96,165,250,0.20)", fontSize: "0.65rem" }}
+            className="px-2 py-0.5 rounded-full font-bold"
+          >
+            {timeStr}
+          </span>
+          <span
+            style={{
+              background: isOnline ? "rgba(34,197,94,0.10)" : "rgba(148,163,184,0.08)",
+              border: `1px solid ${isOnline ? "rgba(34,197,94,0.25)" : "rgba(148,163,184,0.15)"}`,
+              color: isOnline ? "#22C55E" : "var(--text-muted)",
+              fontSize: "0.65rem",
+            }}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full font-bold"
+          >
+            {isOnline
+              ? (isAtGate ? "عند البوابة 🔒" : "داخل المنصة ✅")
+              : "غير متصلة"}
+          </span>
+        </div>
+        <BatteryBar level={battery} />
+      </div>
+
+      {/* Journey Map */}
+      <JourneyMap currentSection={row.current_section} />
+
+      {/* Info grid */}
+      <div className="grid grid-cols-2 gap-2">
+        <div style={T.base} className="rounded-xl px-3 py-2">
+          <p style={{ color: "var(--text-muted)", fontSize: "0.58rem" }} className="font-bold uppercase tracking-wider mb-0.5">القسم الحالي</p>
+          <p style={{ color: "var(--text-primary)", fontSize: "0.78rem" }} className="font-bold truncate">{getSectionStr(row.current_section)}</p>
+        </div>
+        <div style={T.base} className="rounded-xl px-3 py-2">
+          <p style={{ color: "var(--text-muted)", fontSize: "0.58rem" }} className="font-bold uppercase tracking-wider mb-0.5">آخر حركة</p>
+          <p style={{ color: "#60A5FA", fontSize: "0.78rem" }} className="font-bold truncate">{getActionStr(row.last_action)}</p>
+        </div>
+      </div>
+
+      {/* Data panels */}
+      {row.details?.quizChoices && (
+        <div style={{ background: "rgba(201,149,108,0.08)", border: "1px solid rgba(201,149,108,0.25)" }} className="rounded-xl p-3 text-xs space-y-1">
+          <span style={{ color: "var(--accent)" }} className="font-bold block">🎯 إجابات الاختبار:</span>
+          {row.details.quizChoices.map((c, i) => (
+            <span key={i} style={{ color: "var(--text-secondary)" }} className="block">· {c.q}: <strong>{c.answer}</strong></span>
+          ))}
+        </div>
+      )}
+      {row.hesitation_detected && (
+        <div style={{ background: "rgba(251,146,60,0.10)", border: "1px solid rgba(251,146,60,0.25)" }} className="rounded-xl p-3 flex items-center gap-2 text-xs font-medium" style2={{ color: "#FB923C" }}>
+          <AlertCircle size={14} className="text-orange-400 animate-pulse shrink-0" />
+          <span style={{ color: "#FB923C" }}>ترددت لمدة {Math.round(row.hesitation_seconds)} ثانية!</span>
+        </div>
+      )}
+      {row.plea_text && (
+        <div style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.22)" }} className="rounded-xl p-3">
+          <span className="text-indigo-400 text-xs font-bold flex items-center gap-1 mb-1.5">⚖️ دفاعها في المحكمة:</span>
+          <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium leading-relaxed">"{row.plea_text}"</p>
+        </div>
+      )}
+      {row.final_comment && (
+        <div style={{ background: "rgba(236,72,153,0.08)", border: "1px solid rgba(236,72,153,0.22)" }} className="rounded-xl p-3">
+          <span className="text-pink-400 text-xs font-bold flex items-center gap-1 mb-1.5">
+            💌 تقييمها النهائي ({row.star_rating} ⭐):
+          </span>
+          <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium leading-relaxed">"{row.final_comment}"</p>
+        </div>
+      )}
+
+      {/* Broadcast bar */}
+      <div
+        style={{ borderTop: "1px solid var(--border-base)", paddingTop: "0.75rem" }}
+        className="flex items-center gap-2"
+      >
+        <input
+          type="text"
+          value={msg}
+          onChange={(e) => setMsg(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") send(); }}
+          placeholder="ابعث رسالة تظهر على شاشتها فوراً..."
+          style={{ ...T.input, fontSize: "0.78rem" }}
+          className="flex-1 rounded-xl px-3 py-2 font-medium outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+        />
+        <button
+          type="button"
+          disabled={!msg.trim() || sending}
+          onClick={send}
+          style={
+            msg.trim() && !sending
+              ? T.accentGradient
+              : { background: "var(--bg-base)", color: "var(--text-muted)", border: "1px solid var(--border-base)" }
+          }
+          className="rounded-xl px-3 py-2 font-bold text-xs transition-all hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+        >
+          {sending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
+          {sending ? "..." : "إرسال"}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── AI Generator ─────────────────────────────────────────────────────────────
 
 const MagicAIGenerator = memo(({ siteSlug, setFormData }) => {
- const [incidentReason, setIncidentReason] = useState("");
- const [isGeneratingAI, setIsGeneratingAI] = useState(false);
- const [aiSuccessMsg, setAiSuccessMsg] = useState("");
- const [coreIntent, setCoreIntent] = useState("apology");
- const [textVibe, setTextVibe] = useState("standard");
- const [vibeIntensity, setVibeIntensity] = useState("medium");
+  const [incidentReason, setIncidentReason] = useState("");
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiSuccessMsg, setAiSuccessMsg] = useState("");
+  const [coreIntent, setCoreIntent] = useState("apology");
+  const [textVibe, setTextVibe] = useState("standard");
+  const [vibeIntensity, setVibeIntensity] = useState("medium");
 
- const handleGenerateAI = async (e) => {
- e.preventDefault();
- if (!incidentReason.trim() || !siteSlug) return;
- setIsGeneratingAI(true);
- setAiSuccessMsg("");
- try {
- const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/generate-ai`, {
- method: "POST",
- headers: { "Content-Type": "application/json" },
- body: JSON.stringify({
- incident_reason: incidentReason.trim(),
- coreIntent,
- textVibe,
- vibeIntensity
- }),
- });
- if (res.ok) {
- const data = await res.json();
- setFormData((prev) => ({
- ...prev,
- landingText: data.landingText,
- triviaQuestions: data.triviaQuestions,
- finalLetter: {
- ...prev.finalLetter,
- ...data.finalLetter,
- },
- }));
- setAiSuccessMsg("تم توليد النصوص السحرية بنجاح! 🪄 اضغط على زر حفظ التغييرات 💾");
- } else {
- const errData = await res.json();
- alert(errData.error || "فشل توليد نصوص المصالحة");
- }
- } catch (err) {
- console.error(err);
- alert("حدث خطأ أثناء الاتصال بالسيرفر");
- } finally {
- setIsGeneratingAI(false);
- }
- };
+  const handleGenerateAI = async (e) => {
+    e.preventDefault();
+    if (!incidentReason.trim() || !siteSlug) return;
+    setIsGeneratingAI(true);
+    setAiSuccessMsg("");
+    try {
+      const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/generate-ai`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ incident_reason: incidentReason.trim(), coreIntent, textVibe, vibeIntensity }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFormData((prev) => ({
+          ...prev,
+          landingText: data.landingText,
+          triviaQuestions: data.triviaQuestions,
+          finalLetter: { ...prev.finalLetter, ...data.finalLetter },
+        }));
+        setAiSuccessMsg("تم توليد النصوص السحرية بنجاح! 🪄 اضغط على زر حفظ التغييرات 💾");
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "فشل توليد نصوص المصالحة");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء الاتصال بالسيرفر");
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
- return (
- <div className="bg-amber-50/60 border border-amber-200/50 rounded-2xl p-5 sm:p-6 mb-2 relative overflow-hidden">
- <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
- <h4 className="flex items-center gap-2 text-sm font-bold text-amber-900 mb-2">
- <Sparkles size={16} className="text-amber-800 animate-pulse" />
- الصياغة السحرية بالذكاء الاصطناعي ✨
- </h4>
- <p className="text-xs sm:text-sm text-amber-800/80 mb-4 font-medium leading-relaxed max-w-2xl">
- اكتب سبب الزعل باختصار، وسيقوم الذكاء الاصطناعي بصياغة اعتذار رومانسي متكامل، وتجهيز أسئلة فخ مضحكة، وجواب خاص يليق بالمشكلة!
- </p>
+  function ChipGroup({ label, options, value, onChange }) {
+    return (
+      <div className="space-y-2">
+        <FieldLabel>{label}</FieldLabel>
+        <div className="flex flex-wrap gap-2">
+          {options.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onChange(opt.id)}
+              style={
+                value === opt.id
+                  ? { ...T.accentGradient, border: "1px solid var(--accent)" }
+                  : { background: "var(--bg-surface)", color: "var(--text-secondary)", border: "1px solid var(--border-base)" }
+              }
+              className="px-4 py-2 text-xs font-bold rounded-full transition-all duration-200 hover:opacity-90 active:scale-95"
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
- {/* AI Configuration Chips */}
- <div className="flex flex-col gap-4 mb-5 border-b border-amber-200/40 pb-5">
- <div className="space-y-2">
- <label className="block text-xs font-bold text-amber-900/70">الهدف الأساسي (Core Intent):</label>
- <div className="flex flex-wrap gap-2">
- {[
- { id: 'apology', label: 'مصالحة واعتذار استراتيجي' },
- { id: 'love', label: 'اعتراف رومانسي مفتوح' },
- { id: 'joy', label: 'بهجة وسعادة بدون سبب' }
- ].map(opt => (
- <button
- key={opt.id}
- type="button"
- onClick={() => setCoreIntent(opt.id)}
- className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ease-in-out cursor-pointer select-none outline-none ${coreIntent === opt.id ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/40 ring-1 ring-amber-400 transform scale-[1.02]" : "bg-white/40 text-amber-900 hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-95 border border-amber-200/40"}`}
- >
- {opt.label}
- </button>
- ))}
- </div>
- </div>
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start gap-4">
+        <div
+          style={{ background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%)", boxShadow: "0 8px 24px var(--accent-glow)" }}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0"
+        >
+          🤖
+        </div>
+        <div>
+          <h3 style={{ color: "var(--text-primary)" }} className="text-lg font-bold">الصياغة السحرية بالذكاء الاصطناعي</h3>
+          <p style={{ color: "var(--text-muted)" }} className="text-sm mt-0.5 font-medium leading-relaxed">
+            اكتب سبب الزعل واضغط توليد — سيصيغ الـ AI اعتذاراً رومانسياً متكاملاً مع أسئلة وفخوخ مخصصة.
+          </p>
+        </div>
+      </div>
 
- <div className="space-y-2">
- <label className="block text-xs font-bold text-amber-900/70">الروح العامة (Text Vibe):</label>
- <div className="flex flex-wrap gap-2">
- {[
- { id: 'standard', label: 'عادي' },
- { id: 'funny', label: 'ضحك' },
- { id: 'sarcastic_egyptian', label: 'ضحك وسخرية بالعامية المصرية' }
- ].map(opt => (
- <button
- key={opt.id}
- type="button"
- onClick={() => setTextVibe(opt.id)}
- className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ease-in-out cursor-pointer select-none outline-none ${textVibe === opt.id ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/40 ring-1 ring-amber-400 transform scale-[1.02]" : "bg-white/40 text-amber-900 hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-95 border border-amber-200/40"}`}
- >
- {opt.label}
- </button>
- ))}
- </div>
- </div>
+      {/* Config chips */}
+      <div style={T.surface} className="rounded-2xl p-5 space-y-5">
+        <ChipGroup
+          label="الهدف الأساسي (Core Intent)"
+          options={[
+            { id: "apology", label: "🤝 مصالحة واعتذار" },
+            { id: "love",    label: "💕 اعتراف رومانسي" },
+            { id: "joy",     label: "🎉 بهجة بدون سبب" },
+          ]}
+          value={coreIntent}
+          onChange={setCoreIntent}
+        />
+        <ChipGroup
+          label="روح النص (Vibe)"
+          options={[
+            { id: "standard",            label: "✨ عادي وراقي" },
+            { id: "funny",               label: "😂 كوميدي" },
+            { id: "sarcastic_egyptian",  label: "🧂 سخرية بالعامية المصرية" },
+          ]}
+          value={textVibe}
+          onChange={setTextVibe}
+        />
+        <ChipGroup
+          label="جرعة المشاعر (Intensity)"
+          options={[
+            { id: "low",    label: "🌤 على الهادي" },
+            { id: "medium", label: "🔥 دوز متوسط" },
+            { id: "high",   label: "💥 إكستريم" },
+          ]}
+          value={vibeIntensity}
+          onChange={setVibeIntensity}
+        />
+      </div>
 
- <div className="space-y-2">
- <label className="block text-xs font-bold text-amber-900/70">الجرعة وقوة المشاعر (Intensity):</label>
- <div className="flex flex-wrap gap-2">
- {[
- { id: 'low', label: 'على الهادي' },
- { id: 'medium', label: 'دوز متوسط' },
- { id: 'high', label: 'إكستريم / عالي الجرعة' }
- ].map(opt => (
- <button
- key={opt.id}
- type="button"
- onClick={() => setVibeIntensity(opt.id)}
- className={`px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 ease-in-out cursor-pointer select-none outline-none ${vibeIntensity === opt.id ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/40 ring-1 ring-amber-400 transform scale-[1.02]" : "bg-white/40 text-amber-900 hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-95 border border-amber-200/40"}`}
- >
- {opt.label}
- </button>
- ))}
- </div>
- </div>
- </div>
+      {/* Input + Generate */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          value={incidentReason}
+          onChange={(e) => setIncidentReason(e.target.value)}
+          placeholder="مثال: نسيت عيد ميلادها / اتأخرت عليها..."
+          style={T.input}
+          className="flex-1 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+        />
+        <button
+          type="button"
+          onClick={handleGenerateAI}
+          disabled={isGeneratingAI || !incidentReason.trim()}
+          style={T.accentGradient}
+          className="rounded-xl px-6 py-3 text-sm font-bold transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
+        >
+          {isGeneratingAI ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
+          {isGeneratingAI ? "جاري الإبداع..." : "توليد سحري ✨"}
+        </button>
+      </div>
 
- <div className="flex flex-col sm:flex-row gap-3">
- <input
- type="text"
- value={incidentReason}
- onChange={(e) => setIncidentReason(e.target.value)}
- placeholder="مثال: نسيت عيد ميلادها / اتأخرت عليها..."
- className="flex-1 rounded-xl border border-amber-200/50 bg-white/80 backdrop-blur-sm px-4 py-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-amber-500 shadow-inner placeholder:text-gray-400"
- />
- <button
- type="button"
- onClick={handleGenerateAI}
- disabled={isGeneratingAI || !incidentReason.trim()}
- className="rounded-xl bg-gradient-to-r from-amber-700 to-amber-900 px-6 py-3 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50 transition-all duration-300 ease-in-out shadow-md shrink-0 flex items-center justify-center gap-2"
- >
- {isGeneratingAI ? <RefreshCw size={16} className="animate-spin" /> : <Sparkles size={16} />}
- {isGeneratingAI ? "جاري الإبداع..." : "توليد سحري"}
- </button>
- </div>
- {aiSuccessMsg && (
- <p className="mt-3 text-xs sm:text-sm font-bold text-green-700 bg-green-50 px-3 py-2 rounded-lg border border-green-100 inline-block">{aiSuccessMsg}</p>
- )}
- </div>
- );
+      {aiSuccessMsg && (
+        <motion.p
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-xs sm:text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-4 py-3 rounded-xl border border-green-200 dark:border-green-800"
+        >
+          {aiSuccessMsg}
+        </motion.p>
+      )}
+    </div>
+  );
 });
+
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 import { useLanguage } from "../context/LanguageContext";
 
 export default function AdminDashboard() {
- const { t } = useLanguage();
- const { config, refetchConfig, siteSlug } = useApp();
-
- const [activeTab, setActiveTab] = useState("live");
- const [rows, setRows] = useState([]);
- const [loading, setLoading] = useState(true);
- const [error, setError] = useState(null);
- const intervalRef = useRef(null);
-
-
-
- // Settings tab states
- const [formData, setFormData] = useState(null);
- const [activeSection, setActiveSection] = useState("basic");
- const [isSaving, setIsSaving] = useState(false);
- const [saveStatus, setSaveStatus] = useState(null);
- const [copyFeedback, setCopyFeedback] = useState("");
-
- const copyToClipboard = () => {
- const url = window.location.origin + "/" + siteSlug;
- navigator.clipboard.writeText(url);
- setCopyFeedback("تم النسخ بنجاح! 📋");
- setTimeout(() => setCopyFeedback(""), 2000);
- };
-
-
-
- // Sync formData from context configuration once loaded
- useEffect(() => {
- if (config && !formData) {
- const parsedConfig = JSON.parse(JSON.stringify(config));
- 
- // Ensure all objects exist to prevent crashes
- if (!parsedConfig.boyName) parsedConfig.boyName = "";
- if (!parsedConfig.girlName) parsedConfig.girlName = "";
- if (!parsedConfig.girlNickname) parsedConfig.girlNickname = "";
- 
- const isEn = parsedConfig.locale === "en";
-
- if (!parsedConfig.landingText) parsedConfig.landingText = isEn 
- ? "In the middle of any argument.. there are things that can never be lost.. scroll down and see" 
- : "في وسط أي زعل.. فيه حاجات تانية مستحيل تضيع.. انزلي شوفي";
- if (!parsedConfig.voidText) parsedConfig.voidText = isEn ? "{girlNickname} forever 💛" : "{girlNickname} للأبد 💛";
- if (!parsedConfig.audioUrl) parsedConfig.audioUrl = "";
- if (typeof parsedConfig.enableFunnyText === "undefined") parsedConfig.enableFunnyText = true;
- if (!parsedConfig.funnyText) parsedConfig.funnyText = isEn ? "Come on, stop playing around! 😂" : "احا انتي لسه هنا يلا انطري ابلكاش 😂";
- 
- // Integrations
- if (!parsedConfig.telegramBotToken) parsedConfig.telegramBotToken = "";
- if (!parsedConfig.telegramChatId) parsedConfig.telegramChatId = "";
- if (!parsedConfig.geminiApiKey) parsedConfig.geminiApiKey = "";
-
- if (!parsedConfig.loaderTexts) parsedConfig.loaderTexts = isEn 
- ? ["Loading Memories...", "Fetching Love Signals..."] 
- : ["جار التحميل..."];
- if (!parsedConfig.triviaQuestions) parsedConfig.triviaQuestions = [];
- if (!parsedConfig.giftCoupons) parsedConfig.giftCoupons = [];
- if (!parsedConfig.timeline || !Array.isArray(parsedConfig.timeline) || parsedConfig.timeline.length === 0) {
- parsedConfig.timeline = isEn ? [
- { text: "The first day we talked was the beginning of the best thing in my life", image: "" },
- { text: "Your smile makes me forget anything bad in the world", image: "" },
- { text: "No matter what happens, you are always the closest to my heart", image: "" },
- { text: "I'll never forget your support during my hardest times", image: "" },
- { text: "You are not just my girlfriend, you are my best friend and my rock", image: "" },
- { text: "Every detail about you makes me love you even more", image: "" },
- { text: "Nothing in the world could ever replace you for a second", image: "" },
- ] : [
- { text: "أول يوم اتكلمنا فيه كان بداية أحلى حاجة في حياتي", image: "" },
- { text: "ضحكتك بتخليني أنسى أي حاجة وحشة في الدنيا", image: "" },
- { text: "مهما حصل بينا، بتفضلي أقرب حد لقلبي", image: "" },
- { text: "دعمك ليا في أصعب أوقاتي مش هنساه أبداً", image: "" },
- { text: "إنتي مش بس حبيبتي، إنتي صاحبتي وسندي", image: "" },
- { text: "كل تفصيلة فيكي بتخليني أحبك أكتر", image: "" },
- { text: "مفيش حاجة في الدنيا تعوضني عنك لحظة", image: "" },
- ];
- }
- 
- if (!parsedConfig.finalLetter) {
- parsedConfig.finalLetter = isEn 
- ? { title: "A Letter for you", body: [""], loveSignature: "Love,", boySignature: "" }
- : { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
- }
- if (!parsedConfig.finalLetter.body) parsedConfig.finalLetter.body = [""];
- 
- if (!parsedConfig.judgeText) {
- parsedConfig.judgeText = isEn 
- ? { title: "The Court rules in your favor!", details: "Everything you said is right." }
- : { title: "المحكمة تحكم لصالحك!", details: "كل كلامك صح" };
- }
- if (!parsedConfig.feedbackTexts) {
- parsedConfig.feedbackTexts = isEn ? {
- oneStar: "1 star alert!",
- twoStar: "2 stars?",
- threeStar: "3 stars.",
- fourStar: "4 stars!",
- fiveStar: "5 stars! Perfect!"
- } : {
- oneStar: "تنبيه: نجمة واحدة!",
- twoStar: "نجمتين!",
- threeStar: "3 نجوم",
- fourStar: "4 نجوم",
- fiveStar: "5 نجوم شكرا"
- };
- }
- 
- setFormData(parsedConfig);
- }
- }, [config, formData]);
-
- const load = useCallback(async () => {
- if (!siteSlug) return;
- try {
- const res = await fetch(`/api/tracking/${encodeURIComponent(siteSlug)}`);
- if (!res.ok) throw new Error(`[${res.status}] ${res.statusText}`);
- const data = await res.json();
- setRows(data.rows || []);
- setError(null);
- } catch (err) {
- console.error("dashboard load failed", err);
- setError("مش قادر أجيب البيانات دلوقتي");
- } finally {
- setLoading(false);
- }
- }, [siteSlug]);
-
- // Poll automatically
- useEffect(() => {
- load();
- intervalRef.current = setInterval(load, 3000);
- return () => clearInterval(intervalRef.current);
- }, [load]);
-
- const broadcast = useCallback(async (sessionId, message) => {
- if (!siteSlug) return;
- try {
- const res = await fetch(`/api/broadcast/${encodeURIComponent(siteSlug)}`, {
- method: "POST",
- headers: { "Content-Type": "application/json" },
- body: JSON.stringify({ session_id: sessionId, message }),
- });
- if (!res.ok) throw new Error(`[${res.status}] ${res.statusText}`);
- } catch (err) {
- console.error("broadcast failed", err);
- }
- }, [siteSlug]);
-
-
-
- // Settings Save Handler
- const handleSave = async (e) => {
- e.preventDefault();
- setIsSaving(true);
- setSaveStatus(null);
- try {
- const savedPwd = sessionStorage.getItem(`auth_pwd_${siteSlug}`) || "";
- const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/config`, {
- method: "POST",
- headers: {
- "Content-Type": "application/json",
- },
- body: JSON.stringify({
- edit_password: savedPwd,
- config: formData,
- }),
- });
- if (res.ok) {
- setSaveStatus({ success: true, msg: "تم حفظ التغييرات بنجاح!" });
- await refetchConfig();
- } else {
- const errData = await res.json();
- setSaveStatus({ success: false, msg: errData.error || "فشل حفظ الإعدادات" });
- }
- } catch (err) {
- console.error(err);
- setSaveStatus({ success: false, msg: "حدث خطأ أثناء الاتصال بالسيرفر" });
- } finally {
- setIsSaving(false);
- }
- };
-
- useEffect(() => {
- if (saveStatus) {
- const timer = setTimeout(() => {
- setSaveStatus(null);
- }, 4000);
- return () => clearTimeout(timer);
- }
- }, [saveStatus]);
-
- // Form State Mutator Helpers
- const handleDeleteSite = async () => {
- if (!window.confirm("تحذير: هذا سيؤدي إلى مسح الموقع بالكامل ولن تتمكن من الدخول مرة أخرى. هل أنت متأكد؟")) return;
- try {
- const savedPwd = sessionStorage.getItem(`auth_pwd_${siteSlug}`) || "";
- const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}`, {
- method: "DELETE",
- headers: { "Content-Type": "application/json" },
- body: JSON.stringify({ password: savedPwd })
- });
- if (res.ok) {
- alert("تم مسح الموقع نهائياً بنجاح.");
- window.location.href = "/";
- } else {
- const errData = await res.json();
- alert(errData.error || "فشل مسح الموقع");
- }
- } catch (err) {
- console.error(err);
- alert("حدث خطأ أثناء الاتصال بالخادم");
- }
- };
-
- const updateField = (path, value) => {
- setFormData((prev) => {
- const next = { ...prev };
- const parts = path.split(".");
- let current = next;
- for (let i = 0; i < parts.length - 1; i++) {
- current = current[parts[i]];
- }
- current[parts[parts.length - 1]] = value;
- return next;
- });
- };
-
- const handleTimelineImageUpload = (e, index) => {
- const file = e.target.files?.[0];
- if (!file) return;
-
- const reader = new FileReader();
- reader.onload = (event) => {
- const img = new Image();
- img.onload = () => {
- const canvas = document.createElement("canvas");
- let width = img.width;
- let height = img.height;
-
- const MAX_DIM = 600;
- if (width > height) {
- if (width > MAX_DIM) {
- height *= MAX_DIM / width;
- width = MAX_DIM;
- }
- } else {
- if (height > MAX_DIM) {
- width *= MAX_DIM / height;
- height = MAX_DIM;
- }
- }
-
- canvas.width = width;
- canvas.height = height;
- const ctx = canvas.getContext("2d");
- ctx.drawImage(img, 0, 0, width, height);
-
- const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-
- setFormData((prev) => {
- const next = { ...prev };
- const nextTimeline = [...(next.timeline || [])];
- if (nextTimeline[index]) {
- nextTimeline[index] = { ...nextTimeline[index], image: dataUrl };
- }
- next.timeline = nextTimeline;
- return next;
- });
- };
- img.src = event.target.result;
- };
- reader.readAsDataURL(file);
- };
-
- const handleRemoveTimelineImage = (index) => {
- setFormData((prev) => {
- const next = { ...prev };
- const nextTimeline = [...(next.timeline || [])];
- if (nextTimeline[index]) {
- nextTimeline[index] = { ...nextTimeline[index], image: "" };
- }
- next.timeline = nextTimeline;
- return next;
- });
- };
-
- const updateLoaderText = (idx, value) => {
- setFormData((prev) => {
- const next = { ...prev };
- next.loaderTexts[idx] = value;
- return next;
- });
- };
-
- // Questions Helpers
- const addQuestion = () => {
- setFormData((prev) => {
- const next = { ...prev };
- next.triviaQuestions = [
- ...next.triviaQuestions,
- {
- q: "سؤال جديد؟",
- options: ["اختيار 1", "اختيار 2"],
- correct: "اختيار 1",
- trap: null,
- },
- ];
- return next;
- });
- };
-
- const deleteQuestion = (idx) => {
- setFormData((prev) => {
- const next = { ...prev };
- next.triviaQuestions = next.triviaQuestions.filter((_, i) => i !== idx);
- return next;
- });
- };
-
- const updateQuestionTitle = (idx, value) => {
- setFormData((prev) => {
- const next = { ...prev };
- next.triviaQuestions[idx].q = value;
- return next;
- });
- };
-
- const addOption = (qIdx) => {
- setFormData((prev) => {
- const next = { ...prev };
- next.triviaQuestions[qIdx].options.push(
- `اختيار جديد ${next.triviaQuestions[qIdx].options.length + 1}`
- );
- return next;
- });
- };
-
- const deleteOption = (qIdx, oIdx) => {
- setFormData((prev) => {
- const next = { ...prev };
- const optVal = next.triviaQuestions[qIdx].options[oIdx];
- next.triviaQuestions[qIdx].options = next.triviaQuestions[qIdx].options.filter(
- (_, i) => i !== oIdx
- );
-
- // Sanitize correct answers
- let correct = next.triviaQuestions[qIdx].correct;
- if (Array.isArray(correct)) {
- next.triviaQuestions[qIdx].correct = correct.filter((c) => c !== optVal);
- } else if (correct === optVal) {
- next.triviaQuestions[qIdx].correct = next.triviaQuestions[qIdx].options[0] || "";
- }
-
- // Sanitize trap option
- if (next.triviaQuestions[qIdx].trap?.option === optVal) {
- next.triviaQuestions[qIdx].trap = null;
- }
-
- return next;
- });
- };
-
- const updateOption = (qIdx, oIdx, value) => {
- setFormData((prev) => {
- const next = { ...prev };
- const oldVal = next.triviaQuestions[qIdx].options[oIdx];
- next.triviaQuestions[qIdx].options[oIdx] = value;
-
- // Update correct answers references
- let correct = next.triviaQuestions[qIdx].correct;
- if (Array.isArray(correct)) {
- next.triviaQuestions[qIdx].correct = correct.map((c) =>
- c === oldVal ? value : c
- );
- } else if (correct === oldVal) {
- next.triviaQuestions[qIdx].correct = value;
- }
-
- // Update trap references
- if (next.triviaQuestions[qIdx].trap?.option === oldVal) {
- next.triviaQuestions[qIdx].trap.option = value;
- }
-
- return next;
- });
- };
-
- const setCorrectOption = (qIdx, opt, isChecked) => {
- setFormData((prev) => {
- const next = { ...prev };
- const question = next.triviaQuestions[qIdx];
- let correct = question.correct;
- let isArray = Array.isArray(correct);
-
- if (isChecked) {
- if (isArray) {
- if (!correct.includes(opt)) {
- question.correct = [...correct, opt];
- }
- } else {
- // Convert to array containing both
- question.correct = [correct, opt];
- }
- } else {
- if (isArray) {
- const remaining = correct.filter((c) => c !== opt);
- if (remaining.length === 1) {
- question.correct = remaining[0];
- } else {
- question.correct = remaining;
- }
- } else {
- // Cannot uncheck only option
- }
- }
- return next;
- });
- };
-
- // Coupons Helpers
- const addCoupon = () => {
- setFormData((prev) => {
- const next = { ...prev };
- next.giftCoupons = [...next.giftCoupons, "كوبون جديد 🎟️"];
- return next;
- });
- };
-
- const deleteCoupon = (idx) => {
- setFormData((prev) => {
- const next = { ...prev };
- next.giftCoupons = next.giftCoupons.filter((_, i) => i !== idx);
- return next;
- });
- };
-
- const updateCoupon = (idx, value) => {
- setFormData((prev) => {
- const next = { ...prev };
- next.giftCoupons[idx] = value;
- return next;
- });
- };
-
- // Letter Body Helpers
- const addParagraph = () => {
- setFormData((prev) => {
- const next = { ...prev };
- next.finalLetter.body = [...next.finalLetter.body, "فقرة جديدة"];
- return next;
- });
- };
-
- const deleteParagraph = (idx) => {
- setFormData((prev) => {
- const next = { ...prev };
- next.finalLetter.body = next.finalLetter.body.filter((_, i) => i !== idx);
- return next;
- });
- };
-
- const updateParagraph = (idx, value) => {
- setFormData((prev) => {
- const next = { ...prev };
- next.finalLetter.body[idx] = value;
- return next;
- });
- };
-
- const categories = [
- { id: "basic", name: "الأساسيات والنصوص", icon: Sparkles },
- { id: "quiz", name: "الأسئلة والاختبار", icon: HelpCircle },
- { id: "court", name: "المحكمة والتقييم", icon: Gavel },
- { id: "letter", name: "الجواب والهدايا", icon: FileText },
- ];
-
-
-
- // Dashboard Interface
- return (
- <div className="min-h-screen bg-[#F8F9FA] p-4 sm:p-8 font-sans antialiased text-[#1A1A1A] ">
- <div className="mx-auto max-w-6xl space-y-6">
- 
- {/* Top Header Panel */}
- <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-6 rounded-3xl shadow-sm border border-gray-100 gap-4">
- <div>
- <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 ">
- {t("dashboardTitle")}
- </h1>
- <p className="mt-1 text-sm text-gray-500 font-medium">
- إدارة شاملة لرحلة {formData?.girlNickname}
- </p>
- </div>
- <div className="flex items-center gap-2 w-full sm:w-auto">
- <button
- onClick={copyToClipboard}
- className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-gray-50 px-4 py-2 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-100 border border-gray-200 focus-visible:outline-none"
- >
- <Copy size={16} /> 
- {copyFeedback ? t("copied") : t("copyLink")}
- </button>
- </div>
- </div>
-
- {/* Middle Section: Live Tracking & Broadcast Control Center */}
- <div className="rounded-3xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100 ">
- <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
- <div>
- <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900 ">
- <Activity size={22} className="text-red-500 animate-pulse" />
- {t("liveTracking")}
- </h2>
- <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
- {t("liveTrackingDesc")}
- </p>
- </div>
- <button
- type="button"
- onClick={load}
- disabled={loading}
- className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 focus-visible:outline-none disabled:opacity-50"
- >
- <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> {t("refresh")}
- </button>
- </div>
-
- <div className="flex flex-col gap-4">
- {loading && rows.length === 0 && <div className="text-sm text-center py-8 text-gray-400 ">جار التحميل...</div>}
- {error && <div className="text-sm text-center py-8 text-red-500 ">{error}</div>}
-
- {!loading && rows.length === 0 && !error && (
- <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-10 text-center">
- <Activity size={32} className="mx-auto mb-3 text-gray-300 " />
- <p className="text-sm font-bold text-gray-900 ">
- {t("noVisits")}
- </p>
- <p className="mt-1 text-xs text-gray-500 ">
- {t("noVisitsDesc")}
- </p>
- </div>
- )}
-
- <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
- {rows.map((row) => (
- <SessionRow
- key={row.session_id}
- row={row}
- onBroadcast={broadcast}
- />
- ))}
- </div>
- </div>
- </div>
-
- {/* Bottom Section: Tabbed Management Interface */}
- {formData && (
- <form onSubmit={handleSave} className="rounded-3xl bg-white p-6 sm:p-8 shadow-sm border border-gray-100">
- <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 border-b border-gray-100 pb-4">
- <div>
- <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
- <Settings size={22} className="text-amber-800" />
- إعدادات محتوى الموقع
- </h2>
- <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
- عدّل على نصوص وأسئلة الموقع لحفظ تجربة مخصصة لها.
- </p>
- </div>
- <div className="shrink-0 w-full sm:w-auto">
- <button
- type="submit"
- disabled={isSaving}
- className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-amber-800 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-amber-900 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-800 focus-visible:ring-offset-2 shadow-md hover:shadow-lg"
- >
- {isSaving ? (
- <>
- <RefreshCw size={16} className="animate-spin" />
- جاري الحفظ...
- </>
- ) : (
- <>
- <Save size={16} />
- حفظ التغييرات
- </>
- )}
- </button>
- {saveStatus && (
- <p className={`mt-2 text-center text-xs font-bold ${saveStatus.success ? "text-green-600" : "text-red-600"}`}>
- {saveStatus.msg}
- </p>
- )}
- </div>
- </div>
-
- {/* Fluid Tab Navigation */}
- <div className="flex overflow-x-auto pb-4 mb-6 hide-scrollbar gap-2">
- {[
- { id: "basic", label: "الأساسيات والنصوص", icon: Sparkles },
- { id: "timeline", label: "ذكريات خط الزمن", icon: Activity },
- { id: "quiz", label: "أسئلة الاختبار", icon: HelpCircle },
- { id: "court", label: "المحكمة الذكية", icon: Gavel },
- { id: "letter", label: "الجواب والهدايا", icon: Gift }
- ].map((tab) => (
- <button
- key={tab.id}
- type="button"
- onClick={() => setActiveSection(tab.id)}
- className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-300 relative overflow-hidden shrink-0 ${
- activeSection === tab.id
- ? "text-amber-900 bg-amber-50 border border-amber-200/50 shadow-sm"
- : "text-gray-500 hover:text-gray-900 hover:bg-gray-50 border border-transparent"
- }`}
- >
- <tab.icon size={16} className={activeSection === tab.id ? "text-amber-800" : "text-gray-400"} />
- {tab.label}
- {activeSection === tab.id && (
- <motion.div
- layoutId="activeTabIndicator"
- className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500"
- initial={false}
- transition={{ type: "spring", stiffness: 300, damping: 30 }}
- />
- )}
- </button>
- ))}
- </div>
-
- {/* Tab Contents */}
- <div className="min-h-[400px]">
- {/* Tab 1: Basic */}
- {activeSection === "basic" && (
- <motion.div
- initial={{ opacity: 0, y: 10 }}
- animate={{ opacity: 1, y: 0 }}
- className="flex flex-col gap-6"
- >
- <MagicAIGenerator siteSlug={siteSlug} setFormData={setFormData} />
-
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
- <label className="block text-xs font-bold text-gray-700 mb-2">اسم الولد</label>
- <input
- type="text"
- required
- value={formData.boyName}
- onChange={(e) => updateField("boyName", e.target.value)}
- className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
- />
- </div>
- <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
- <label className="block text-xs font-bold text-gray-700 mb-2">اسم البنت</label>
- <input
- type="text"
- required
- value={formData.girlName}
- onChange={(e) => updateField("girlName", e.target.value)}
- className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
- />
- </div>
- </div>
-
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
- <label className="block text-xs font-bold text-gray-700 mb-2">اسم الدلع للبنت (الحالي)</label>
- <input
- type="text"
- required
- value={formData.girlNickname}
- onChange={(e) => updateField("girlNickname", e.target.value)}
- className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
- />
- </div>
- <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
- <label className="block text-xs font-bold text-gray-700 mb-2">اسم دلع مخصص للذكاء الاصطناعي (اختياري)</label>
- <input
- type="text"
- value={formData.petNameOverride || ""}
- onChange={(e) => updateField("petNameOverride", e.target.value)}
- placeholder="مثال: مريومتي (لو فاضي الـ AI هيألف من عنده)"
- className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
- />
- </div>
- </div>
-
- <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
- <label className="block text-xs font-bold text-gray-700 mb-2">نص الصفحة الرئيسية (Landing)</label>
- <textarea
- rows={3}
- required
- value={formData.landingText}
- onChange={(e) => updateField("landingText", e.target.value)}
- className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 resize-none shadow-sm"
- />
- </div>
-
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
- <label className="block text-xs font-bold text-gray-700 mb-2">نص النهاية (الشاشة اللانهائية)</label>
- <input
- type="text"
- required
- value={formData.voidText}
- onChange={(e) => updateField("voidText", e.target.value)}
- className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
- />
- </div>
- <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
- <label className="block text-xs font-bold text-gray-700 mb-2">رابط ملف الموسيقى (MP3/M4A)</label>
- <input
- type="text"
- value={formData.audioUrl || ""}
- onChange={(e) => updateField("audioUrl", e.target.value)}
- placeholder="مثال: https://link-to-song.mp3"
- className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
- />
- </div>
- </div>
-
- <div className="border-t border-gray-100 pt-6 mt-2">
- <span className="block text-sm font-bold text-gray-900 mb-4">رسائل شاشة الهاكر (Loader Terminal)</span>
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- {formData.loaderTexts.map((txt, idx) => (
- <div key={idx} className="flex flex-col gap-1">
- <label className="text-[10px] font-bold text-gray-400">السطر {idx + 1}</label>
- <input
- type="text"
- required
- value={txt}
- onChange={(e) => updateLoaderText(idx, e.target.value)}
- className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-colors"
- />
- </div>
- ))}
- </div>
- </div>
- </motion.div>
- )}
-
- {/* Tab 2: Timeline */}
- {activeSection === "timeline" && (
- <motion.div
- initial={{ opacity: 0, y: 10 }}
- animate={{ opacity: 1, y: 0 }}
- className="flex flex-col gap-6"
- >
- <div className="flex flex-col gap-4">
- {formData.timeline?.map((item, idx) => (
- <div key={idx} className="flex flex-col sm:flex-row gap-4 p-5 bg-gray-50/50 rounded-2xl border border-gray-100 shadow-sm">
- 
- {/* Image Preview & Upload */}
- <div className="flex flex-col items-center gap-3 w-full sm:w-1/3 shrink-0">
- <div className="w-full aspect-video sm:aspect-square rounded-xl border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center bg-white relative group">
- {item.image ? (
- <>
- <img src={item.image} alt="preview" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
- <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
- <button
- type="button"
- onClick={() => handleRemoveTimelineImage(idx)}
- className="bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
- >
- <Trash2 size={16} />
- </button>
- </div>
- </>
- ) : (
- <div className="flex flex-col items-center text-gray-400 gap-1">
- <Activity size={24} className="opacity-20" />
- <span className="text-[10px] font-medium uppercase tracking-wider">بدون صورة</span>
- </div>
- )}
- </div>
- {!item.image && (
- <label className="text-xs font-bold bg-white text-gray-700 px-4 py-2 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors w-full text-center border border-gray-200 shadow-sm">
- رفع صورة
- <input
- type="file"
- accept="image/*"
- onChange={(e) => handleTimelineImageUpload(e, idx)}
- className="hidden"
- />
- </label>
- )}
- </div>
-
- {/* Text Input */}
- <div className="flex flex-col w-full">
- <label className="mb-2 block text-xs font-bold text-gray-500 uppercase tracking-wider">
- ذكرى رقم {idx + 1}
- </label>
- <textarea
- value={item.text}
- onChange={(e) => {
- const nextTimeline = [...formData.timeline];
- nextTimeline[idx] = { ...nextTimeline[idx], text: e.target.value };
- updateField("timeline", nextTimeline);
- }}
- rows={3}
- placeholder="اكتب جملة توصف الذكرى..."
- className="w-full h-full min-h-[100px] rounded-xl border border-gray-200 p-4 text-sm focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 outline-none resize-none bg-white shadow-inner"
- />
- </div>
- </div>
- ))}
- </div>
- </motion.div>
- )}
-
- {/* Tab 3: Quiz */}
- {activeSection === "quiz" && (
- <motion.div
- initial={{ opacity: 0, y: 10 }}
- animate={{ opacity: 1, y: 0 }}
- className="flex flex-col gap-6"
- >
- <div className="flex items-center justify-between">
- <p className="text-xs sm:text-sm text-gray-500 font-medium">أضف أسئلة للتأكد من ذاكرتها ومواقفكم المشتركة.</p>
- <button
- type="button"
- onClick={addQuestion}
- className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-amber-800 hover:bg-amber-900 px-4 py-2 rounded-xl transition-colors shadow-sm"
- >
- <Plus size={14} /> إضافة سؤال
- </button>
- </div>
-
- <div className="grid grid-cols-1 gap-6">
- {formData.triviaQuestions.map((qItem, qIdx) => (
- <div
- key={qIdx}
- className="border border-gray-100 rounded-2xl bg-white p-5 sm:p-6 relative shadow-sm"
- >
- <button
- type="button"
- onClick={() => deleteQuestion(qIdx)}
- className="absolute top-4 left-4 text-gray-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all"
- title="حذف السؤال"
- >
- <Trash2 size={18} />
- </button>
-
- <div className="flex flex-col gap-5 pr-8 sm:pr-0">
- <div>
- <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">السؤال {qIdx + 1}</label>
- <input
- type="text"
- required
- value={qItem.q}
- onChange={(e) => updateQuestionTitle(qIdx, e.target.value)}
- className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 transition-colors"
- />
- </div>
-
- <div>
- <div className="flex items-center justify-between mb-3 border-t border-gray-100 pt-4">
- <span className="text-xs font-bold text-gray-700">الاختيارات (حدد الصحيح ✔️)</span>
- <button
- type="button"
- onClick={() => addOption(qIdx)}
- className="text-xs text-amber-800 hover:text-amber-950 flex items-center gap-1 font-bold bg-amber-50 px-2 py-1 rounded-lg"
- >
- <Plus size={12} /> إضافة خيار
- </button>
- </div>
- <div className="flex flex-col gap-2">
- {qItem.options.map((opt, oIdx) => {
- const isCorrect = Array.isArray(qItem.correct)
- ? qItem.correct.includes(opt)
- : qItem.correct === opt;
-
- return (
- <div
- key={oIdx}
- className={`flex items-center gap-3 p-2.5 rounded-xl border ${isCorrect ? "border-green-400 bg-green-50" : "border-gray-200 bg-white"} transition-colors`}
- >
- <input
- type="checkbox"
- checked={isCorrect}
- onChange={(e) => setCorrectOption(qIdx, opt, e.target.checked)}
- className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-green-600 cursor-pointer"
- title="إجابة صحيحة"
- />
- <input
- type="text"
- required
- value={opt}
- onChange={(e) => updateOption(qIdx, oIdx, e.target.value)}
- className={`flex-1 border-0 bg-transparent py-1 px-2 text-sm outline-none ${isCorrect ? "font-bold text-green-900" : "font-medium text-gray-700"}`}
- />
- {qItem.options.length > 2 && (
- <button
- type="button"
- onClick={() => deleteOption(qIdx, oIdx)}
- className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-white"
- >
- <Trash2 size={16} />
- </button>
- )}
- </div>
- );
- })}
- </div>
- </div>
-
- {/* Trap option checkbox */}
- <div className="border-t border-gray-100 pt-4 mt-2">
- <label className="flex items-center gap-3 cursor-pointer select-none w-fit group">
- <input
- type="checkbox"
- checked={qItem.trap !== null}
- onChange={(e) => {
- if (e.target.checked) {
- setFormData((prev) => {
- const next = { ...prev };
- next.triviaQuestions[qIdx].trap = {
- option: qItem.options[0] || "",
- msg: "بطلي عبط اختاري تاني 🤦‍♂️😂",
- };
- return next;
- });
- } else {
- setFormData((prev) => {
- const next = { ...prev };
- next.triviaQuestions[qIdx].trap = null;
- return next;
- });
- }
- }}
- className="h-5 w-5 rounded border-gray-300 text-amber-600 focus:ring-amber-600 cursor-pointer"
- />
- <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900 transition-colors">
- تفعيل خيار الفخ (خدعة للمرح) 🪤
- </span>
- </label>
-
- {qItem.trap && (
- <motion.div
- initial={{ opacity: 0, height: 0 }}
- animate={{ opacity: 1, height: "auto" }}
- className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-amber-50/50 p-4 rounded-xl border border-amber-100 mt-3"
- >
- <div className="md:col-span-1">
- <label className="block text-[11px] font-bold text-amber-900/60 uppercase tracking-wider mb-1.5">الخيار المفخخ</label>
- <select
- value={qItem.trap.option}
- onChange={(e) => {
- const val = e.target.value;
- setFormData((prev) => {
- const next = { ...prev };
- next.triviaQuestions[qIdx].trap.option = val;
- return next;
- });
- }}
- className="w-full rounded-lg border border-amber-200/50 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium text-amber-900"
- >
- {qItem.options.map((opt, idx) => (
- <option key={idx} value={opt}>
- {opt}
- </option>
- ))}
- </select>
- </div>
- <div className="md:col-span-2">
- <label className="block text-[11px] font-bold text-amber-900/60 uppercase tracking-wider mb-1.5">رسالة الخداع 🤡</label>
- <input
- type="text"
- required
- value={qItem.trap.msg}
- onChange={(e) => {
- const val = e.target.value;
- setFormData((prev) => {
- const next = { ...prev };
- next.triviaQuestions[qIdx].trap.msg = val;
- return next;
- });
- }}
- className="w-full rounded-lg border border-amber-200/50 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500 font-medium text-amber-900"
- />
- </div>
- </motion.div>
- )}
- </div>
- </div>
- </div>
- ))}
- </div>
- </motion.div>
- )}
-
- {/* Tab 4: Court */}
- {activeSection === "court" && (
- <motion.div
- initial={{ opacity: 0, y: 10 }}
- animate={{ opacity: 1, y: 0 }}
- className="flex flex-col gap-6"
- >
- <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6">
- <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
- <Gavel size={18} className="text-amber-800" />
- الحكم الافتراضي للمحكمة (إذا لم يتم استخدام الذكاء الاصطناعي)
- </h3>
- <div className="grid grid-cols-1 gap-4">
- <div>
- <label className="block text-xs font-bold text-gray-600 mb-1.5">عنوان الحكم</label>
- <input
- type="text"
- required
- value={formData.judgeText.title}
- onChange={(e) => updateField("judgeText.title", e.target.value)}
- className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500"
- />
- </div>
- <div>
- <label className="block text-xs font-bold text-gray-600 mb-1.5">تفاصيل الحكم</label>
- <textarea
- rows={3}
- required
- value={formData.judgeText.details}
- onChange={(e) => updateField("judgeText.details", e.target.value)}
- className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500 resize-none"
- />
- </div>
- </div>
- </div>
-
- <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6 flex flex-col gap-5">
- <span className="block text-sm font-bold text-gray-900 flex items-center gap-2">
- <Sparkles size={18} className="text-amber-500" />
- ردود تقييم النجوم (بعد المحكمة)
- </span>
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- {[
- { key: "oneStar", label: "نجمة واحدة 😡", color: "red" },
- { key: "twoStar", label: "نجمتين 😟", color: "orange" },
- { key: "threeStar", label: "3 نجوم 😐", color: "yellow" },
- { key: "fourStar", label: "4 نجوم 🙂", color: "blue" },
- { key: "fiveStar", label: "5 نجوم 😍 (الصلح)", color: "green", full: true }
- ].map((star) => (
- <div key={star.key} className={`bg-white p-4 rounded-xl border border-gray-200 ${star.full ? "sm:col-span-2" : ""}`}>
- <label className="block text-xs font-bold text-gray-700 mb-2">{star.label}</label>
- <textarea
- rows={star.full ? 3 : 2}
- required
- value={formData.feedbackTexts[star.key]}
- onChange={(e) => updateField(`feedbackTexts.${star.key}`, e.target.value)}
- className="w-full rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-amber-500 resize-none transition-colors"
- />
- </div>
- ))}
- </div>
- </div>
-
- <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6">
- <label className="mb-4 flex items-center cursor-pointer gap-3 w-fit group">
- <input
- type="checkbox"
- checked={formData.enableFunnyText}
- onChange={(e) => updateField("enableFunnyText", e.target.checked)}
- className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
- />
- <span className="text-sm font-bold text-gray-800 group-hover:text-blue-600 transition-colors">تفعيل الرسالة الساخرة في النهاية 😈</span>
- </label>
-
- {formData.enableFunnyText && (
- <motion.div
- initial={{ opacity: 0, height: 0 }}
- animate={{ opacity: 1, height: "auto" }}
- className="mt-4"
- >
- <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
- النص الساخر (مثال: احا انتي لسه هنا؟)
- </label>
- <input
- type="text"
- value={formData.funnyText}
- onChange={(e) => updateField("funnyText", e.target.value)}
- className="w-full rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-bold text-blue-900 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
- />
- </motion.div>
- )}
- </div>
- </motion.div>
- )}
-
- {/* Tab 5: Letter */}
- {activeSection === "letter" && (
- <motion.div
- initial={{ opacity: 0, y: 10 }}
- animate={{ opacity: 1, y: 0 }}
- className="flex flex-col gap-6"
- >
- <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-5 sm:p-6">
- <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
- <FileText size={18} className="text-amber-800" />
- رسالة النهاية (الجواب)
- </h3>
- 
- <div className="mb-5">
- <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">عنوان الجواب</label>
- <input
- type="text"
- required
- value={formData.finalLetter.title}
- onChange={(e) => updateField("finalLetter.title", e.target.value)}
- className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500"
- />
- </div>
-
- <div className="flex flex-col gap-3 mb-6 border-y border-gray-100 py-5">
- <div className="flex items-center justify-between mb-2">
- <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">محتوى الجواب (فقرات)</span>
- <button
- type="button"
- onClick={addParagraph}
- className="text-xs text-amber-800 hover:text-amber-950 flex items-center gap-1 font-bold bg-white px-2 py-1 rounded-lg border border-gray-200 shadow-sm"
- >
- <Plus size={12} /> إضافة فقرة
- </button>
- </div>
- <div className="space-y-3">
- {formData.finalLetter.body.map((para, idx) => (
- <div
- key={idx}
- className="flex gap-3 items-start bg-white p-3 rounded-xl border border-gray-200 shadow-sm"
- >
- <span className="text-xs font-bold text-gray-300 pt-2">{idx + 1}</span>
- <textarea
- value={para}
- required
- onChange={(e) => updateParagraph(idx, e.target.value)}
- rows={3}
- className="flex-1 border-0 bg-transparent py-1 text-sm font-medium outline-none focus:ring-0 resize-none leading-relaxed text-gray-800"
- />
- {formData.finalLetter.body.length > 1 && (
- <button
- type="button"
- onClick={() => deleteParagraph(idx)}
- className="text-gray-300 hover:text-red-500 p-2 rounded-lg hover:bg-gray-50 transition-colors"
- >
- <Trash2 size={16} />
- </button>
- )}
- </div>
- ))}
- </div>
- </div>
-
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
- <div>
- <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">جملة الختام (اليمين)</label>
- <input
- type="text"
- required
- value={formData.finalLetter.loveSignature}
- onChange={(e) => updateField("finalLetter.loveSignature", e.target.value)}
- className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500"
- />
- </div>
- <div>
- <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">اسمك (اليسار)</label>
- <input
- type="text"
- required
- value={formData.finalLetter.boySignature}
- onChange={(e) => updateField("finalLetter.boySignature", e.target.value)}
- className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500"
- />
- </div>
- </div>
- </div>
-
- {/* Coupons Section */}
- <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-5 sm:p-6">
- <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
- <div>
- <h3 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
- <Gift size={18} />
- كروت الهدايا (Gift Coupons)
- </h3>
- <p className="text-xs text-indigo-700/70 mt-1 font-medium">كروت تظهر لها في النهاية تسحبها للصلح المادي والمعنوي.</p>
- </div>
- <button
- type="button"
- onClick={addCoupon}
- className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-colors shadow-sm"
- >
- <Plus size={14} /> إضافة كارت
- </button>
- </div>
-
- <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
- {formData.giftCoupons.map((coupon, idx) => (
- <div
- key={idx}
- className="flex gap-2 items-center bg-white p-2.5 rounded-xl border border-indigo-100 shadow-sm"
- >
- <Gift size={16} className="text-indigo-300 shrink-0 ml-1" />
- <input
- type="text"
- required
- value={coupon}
- onChange={(e) => updateCoupon(idx, e.target.value)}
- className="flex-1 border-0 bg-transparent py-1 text-sm font-bold text-indigo-900 outline-none focus:ring-0 placeholder-indigo-300"
- placeholder="مثال: خروجة على حسابي"
- />
- <button
- type="button"
- onClick={() => deleteCoupon(idx)}
- className="text-indigo-200 hover:text-red-500 p-1.5 rounded-lg hover:bg-indigo-50 transition-colors shrink-0"
- >
- <Trash2 size={16} />
- </button>
- </div>
- ))}
- </div>
- </div>
- </motion.div>
- )}
- </div>
- </form>
- )}
-
- {/* Danger Zone Section */}
- <div className="mt-6 rounded-3xl bg-red-50 p-6 sm:p-8 border border-red-200 ">
- <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
- <div>
- <h2 className="text-lg font-bold text-red-900 flex items-center gap-2">
- <AlertCircle size={20} />
- {t("dangerZone")}
- </h2>
- <p className="text-xs sm:text-sm text-red-700 mt-1 font-medium">
- {t("dangerZoneDesc")}
- </p>
- </div>
- <button
- onClick={handleDeleteSite}
- className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-700 shadow-md hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 shrink-0"
- >
- <Trash2 size={16} /> {t("deleteSiteBtn")}
- </button>
- </div>
- </div>
-
- </div>
- <Footer />
- </div>
- );
+  const { t } = useLanguage();
+  const { config, refetchConfig, siteSlug } = useApp();
+
+  // ── State ──
+  const [activeTab, setActiveTab] = useState("live");
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const intervalRef = useRef(null);
+
+  const [formData, setFormData] = useState(null);
+  const [activeSection, setActiveSection] = useState("basic");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
+  const [copyFeedback, setCopyFeedback] = useState("");
+
+  // ── Copy Link ──
+  const copyToClipboard = () => {
+    const url = window.location.origin + "/" + siteSlug;
+    navigator.clipboard.writeText(url);
+    setCopyFeedback("تم النسخ! 📋");
+    setTimeout(() => setCopyFeedback(""), 2000);
+  };
+
+  // ── Sync formData from config ──
+  useEffect(() => {
+    if (config && !formData) {
+      const parsedConfig = JSON.parse(JSON.stringify(config));
+      if (!parsedConfig.boyName) parsedConfig.boyName = "";
+      if (!parsedConfig.girlName) parsedConfig.girlName = "";
+      if (!parsedConfig.girlNickname) parsedConfig.girlNickname = "";
+      const isEn = parsedConfig.locale === "en";
+      if (!parsedConfig.landingText) parsedConfig.landingText = isEn ? "In the middle of any argument.. scroll down and see" : "في وسط أي زعل.. فيه حاجات تانية مستحيل تضيع.. انزلي شوفي";
+      if (!parsedConfig.voidText) parsedConfig.voidText = isEn ? "{girlNickname} forever 💛" : "{girlNickname} للأبد 💛";
+      if (!parsedConfig.audioUrl) parsedConfig.audioUrl = "";
+      if (typeof parsedConfig.enableFunnyText === "undefined") parsedConfig.enableFunnyText = true;
+      if (!parsedConfig.funnyText) parsedConfig.funnyText = isEn ? "Come on, stop playing around! 😂" : "احا انتي لسه هنا يلا انطري ابلكاش 😂";
+      if (!parsedConfig.telegramBotToken) parsedConfig.telegramBotToken = "";
+      if (!parsedConfig.telegramChatId) parsedConfig.telegramChatId = "";
+      if (!parsedConfig.geminiApiKey) parsedConfig.geminiApiKey = "";
+      if (!parsedConfig.loaderTexts) parsedConfig.loaderTexts = isEn ? ["Loading Memories...", "Fetching Love Signals..."] : ["جار التحميل..."];
+      if (!parsedConfig.triviaQuestions) parsedConfig.triviaQuestions = [];
+      if (!parsedConfig.giftCoupons) parsedConfig.giftCoupons = [];
+      if (!parsedConfig.timeline || !Array.isArray(parsedConfig.timeline) || parsedConfig.timeline.length === 0) {
+        parsedConfig.timeline = isEn ? [
+          { text: "The first day we talked was the beginning of the best thing in my life", image: "" },
+          { text: "Your smile makes me forget anything bad in the world", image: "" },
+          { text: "No matter what happens, you are always the closest to my heart", image: "" },
+          { text: "I'll never forget your support during my hardest times", image: "" },
+          { text: "You are not just my girlfriend, you are my best friend and my rock", image: "" },
+          { text: "Every detail about you makes me love you even more", image: "" },
+          { text: "Nothing in the world could ever replace you for a second", image: "" },
+        ] : [
+          { text: "أول يوم اتكلمنا فيه كان بداية أحلى حاجة في حياتي", image: "" },
+          { text: "ضحكتك بتخليني أنسى أي حاجة وحشة في الدنيا", image: "" },
+          { text: "مهما حصل بينا، بتفضلي أقرب حد لقلبي", image: "" },
+          { text: "دعمك ليا في أصعب أوقاتي مش هنساه أبداً", image: "" },
+          { text: "إنتي مش بس حبيبتي، إنتي صاحبتي وسندي", image: "" },
+          { text: "كل تفصيلة فيكي بتخليني أحبك أكتر", image: "" },
+          { text: "مفيش حاجة في الدنيا تعوضني عنك لحظة", image: "" },
+        ];
+      }
+      if (!parsedConfig.finalLetter) {
+        parsedConfig.finalLetter = isEn
+          ? { title: "A Letter for you", body: [""], loveSignature: "Love,", boySignature: "" }
+          : { title: "رسالة", body: [""], loveSignature: "", boySignature: "" };
+      }
+      if (!parsedConfig.finalLetter.body) parsedConfig.finalLetter.body = [""];
+      if (!parsedConfig.judgeText) {
+        parsedConfig.judgeText = isEn
+          ? { title: "The Court rules in your favor!", details: "Everything you said is right." }
+          : { title: "المحكمة تحكم لصالحك!", details: "كل كلامك صح" };
+      }
+      if (!parsedConfig.feedbackTexts) {
+        parsedConfig.feedbackTexts = isEn ? {
+          oneStar: "1 star alert!", twoStar: "2 stars?", threeStar: "3 stars.",
+          fourStar: "4 stars!", fiveStar: "5 stars! Perfect!"
+        } : {
+          oneStar: "تنبيه: نجمة واحدة!", twoStar: "نجمتين!", threeStar: "3 نجوم",
+          fourStar: "4 نجوم", fiveStar: "5 نجوم شكرا"
+        };
+      }
+      setFormData(parsedConfig);
+    }
+  }, [config, formData]);
+
+  // ── Live Tracking ──
+  const load = useCallback(async () => {
+    if (!siteSlug) return;
+    try {
+      const res = await fetch(`/api/tracking/${encodeURIComponent(siteSlug)}`);
+      if (!res.ok) throw new Error(`[${res.status}] ${res.statusText}`);
+      const data = await res.json();
+      setRows(data.rows || []);
+      setError(null);
+    } catch (err) {
+      console.error("dashboard load failed", err);
+      setError("مش قادر أجيب البيانات دلوقتي");
+    } finally {
+      setLoading(false);
+    }
+  }, [siteSlug]);
+
+  useEffect(() => {
+    load();
+    intervalRef.current = setInterval(load, 3000);
+    return () => clearInterval(intervalRef.current);
+  }, [load]);
+
+  const broadcast = useCallback(async (sessionId, message) => {
+    if (!siteSlug) return;
+    try {
+      const res = await fetch(`/api/broadcast/${encodeURIComponent(siteSlug)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, message }),
+      });
+      if (!res.ok) throw new Error(`[${res.status}] ${res.statusText}`);
+    } catch (err) {
+      console.error("broadcast failed", err);
+    }
+  }, [siteSlug]);
+
+  // ── Settings Save ──
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSaveStatus(null);
+    try {
+      const savedPwd = sessionStorage.getItem(`auth_pwd_${siteSlug}`) || "";
+      const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/config`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edit_password: savedPwd, config: formData }),
+      });
+      if (res.ok) {
+        setSaveStatus({ success: true, msg: "✓ تم حفظ التغييرات بنجاح!" });
+        await refetchConfig();
+      } else {
+        const errData = await res.json();
+        setSaveStatus({ success: false, msg: errData.error || "فشل حفظ الإعدادات" });
+      }
+    } catch (err) {
+      console.error(err);
+      setSaveStatus({ success: false, msg: "حدث خطأ أثناء الاتصال بالسيرفر" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (saveStatus) {
+      const timer = setTimeout(() => setSaveStatus(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [saveStatus]);
+
+  // ── Delete Site ──
+  const handleDeleteSite = async () => {
+    if (!window.confirm("تحذير: هذا سيؤدي إلى مسح الموقع بالكامل. هل أنت متأكد؟")) return;
+    try {
+      const savedPwd = sessionStorage.getItem(`auth_pwd_${siteSlug}`) || "";
+      const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: savedPwd }),
+      });
+      if (res.ok) {
+        alert("تم مسح الموقع نهائياً بنجاح.");
+        window.location.href = "/";
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "فشل مسح الموقع");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء الاتصال بالخادم");
+    }
+  };
+
+  // ── Form Helpers ──
+  const updateField = (path, value) => {
+    setFormData((prev) => {
+      const next = { ...prev };
+      const parts = path.split(".");
+      let current = next;
+      for (let i = 0; i < parts.length - 1; i++) current = current[parts[i]];
+      current[parts[parts.length - 1]] = value;
+      return next;
+    });
+  };
+
+  const handleTimelineImageUpload = (e, index) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width, height = img.height;
+        const MAX_DIM = 600;
+        if (width > height) { if (width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; } }
+        else { if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; } }
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        setFormData((prev) => {
+          const next = { ...prev };
+          const nextTimeline = [...(next.timeline || [])];
+          if (nextTimeline[index]) nextTimeline[index] = { ...nextTimeline[index], image: dataUrl };
+          next.timeline = nextTimeline;
+          return next;
+        });
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveTimelineImage = (index) => {
+    setFormData((prev) => {
+      const next = { ...prev };
+      const nextTimeline = [...(next.timeline || [])];
+      if (nextTimeline[index]) nextTimeline[index] = { ...nextTimeline[index], image: "" };
+      next.timeline = nextTimeline;
+      return next;
+    });
+  };
+
+  const updateLoaderText = (idx, value) => setFormData((prev) => { const next = { ...prev }; next.loaderTexts[idx] = value; return next; });
+  const addQuestion = () => setFormData((prev) => { const next = { ...prev }; next.triviaQuestions = [...next.triviaQuestions, { q: "سؤال جديد؟", options: ["اختيار 1", "اختيار 2"], correct: "اختيار 1", trap: null }]; return next; });
+  const deleteQuestion = (idx) => setFormData((prev) => { const next = { ...prev }; next.triviaQuestions = next.triviaQuestions.filter((_, i) => i !== idx); return next; });
+  const updateQuestionTitle = (idx, value) => setFormData((prev) => { const next = { ...prev }; next.triviaQuestions[idx].q = value; return next; });
+  const addOption = (qIdx) => setFormData((prev) => { const next = { ...prev }; next.triviaQuestions[qIdx].options.push(`اختيار ${next.triviaQuestions[qIdx].options.length + 1}`); return next; });
+  const deleteOption = (qIdx, oIdx) => setFormData((prev) => {
+    const next = { ...prev };
+    const optVal = next.triviaQuestions[qIdx].options[oIdx];
+    next.triviaQuestions[qIdx].options = next.triviaQuestions[qIdx].options.filter((_, i) => i !== oIdx);
+    let correct = next.triviaQuestions[qIdx].correct;
+    if (Array.isArray(correct)) next.triviaQuestions[qIdx].correct = correct.filter((c) => c !== optVal);
+    else if (correct === optVal) next.triviaQuestions[qIdx].correct = next.triviaQuestions[qIdx].options[0] || "";
+    if (next.triviaQuestions[qIdx].trap?.option === optVal) next.triviaQuestions[qIdx].trap = null;
+    return next;
+  });
+  const updateOption = (qIdx, oIdx, value) => setFormData((prev) => {
+    const next = { ...prev };
+    const oldVal = next.triviaQuestions[qIdx].options[oIdx];
+    next.triviaQuestions[qIdx].options[oIdx] = value;
+    let correct = next.triviaQuestions[qIdx].correct;
+    if (Array.isArray(correct)) next.triviaQuestions[qIdx].correct = correct.map((c) => c === oldVal ? value : c);
+    else if (correct === oldVal) next.triviaQuestions[qIdx].correct = value;
+    if (next.triviaQuestions[qIdx].trap?.option === oldVal) next.triviaQuestions[qIdx].trap.option = value;
+    return next;
+  });
+  const setCorrectOption = (qIdx, opt, isChecked) => setFormData((prev) => {
+    const next = { ...prev };
+    const question = next.triviaQuestions[qIdx];
+    let correct = question.correct;
+    let isArray = Array.isArray(correct);
+    if (isChecked) { question.correct = isArray ? (correct.includes(opt) ? correct : [...correct, opt]) : [correct, opt]; }
+    else { if (isArray) { const remaining = correct.filter((c) => c !== opt); question.correct = remaining.length === 1 ? remaining[0] : remaining; } }
+    return next;
+  });
+  const addCoupon = () => setFormData((prev) => { const next = { ...prev }; next.giftCoupons = [...next.giftCoupons, "كوبون جديد 🎟️"]; return next; });
+  const deleteCoupon = (idx) => setFormData((prev) => { const next = { ...prev }; next.giftCoupons = next.giftCoupons.filter((_, i) => i !== idx); return next; });
+  const updateCoupon = (idx, value) => setFormData((prev) => { const next = { ...prev }; next.giftCoupons[idx] = value; return next; });
+  const addParagraph = () => setFormData((prev) => { const next = { ...prev }; next.finalLetter.body = [...next.finalLetter.body, "فقرة جديدة"]; return next; });
+  const deleteParagraph = (idx) => setFormData((prev) => { const next = { ...prev }; next.finalLetter.body = next.finalLetter.body.filter((_, i) => i !== idx); return next; });
+  const updateParagraph = (idx, value) => setFormData((prev) => { const next = { ...prev }; next.finalLetter.body[idx] = value; return next; });
+
+  // ── Derived ──
+  const onlineCount = rows.filter((r) => (Date.now() - new Date(r.updated_at).getTime()) < 15000).length;
+  const lastSeen = rows.length > 0 ? timeAgo(rows.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))[0]?.updated_at) : null;
+
+  const MAIN_TABS = [
+    { id: "live",     label: "مباشر",     icon: Activity },
+    { id: "settings", label: "الإعدادات", icon: Settings },
+    { id: "ai",       label: "الذكاء",    icon: Sparkles },
+  ];
+
+  const SETTINGS_TABS = [
+    { id: "basic",    label: "الأساسيات",       icon: Sparkles },
+    { id: "timeline", label: "الذكريات",         icon: Activity },
+    { id: "quiz",     label: "الاختبار",          icon: HelpCircle },
+    { id: "court",    label: "المحكمة",           icon: Gavel },
+    { id: "letter",   label: "الجواب والهدايا",   icon: Gift },
+  ];
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────────
+  return (
+    <div style={{ background: "var(--bg-base)", color: "var(--text-primary)", minHeight: "100vh" }} className="font-sans antialiased">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-20 pb-16 space-y-5">
+
+        {/* ══════════════════════════════════════════════
+            BLOCK 1 — HERO HEADER
+        ══════════════════════════════════════════════ */}
+        <div style={T.card} className="rounded-3xl p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+
+            {/* Identity */}
+            <div className="flex items-center gap-4">
+              <div
+                style={{ background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%)", boxShadow: "0 8px 28px var(--accent-glow)" }}
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 select-none"
+              >
+                🔒
+              </div>
+              <div>
+                <h1
+                  style={{ color: "var(--text-primary)", fontFamily: "'Playfair Display', 'Cairo', serif" }}
+                  className="text-2xl sm:text-3xl font-bold tracking-tight"
+                >
+                  {t("dashboardTitle")}
+                </h1>
+                <p style={{ color: "var(--text-muted)" }} className="mt-0.5 text-sm font-medium">
+                  إدارة رحلة{" "}
+                  <span style={{ color: "var(--accent)" }} className="font-bold">
+                    {formData?.girlNickname || "—"}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            {/* Metrics + Actions */}
+            <div className="flex flex-wrap items-center gap-3">
+
+              {/* Online count badge */}
+              <div
+                style={{
+                  background: onlineCount > 0 ? "rgba(34,197,94,0.10)" : "rgba(148,163,184,0.08)",
+                  border: `1px solid ${onlineCount > 0 ? "rgba(34,197,94,0.30)" : "rgba(148,163,184,0.18)"}`,
+                  color: onlineCount > 0 ? "#22C55E" : "var(--text-muted)",
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold"
+              >
+                <span className={`w-2 h-2 rounded-full ${onlineCount > 0 ? "bg-green-500 animate-pulse" : "bg-slate-400"}`} />
+                {onlineCount > 0 ? `${onlineCount} متصلة الآن` : "لا يوجد زوار"}
+              </div>
+
+              {/* Last seen */}
+              {lastSeen && (
+                <div
+                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border-base)", color: "var(--text-muted)" }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold"
+                >
+                  <MapPin size={11} />
+                  {lastSeen}
+                </div>
+              )}
+
+              {/* Copy link */}
+              <button
+                onClick={copyToClipboard}
+                style={T.accentGradient}
+                className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all hover:opacity-90 hover:scale-[1.02] active:scale-95"
+              >
+                <Copy size={15} />
+                {copyFeedback || t("copyLink")}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════
+            BLOCK 2 — PREMIUM TAB BAR
+        ══════════════════════════════════════════════ */}
+        <div
+          style={{ background: "var(--bg-card)", border: "1px solid var(--border-base)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+          className="rounded-2xl p-1.5 flex gap-1"
+        >
+          {MAIN_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={
+                  isActive
+                    ? { background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%)", color: "#1A1510", boxShadow: "0 4px 16px var(--accent-glow)" }
+                    : { color: "var(--text-muted)" }
+                }
+                className={`flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${!isActive ? "hover:bg-gray-50" : ""}`}
+              >
+                <Icon size={16} />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ══════════════════════════════════════════════
+            BLOCK 3 — CONTENT AREA (animated)
+        ══════════════════════════════════════════════ */}
+        <AnimatePresence mode="wait">
+
+          {/* ─── TAB: LIVE ─── */}
+          {activeTab === "live" && (
+            <motion.div key="live" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }} className="space-y-4">
+
+              {/* Live header */}
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <h2 style={{ color: "var(--text-primary)" }} className="flex items-center gap-2 text-base font-bold">
+                    <Activity size={18} className="text-red-500 animate-pulse" />
+                    {t("liveTracking")}
+                  </h2>
+                  <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 font-medium">{t("liveTrackingDesc")}</p>
+                </div>
+                <button
+                  onClick={load}
+                  disabled={loading}
+                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border-base)", color: "var(--text-secondary)" }}
+                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium transition-all hover:opacity-80 disabled:opacity-40"
+                >
+                  <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                  {t("refresh")}
+                </button>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="rounded-2xl bg-red-50 border border-red-200 p-4 text-center text-sm text-red-600 font-medium">{error}</div>
+              )}
+
+              {/* Empty state */}
+              {!loading && rows.length === 0 && !error && (
+                <div style={T.card} className="rounded-3xl p-14 text-center">
+                  <div className="text-5xl mb-4 select-none">📡</div>
+                  <p style={{ color: "var(--text-primary)" }} className="text-base font-bold">{t("noVisits")}</p>
+                  <p style={{ color: "var(--text-muted)" }} className="text-sm mt-1 font-medium">{t("noVisitsDesc")}</p>
+                </div>
+              )}
+
+              {/* Cards grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {rows.map((row) => (
+                  <PremiumSessionCard key={row.session_id} row={row} onBroadcast={broadcast} />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── TAB: AI ─── */}
+          {activeTab === "ai" && (
+            <motion.div key="ai" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
+              <div style={T.card} className="rounded-3xl p-6 sm:p-8">
+                <MagicAIGenerator siteSlug={siteSlug} setFormData={setFormData} />
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── TAB: SETTINGS ─── */}
+          {activeTab === "settings" && formData && (
+            <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
+              <form onSubmit={handleSave} className="space-y-4">
+
+                {/* Settings top bar */}
+                <div style={T.card} className="rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 style={{ color: "var(--text-primary)" }} className="text-base font-bold flex items-center gap-2">
+                      <Settings size={18} style={{ color: "var(--accent)" }} />
+                      إعدادات محتوى الموقع
+                    </h2>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 font-medium">
+                      عدّل النصوص والأسئلة ثم اضغط حفظ.
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <button
+                      type="submit"
+                      disabled={isSaving}
+                      style={T.accentGradient}
+                      className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm font-bold transition-all hover:opacity-90 disabled:opacity-50"
+                    >
+                      {isSaving ? <RefreshCw size={15} className="animate-spin" /> : <Save size={15} />}
+                      {isSaving ? "جاري الحفظ..." : "حفظ التغييرات"}
+                    </button>
+                    <AnimatePresence>
+                      {saveStatus && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-lg ${saveStatus.success ? "text-green-700 bg-green-50 border border-green-200" : "text-red-600 bg-red-50 border border-red-200"}`}
+                        >
+                          {saveStatus.msg}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* Settings sub-tab navigation */}
+                <div
+                  style={{ background: "var(--bg-surface)", border: "1px solid var(--border-base)" }}
+                  className="rounded-2xl p-1 flex overflow-x-auto gap-1"
+                  style2={{ scrollbarWidth: "none" }}
+                >
+                  {SETTINGS_TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeSection === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveSection(tab.id)}
+                        style={
+                          isActive
+                            ? { background: "var(--bg-card)", color: "var(--accent)", border: "1px solid var(--border-base)", boxShadow: "var(--shadow-card)" }
+                            : { color: "var(--text-muted)", border: "1px solid transparent" }
+                        }
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all shrink-0 hover:opacity-80"
+                      >
+                        <Icon size={13} />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Settings Content */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeSection}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    style={T.card}
+                    className="rounded-3xl p-6 sm:p-8"
+                  >
+
+                    {/* ─ Basics ─ */}
+                    {activeSection === "basic" && (
+                      <div className="space-y-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {[
+                            { label: "اسم الولد",                   field: "boyName" },
+                            { label: "اسم البنت",                   field: "girlName" },
+                            { label: "اسم الدلع للبنت",             field: "girlNickname" },
+                            { label: "اسم دلع للذكاء الاصطناعي (اختياري)", field: "petNameOverride" },
+                          ].map(({ label, field }) => (
+                            <FormField key={field} label={label}>
+                              <TokenInput value={formData[field] || ""} onChange={(e) => updateField(field, e.target.value)} />
+                            </FormField>
+                          ))}
+                        </div>
+
+                        <FormField label="نص الصفحة الرئيسية (Landing)">
+                          <TokenInput rows={3} value={formData.landingText} onChange={(e) => updateField("landingText", e.target.value)} />
+                        </FormField>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField label="نص شاشة النهاية (اللانهائية)">
+                            <TokenInput value={formData.voidText} onChange={(e) => updateField("voidText", e.target.value)} />
+                          </FormField>
+                          <FormField label="رابط ملف الموسيقى (MP3)">
+                            <TokenInput value={formData.audioUrl || ""} onChange={(e) => updateField("audioUrl", e.target.value)} placeholder="https://..." />
+                          </FormField>
+                        </div>
+
+                        <div style={{ borderTop: "1px solid var(--border-base)", paddingTop: "1.25rem" }}>
+                          <FieldLabel>رسائل شاشة الهاكر (Loader Terminal)</FieldLabel>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                            {formData.loaderTexts.map((txt, idx) => (
+                              <div key={idx}>
+                                <label style={{ color: "var(--text-muted)", fontSize: "0.6rem" }} className="font-bold block mb-1">السطر {idx + 1}</label>
+                                <TokenInput value={txt} onChange={(e) => updateLoaderText(idx, e.target.value)} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ─ Timeline ─ */}
+                    {activeSection === "timeline" && (
+                      <div className="space-y-4">
+                        {formData.timeline?.map((item, idx) => (
+                          <div key={idx} style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="flex flex-col sm:flex-row gap-4 p-4 rounded-2xl">
+                            <div className="flex flex-col items-center gap-3 w-full sm:w-1/3 shrink-0">
+                              <div style={{ border: "2px dashed var(--border-base)", background: "var(--bg-base)" }} className="w-full aspect-video sm:aspect-square rounded-xl overflow-hidden flex items-center justify-center relative group">
+                                {item.image ? (
+                                  <>
+                                    <img src={item.image} alt="preview" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <button type="button" onClick={() => handleRemoveTimelineImage(idx)} className="bg-red-500 text-white rounded-full p-2">
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div style={{ color: "var(--text-muted)" }} className="flex flex-col items-center gap-1">
+                                    <Activity size={22} className="opacity-20" />
+                                    <span className="text-[10px] font-medium">بدون صورة</span>
+                                  </div>
+                                )}
+                              </div>
+                              {!item.image && (
+                                <label style={{ background: "var(--bg-card)", border: "1px solid var(--border-base)", color: "var(--text-secondary)" }} className="text-xs font-bold px-4 py-2 rounded-xl cursor-pointer hover:opacity-80 w-full text-center transition-all">
+                                  رفع صورة
+                                  <input type="file" accept="image/*" onChange={(e) => handleTimelineImageUpload(e, idx)} className="hidden" />
+                                </label>
+                              )}
+                            </div>
+                            <div className="flex flex-col w-full gap-2">
+                              <FieldLabel>ذكرى رقم {idx + 1}</FieldLabel>
+                              <TokenInput rows={4} value={item.text} onChange={(e) => { const next = [...formData.timeline]; next[idx] = { ...next[idx], text: e.target.value }; updateField("timeline", next); }} placeholder="اكتب جملة توصف الذكرى..." />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* ─ Quiz ─ */}
+                    {activeSection === "quiz" && (
+                      <div className="space-y-5">
+                        <div className="flex items-center justify-between">
+                          <p style={{ color: "var(--text-muted)" }} className="text-sm font-medium">أضف أسئلة للتأكد من ذاكرتها.</p>
+                          <button type="button" onClick={addQuestion} style={T.accentGradient} className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90">
+                            <Plus size={13} /> إضافة سؤال
+                          </button>
+                        </div>
+                        <div className="space-y-5">
+                          {formData.triviaQuestions.map((qItem, qIdx) => (
+                            <div key={qIdx} style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="rounded-2xl p-5 relative">
+                              <button type="button" onClick={() => deleteQuestion(qIdx)} style={{ color: "var(--text-muted)" }} className="absolute top-4 left-4 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-all">
+                                <Trash2 size={16} />
+                              </button>
+                              <div className="flex flex-col gap-4 pr-8 sm:pr-0">
+                                <FormField label={`السؤال ${qIdx + 1}`}>
+                                  <TokenInput value={qItem.q} onChange={(e) => updateQuestionTitle(qIdx, e.target.value)} />
+                                </FormField>
+                                <div>
+                                  <div className="flex items-center justify-between mb-3" style={{ borderTop: "1px solid var(--border-base)", paddingTop: "1rem" }}>
+                                    <FieldLabel>الاختيارات (حدد الصحيح ✔️)</FieldLabel>
+                                    <button type="button" onClick={() => addOption(qIdx)} style={{ color: "var(--accent)" }} className="text-xs flex items-center gap-1 font-bold hover:opacity-80">
+                                      <Plus size={11} /> خيار
+                                    </button>
+                                  </div>
+                                  <div className="space-y-2">
+                                    {qItem.options.map((opt, oIdx) => {
+                                      const isCorrect = Array.isArray(qItem.correct) ? qItem.correct.includes(opt) : qItem.correct === opt;
+                                      return (
+                                        <div key={oIdx} style={{ border: `1px solid ${isCorrect ? "rgba(34,197,94,0.35)" : "var(--border-base)"}`, background: isCorrect ? "rgba(34,197,94,0.07)" : "var(--bg-base)" }} className="flex items-center gap-3 p-2.5 rounded-xl">
+                                          <input type="checkbox" checked={isCorrect} onChange={(e) => setCorrectOption(qIdx, opt, e.target.checked)} className="h-4 w-4 rounded shrink-0" />
+                                          <input type="text" value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} style={{ color: isCorrect ? "#4ADE80" : "var(--text-primary)", background: "transparent" }} className={`flex-1 border-0 py-1 px-1 text-sm outline-none ${isCorrect ? "font-bold" : "font-medium"}`} />
+                                          {qItem.options.length > 2 && (
+                                            <button type="button" onClick={() => deleteOption(qIdx, oIdx)} style={{ color: "var(--text-muted)" }} className="hover:text-red-500 p-1 rounded-lg transition-colors shrink-0"><Trash2 size={14} /></button>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                                <div style={{ borderTop: "1px solid var(--border-base)", paddingTop: "0.75rem" }}>
+                                  <label className="flex items-center gap-3 cursor-pointer w-fit group">
+                                    <input type="checkbox" checked={qItem.trap !== null} onChange={(e) => {
+                                      if (e.target.checked) setFormData((prev) => { const next = { ...prev }; next.triviaQuestions[qIdx].trap = { option: qItem.options[0] || "", msg: "بطلي عبط اختاري تاني 🤦‍♂️😂" }; return next; });
+                                      else setFormData((prev) => { const next = { ...prev }; next.triviaQuestions[qIdx].trap = null; return next; });
+                                    }} className="h-4 w-4 rounded shrink-0" />
+                                    <span style={{ color: "var(--text-secondary)" }} className="text-sm font-bold">تفعيل خيار الفخ 🪤</span>
+                                  </label>
+                                  {qItem.trap && (
+                                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} style={{ background: "rgba(201,149,108,0.08)", border: "1px solid rgba(201,149,108,0.22)" }} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl mt-3">
+                                      <FormField label="الخيار المفخخ">
+                                        <select value={qItem.trap.option} onChange={(e) => { const val = e.target.value; setFormData((prev) => { const next = { ...prev }; next.triviaQuestions[qIdx].trap.option = val; return next; }); }} style={T.input} className="w-full rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] font-medium">
+                                          {qItem.options.map((opt, idx) => <option key={idx} value={opt}>{opt}</option>)}
+                                        </select>
+                                      </FormField>
+                                      <div className="md:col-span-2">
+                                        <FormField label="رسالة الخداع 🤡">
+                                          <TokenInput value={qItem.trap.msg} onChange={(e) => { const val = e.target.value; setFormData((prev) => { const next = { ...prev }; next.triviaQuestions[qIdx].trap.msg = val; return next; }); }} />
+                                        </FormField>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ─ Court ─ */}
+                    {activeSection === "court" && (
+                      <div className="space-y-5">
+                        <div style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="rounded-2xl p-5 space-y-4">
+                          <SectionHeading icon={Gavel}>الحكم الافتراضي للمحكمة</SectionHeading>
+                          <FormField label="عنوان الحكم"><TokenInput value={formData.judgeText.title} onChange={(e) => updateField("judgeText.title", e.target.value)} /></FormField>
+                          <FormField label="تفاصيل الحكم"><TokenInput rows={3} value={formData.judgeText.details} onChange={(e) => updateField("judgeText.details", e.target.value)} /></FormField>
+                        </div>
+                        <div style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="rounded-2xl p-5 space-y-4">
+                          <SectionHeading icon={Sparkles} accent>ردود تقييم النجوم</SectionHeading>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {[
+                              { key: "oneStar", label: "نجمة واحدة 😡" },
+                              { key: "twoStar", label: "نجمتين 😟" },
+                              { key: "threeStar", label: "3 نجوم 😐" },
+                              { key: "fourStar", label: "4 نجوم 🙂" },
+                              { key: "fiveStar", label: "5 نجوم 😍 (الصلح)", full: true },
+                            ].map((star) => (
+                              <div key={star.key} className={star.full ? "sm:col-span-2" : ""}>
+                                <FormField label={star.label}>
+                                  <TokenInput rows={star.full ? 3 : 2} value={formData.feedbackTexts[star.key]} onChange={(e) => updateField(`feedbackTexts.${star.key}`, e.target.value)} />
+                                </FormField>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="rounded-2xl p-5 space-y-3">
+                          <label className="flex items-center gap-3 cursor-pointer w-fit">
+                            <input type="checkbox" checked={formData.enableFunnyText} onChange={(e) => updateField("enableFunnyText", e.target.checked)} className="h-4 w-4 rounded shrink-0" />
+                            <span style={{ color: "var(--text-primary)" }} className="text-sm font-bold">تفعيل الرسالة الساخرة في النهاية 😈</span>
+                          </label>
+                          {formData.enableFunnyText && (
+                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+                              <FormField label="النص الساخر">
+                                <TokenInput value={formData.funnyText} onChange={(e) => updateField("funnyText", e.target.value)} />
+                              </FormField>
+                            </motion.div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ─ Letter + Gifts ─ */}
+                    {activeSection === "letter" && (
+                      <div className="space-y-5">
+                        <div style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="rounded-2xl p-5 space-y-4">
+                          <SectionHeading icon={FileText}>رسالة النهاية (الجواب)</SectionHeading>
+                          <FormField label="عنوان الجواب"><TokenInput value={formData.finalLetter.title} onChange={(e) => updateField("finalLetter.title", e.target.value)} /></FormField>
+                          <div style={{ borderTop: "1px solid var(--border-base)", paddingTop: "1rem" }}>
+                            <div className="flex items-center justify-between mb-3">
+                              <FieldLabel>محتوى الجواب (فقرات)</FieldLabel>
+                              <button type="button" onClick={addParagraph} style={{ color: "var(--accent)", border: "1px solid var(--border-base)", background: "var(--bg-card)" }} className="text-xs flex items-center gap-1 font-bold px-3 py-1.5 rounded-lg hover:opacity-80">
+                                <Plus size={11} /> فقرة
+                              </button>
+                            </div>
+                            <div className="space-y-2">
+                              {formData.finalLetter.body.map((para, idx) => (
+                                <div key={idx} style={{ border: "1px solid var(--border-base)", background: "var(--bg-base)" }} className="flex gap-3 items-start p-3 rounded-xl">
+                                  <span style={{ color: "var(--text-muted)" }} className="text-xs font-bold pt-2 shrink-0">{idx + 1}</span>
+                                  <textarea value={para} onChange={(e) => updateParagraph(idx, e.target.value)} rows={3} style={{ color: "var(--text-primary)", background: "transparent" }} className="flex-1 border-0 py-1 text-sm font-medium outline-none resize-none leading-relaxed" />
+                                  {formData.finalLetter.body.length > 1 && (
+                                    <button type="button" onClick={() => deleteParagraph(idx)} style={{ color: "var(--text-muted)" }} className="hover:text-red-500 p-1.5 rounded-lg transition-colors shrink-0"><Trash2 size={14} /></button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField label="جملة الختام"><TokenInput value={formData.finalLetter.loveSignature} onChange={(e) => updateField("finalLetter.loveSignature", e.target.value)} /></FormField>
+                            <FormField label="اسمك"><TokenInput value={formData.finalLetter.boySignature} onChange={(e) => updateField("finalLetter.boySignature", e.target.value)} /></FormField>
+                          </div>
+                        </div>
+
+                        {/* Gift Coupons */}
+                        <div style={{ border: "1px solid rgba(99,102,241,0.22)", background: "rgba(99,102,241,0.05)" }} className="rounded-2xl p-5 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 style={{ color: "var(--text-primary)" }} className="text-sm font-bold flex items-center gap-2">
+                                <Gift size={15} className="text-indigo-400" />
+                                كروت الهدايا (Gift Coupons)
+                              </h3>
+                              <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 font-medium">كروت تظهر لها في النهاية للصلح المادي والمعنوي.</p>
+                            </div>
+                            <button type="button" onClick={addCoupon} className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-colors">
+                              <Plus size={13} /> إضافة
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {formData.giftCoupons.map((coupon, idx) => (
+                              <div key={idx} style={{ border: "1px solid rgba(99,102,241,0.18)", background: "var(--bg-surface)" }} className="flex gap-2 items-center p-2.5 rounded-xl">
+                                <Gift size={14} className="text-indigo-400 shrink-0 ml-1" />
+                                <input type="text" value={coupon} onChange={(e) => updateCoupon(idx, e.target.value)} style={{ color: "var(--text-primary)", background: "transparent" }} className="flex-1 border-0 py-1 text-sm font-bold outline-none focus:ring-0" placeholder="مثال: خروجة على حسابي" />
+                                <button type="button" onClick={() => deleteCoupon(idx)} style={{ color: "var(--text-muted)" }} className="hover:text-red-500 p-1 rounded-lg transition-colors shrink-0"><Trash2 size={14} /></button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  </motion.div>
+                </AnimatePresence>
+              </form>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+
+        {/* ── Danger Zone ── */}
+        <div style={{ border: "1px solid rgba(239,68,68,0.25)", background: "rgba(239,68,68,0.05)" }} className="rounded-3xl p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-bold text-red-600 flex items-center gap-2">
+                <AlertCircle size={16} />
+                {t("dangerZone")}
+              </h2>
+              <p style={{ color: "var(--text-muted)" }} className="text-xs mt-0.5 font-medium">{t("dangerZoneDesc")}</p>
+            </div>
+            <button onClick={handleDeleteSite} className="inline-flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-5 py-2.5 text-sm font-bold text-white transition-all shrink-0 shadow-md">
+              <Trash2 size={15} /> {t("deleteSiteBtn")}
+            </button>
+          </div>
+        </div>
+
+      </div>
+      <Footer />
+    </div>
+  );
 }
