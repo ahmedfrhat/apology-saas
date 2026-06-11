@@ -433,8 +433,35 @@ export function AppProvider({ children }) {
       }).catch(() => {});
     };
 
+    const handleTouch = (e) => {
+      if (!e.touches || !e.touches[0]) return;
+      const now = Date.now();
+      if (now - lastSentRef.current < 150) return;
+      lastSentRef.current = now;
+
+      const touch = e.touches[0];
+      const x = touch.clientX / window.innerWidth;
+      const y = touch.clientY / window.innerHeight;
+
+      fetch(`/api/realtime/${encodeURIComponent(slug)}/trigger`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          event: "cursor-move",
+          data: { x, y }
+        })
+      }).catch(() => {});
+    };
+
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    window.addEventListener("touchmove", handleTouch, { passive: true });
+    window.addEventListener("touchstart", handleTouch, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouch);
+      window.removeEventListener("touchstart", handleTouch);
+    };
   }, []);
 
   // Fire initial session tracking registration on mount

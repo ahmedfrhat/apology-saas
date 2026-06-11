@@ -129,6 +129,7 @@ export default function FingerprintScanner({ onNext }) {
               startScanning();
             }}
             onTouchEnd={stopScanning}
+            onTouchCancel={stopScanning}
             disabled={done}
             aria-label={t("ضع البصمة")}
             className="relative h-32 w-32 flex items-center justify-center rounded-full bg-[#FAF8F3] dark:bg-[#1C1F30] border border-[#1A1A1A]/10 dark:border-white/10 shadow-lg cursor-pointer focus-visible:outline-none transition-transform active:scale-95 z-10"

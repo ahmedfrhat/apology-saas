@@ -1,5 +1,17 @@
+import { useEffect, useState } from "react";
+
 // Subtle film-grain overlay. Pure CSS/SVG noise, very low opacity.
 export default function FilmGrain() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    setIsMobile(isMobileUA || window.innerWidth < 768);
+  }, []);
+
+  if (isMobile) return null;
+
   const noise =
     "data:image/svg+xml;utf8," +
     encodeURIComponent(

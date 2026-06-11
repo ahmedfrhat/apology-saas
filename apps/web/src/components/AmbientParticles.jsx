@@ -25,7 +25,10 @@ export default function AmbientParticles() {
     const ctx = canvas.getContext("2d");
     let animationFrameId;
     let particles = [];
-    const maxParticles = 80;
+
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || window.innerWidth < 768;
+    const maxParticles = isMobile ? 25 : 80;
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
@@ -73,9 +76,13 @@ export default function AmbientParticles() {
         const { r, g, b } = hexToRgb(moodColorsRef.current.particle);
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
         
-        // Shadow/glow properties (soft blur on canvas)
-        ctx.shadowBlur = this.isMouseFollower ? 8 : 4;
-        ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
+        // Shadow/glow properties (soft blur on canvas) - disabled on mobile
+        if (!isMobile) {
+          ctx.shadowBlur = this.isMouseFollower ? 8 : 4;
+          ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
+        } else {
+          ctx.shadowBlur = 0;
+        }
         
         ctx.fill();
         ctx.shadowBlur = 0; // reset to prevent drawing lag
@@ -83,7 +90,8 @@ export default function AmbientParticles() {
     }
 
     // Populate initial background floating particles
-    for (let i = 0; i < 35; i++) {
+    const initialCount = isMobile ? 15 : 35;
+    for (let i = 0; i < initialCount; i++) {
       particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height, false));
     }
 
@@ -114,6 +122,12 @@ export default function AmbientParticles() {
       }
     };
 
+    const handleTouchEnd = () => {
+      mouseRef.current.active = false;
+      mouseRef.current.x = -1000;
+      mouseRef.current.y = -1000;
+    };
+
     const handleMouseLeave = () => {
       mouseRef.current.active = false;
     };
@@ -121,6 +135,8 @@ export default function AmbientParticles() {
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("touchmove", handleTouchMove, { passive: true });
     window.addEventListener("touchstart", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", handleTouchEnd, { passive: true });
     document.addEventListener("mouseleave", handleMouseLeave);
 
     // Animation Loop
@@ -128,7 +144,8 @@ export default function AmbientParticles() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Periodically spawn slow floating background particles
-      if (Math.random() < 0.12 && particles.filter(p => !p.isMouseFollower).length < 40) {
+      const bgCap = isMobile ? 12 : 40;
+      if (Math.random() < 0.12 && particles.filter(p => !p.isMouseFollower).length < bgCap) {
         particles.push(new Particle(Math.random() * canvas.width, canvas.height + 10, false));
       }
 
@@ -149,6 +166,8 @@ export default function AmbientParticles() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchstart", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
       document.removeEventListener("mouseleave", handleMouseLeave);
       cancelAnimationFrame(animationFrameId);
     };
