@@ -1,5 +1,5 @@
 import sql from "@/app/api/utils/sql";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitize } from "@/lib/sanitize";
 
 async function triggerNotification(slug, eventType, sessionId, data = {}, request) {
   let message = "";
@@ -95,12 +95,12 @@ export async function POST(request, context, c) {
 
     const currentSection = body.current_section ?? null;
     const batteryLevel = typeof body.battery_level === "number" ? body.battery_level : 0;
-    const lastAction = typeof body.last_action === "string" ? DOMPurify.sanitize(body.last_action) : (body.last_action ?? null);
+    const lastAction = typeof body.last_action === "string" ? sanitize(body.last_action) : (body.last_action ?? null);
     const hesitationDetected = body.hesitation_detected ?? false;
     const hesitationSeconds = body.hesitation_seconds ?? 0;
-    const pleaText = typeof body.plea_text === "string" ? DOMPurify.sanitize(body.plea_text) : (body.plea_text ?? null);
+    const pleaText = typeof body.plea_text === "string" ? sanitize(body.plea_text) : (body.plea_text ?? null);
     const starRating = body.star_rating ?? null;
-    const finalComment = typeof body.final_comment === "string" ? DOMPurify.sanitize(body.final_comment) : (body.final_comment ?? null);
+    const finalComment = typeof body.final_comment === "string" ? sanitize(body.final_comment) : (body.final_comment ?? null);
     const details = body.details ?? null;
 
     let stickyNotes = body.sticky_notes ?? null;
@@ -108,7 +108,7 @@ export async function POST(request, context, c) {
       const sanitized = {};
       for (const key in stickyNotes) {
         if (typeof stickyNotes[key] === "string") {
-          sanitized[key] = DOMPurify.sanitize(stickyNotes[key]);
+          sanitized[key] = sanitize(stickyNotes[key]);
         } else {
           sanitized[key] = stickyNotes[key];
         }
@@ -116,8 +116,8 @@ export async function POST(request, context, c) {
       stickyNotes = sanitized;
     }
 
-    const courtroomFollowup = typeof body.courtroom_followup === "string" ? DOMPurify.sanitize(body.courtroom_followup) : (body.courtroom_followup ?? null);
-    const timeCapsule = typeof body.time_capsule === "string" ? DOMPurify.sanitize(body.time_capsule) : (body.time_capsule ?? null);
+    const courtroomFollowup = typeof body.courtroom_followup === "string" ? sanitize(body.courtroom_followup) : (body.courtroom_followup ?? null);
+    const timeCapsule = typeof body.time_capsule === "string" ? sanitize(body.time_capsule) : (body.time_capsule ?? null);
     const isFrozen = body.is_frozen ?? false;
 
     // 2. Intercept for session initialization and completion alerts

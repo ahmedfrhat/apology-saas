@@ -1,5 +1,4 @@
 import sql from "@/app/api/utils/sql";
-import DOMPurify from "isomorphic-dompurify";
 
 export async function GET(request) {
   try {

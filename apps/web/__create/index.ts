@@ -4,7 +4,7 @@ import { skipCSRFCheck } from '@auth/core';
 import Credentials from '@auth/core/providers/credentials';
 import { authHandler, initAuthConfig } from '@hono/auth-js';
 import { Pool, neonConfig } from '@neondatabase/serverless';
-import { hash, verify } from 'argon2';
+import { hash, compare } from 'bcryptjs';
 import { Hono } from 'hono';
 import { contextStorage, getContext } from 'hono/context-storage';
 import { cors } from 'hono/cors';
@@ -38,7 +38,7 @@ for (const method of ['log', 'info', 'warn', 'error', 'debug'] as const) {
   };
 }
 
-const isBuild = process.env.npm_lifecycle_event === 'build' || process.argv.some(arg => arg.includes('build'));
+const isBuild = process.env.npm_lifecycle_event === 'build' || process.argv.includes('build');
 
 function sanitizeDatabaseUrl(urlStr: string | undefined): string | undefined {
   if (!urlStr) return urlStr;
@@ -217,7 +217,7 @@ if (process.env.AUTH_SECRET && adapter) {
               return null;
             }
 
-            const isValid = await verify(accountPassword, password);
+            const isValid = await compare(password, accountPassword);
             if (!isValid) {
               return null;
             }
@@ -261,7 +261,7 @@ if (process.env.AUTH_SECRET && adapter) {
               });
               await adapter.linkAccount({
                 extraData: {
-                  password: await hash(password),
+                  password: await hash(password, 10),
                 },
                 type: 'credentials',
                 userId: newUser.id,
@@ -334,17 +334,27 @@ if (!isBuild) {
     serveStatic({ root: clientBuildPath })
   );
 
-  // Serve public directory files (favicon.ico, etc.)
+  // Serve public directory files (favicon.ico, etc.) only if they look like static files
   app.use(
     '*',
-    // @ts-expect-error type mismatch between hono versions
-    serveStatic({ root: clientBuildPath })
+    createMiddleware(async (c, next) => {
+      const path = c.req.path;
+      if (path.includes('.') && !path.startsWith('/api/')) {
+        // @ts-expect-error type mismatch between hono versions
+        const handler = serveStatic({ root: clientBuildPath });
+        return handler(c, next);
+      }
+      return next();
+    })
   );
 
   // Add the React Router SSR handler as the catch-all
   app.use('*', createMiddleware(async (c) => {
+    console.log(`[SSR Handler] Path: ${c.req.path}`);
     const requestHandler = createRequestHandler(build, 'production');
-    return requestHandler(c.req.raw);
+    const response = await requestHandler(c.req.raw);
+    console.log(`[SSR Handler] Response status: ${response.status}`);
+    return response;
   }));
 }
 

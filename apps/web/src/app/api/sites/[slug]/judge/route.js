@@ -1,8 +1,8 @@
 import sql from "@/app/api/utils/sql";
 import { enforceRateLimit } from "@/app/api/utils/ratelimit";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitize } from "@/lib/sanitize";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 const fallbacks = [
   "السيستم هنج من كتر ما أنتِ معاكي حق! المحكمة بتحكم إنك التوب والباقي كنتلوب، وهو غلطان من ساسه لراسه! 💅",
@@ -39,10 +39,10 @@ export async function POST(request, context, c) {
       memoConditions = "" 
     } = body || {};
 
-    pleaText = DOMPurify.sanitize(pleaText || "");
-    followupQuestion = DOMPurify.sanitize(followupQuestion || "");
-    followupResponse = DOMPurify.sanitize(followupResponse || "");
-    memoConditions = DOMPurify.sanitize(memoConditions || "");
+    pleaText = sanitize(pleaText || "");
+    followupQuestion = sanitize(followupQuestion || "");
+    followupResponse = sanitize(followupResponse || "");
+    memoConditions = sanitize(memoConditions || "");
 
     if (!pleaText) {
       return Response.json({ error: "الرجاء إدخال نص الدفاع" }, { status: 400 });

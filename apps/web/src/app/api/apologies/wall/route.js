@@ -1,5 +1,5 @@
 import sql from "@/app/api/utils/sql";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitize } from "@/lib/sanitize";
 
 export async function GET(request) {
   try {
@@ -35,7 +35,7 @@ export async function POST(request, context, c) {
     }
 
     // Heavy sanitization to ensure no malicious code gets stored
-    const sanitizedContent = DOMPurify.sanitize(content.trim()).substring(0, 300);
+    const sanitizedContent = sanitize(content.trim()).substring(0, 300);
 
     const [row] = await sql`
       INSERT INTO anonymous_apologies (content)
