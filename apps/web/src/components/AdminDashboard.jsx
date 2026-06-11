@@ -21,6 +21,7 @@ import {
   Zap,
   BarChart2,
   MapPin,
+  Calendar,
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { motion, AnimatePresence } from "motion/react";
@@ -782,7 +783,7 @@ const MagicAIGenerator = memo(({ siteSlug, setFormData, t }) => {
 import { useLanguage } from "../context/LanguageContext";
 
 export default function AdminDashboard() {
-  const { t } = useLanguage();
+  const { locale, t } = useLanguage();
   const { config, refetchConfig, siteSlug } = useApp();
 
   // ── State ──
@@ -1273,6 +1274,7 @@ export default function AdminDashboard() {
   const MAIN_TABS = [
     { id: "live",     label: t("liveTracking"),     icon: Activity },
     { id: "settings", label: t("settingsTitle"),    icon: Settings },
+    { id: "retention", label: locale === "en" ? "Wishes & Anniversary" : "الهدايا والذكرى السنوية", icon: Calendar },
     { id: "ai",       label: t("aiGenerator"),      icon: Sparkles },
   ];
 
@@ -1460,6 +1462,207 @@ export default function AdminDashboard() {
             <motion.div key="ai" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
               <div style={T.card} className="rounded-3xl p-6 sm:p-8">
                 <MagicAIGenerator siteSlug={siteSlug} setFormData={setFormData} t={t} />
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── TAB: RETENTION & WISHES ─── */}
+          {activeTab === "retention" && (
+            <motion.div key="retention" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Anniversary Calendar Module */}
+                <div style={T.card} className="rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
+                  <div>
+                    <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold flex items-center gap-2 mb-2">
+                      <Calendar size={20} style={{ color: "var(--accent)" }} />
+                      {config?.locale === "en" ? "Anniversary Calendar & Milestones" : "جدول المناسبات والذكرى السنوية"}
+                    </h2>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs leading-relaxed mb-6">
+                      {config?.locale === "en" 
+                        ? "Keep track of your relationship milestones, reconciliation status, and time capsule countdown." 
+                        : "تتبع اللحظات الفارقة في علاقتكما، وحالة صلحكما وتاريخ انتهاء كبسولة الزمن المشفرة."}
+                    </p>
+
+                    {/* Timeline of events */}
+                    <div className="space-y-4 font-sans text-xs">
+                      {/* Step 1: Creation */}
+                      <div className="flex items-start gap-3 relative">
+                        <div className="h-6 w-6 rounded-full bg-green-500/10 border border-green-500/40 text-green-500 flex items-center justify-center font-bold flex-shrink-0">✓</div>
+                        <div className="flex-1 border-b border-gray-100 dark:border-gray-800 pb-2">
+                          <p style={{ color: "var(--text-primary)" }} className="font-bold">
+                            {config?.locale === "en" ? "Apology Site Launched" : "تم إطلاق موقع الاعتذار 🚀"}
+                          </p>
+                          <p style={{ color: "var(--text-muted)" }} className="text-[10px] mt-0.5">
+                            {rows.length > 0 && rows[rows.length - 1]?.created_at 
+                              ? new Date(rows[rows.length - 1].created_at).toLocaleDateString(config?.locale === "en" ? "en-US" : "ar-EG") 
+                              : new Date().toLocaleDateString(config?.locale === "en" ? "en-US" : "ar-EG")}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Step 2: Reconciliation */}
+                      {(() => {
+                        const completedRow = rows.find(r => r.current_section === "eternal-void" || r.last_action === "forgiven" || r.star_rating === 5);
+                        const reconciledDate = completedRow?.updated_at ? new Date(completedRow.updated_at) : null;
+                        return (
+                          <div className="flex items-start gap-3">
+                            <div className={`h-6 w-6 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
+                              reconciledDate 
+                                ? "bg-green-500/10 border border-green-500/40 text-green-500" 
+                                : "bg-amber-500/10 border border-amber-500/30 text-amber-500 animate-pulse"
+                            }`}>
+                              {reconciledDate ? "✓" : "⏰"}
+                            </div>
+                            <div className="flex-1 border-b border-gray-100 dark:border-gray-800 pb-2">
+                              <p style={{ color: "var(--text-primary)" }} className="font-bold">
+                                {config?.locale === "en" ? "Reconciliation Accomplished" : "وثيقة وتاريخ الصلح الرسمي 📜❤️"}
+                              </p>
+                              <p style={{ color: "var(--text-muted)" }} className="text-[10px] mt-0.5">
+                                {reconciledDate 
+                                  ? `${config?.locale === "en" ? "Completed on " : "تم التوثيق في: "} ${reconciledDate.toLocaleDateString(config?.locale === "en" ? "en-US" : "ar-EG")}`
+                                  : (config?.locale === "en" ? "Waiting for Stage 12 acceptance..." : "بانتظار وصولها للمرحلة الـ 12 والموافقة...")}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Step 3: Time Capsule */}
+                      {(() => {
+                        const completedRow = rows.find(r => r.current_section === "eternal-void" || r.last_action === "forgiven" || r.star_rating === 5);
+                        const capsuleCreated = completedRow?.details?.capsule_created_at || completedRow?.created_at;
+                        const capsuleUnlock = capsuleCreated ? new Date(new Date(capsuleCreated).setFullYear(new Date(capsuleCreated).getFullYear() + 1)) : null;
+                        const isReconciled = !!completedRow;
+                        return (
+                          <div className="flex items-start gap-3">
+                            <div className={`h-6 w-6 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
+                              isReconciled 
+                                ? "bg-indigo-500/10 border border-indigo-500/40 text-indigo-500" 
+                                : "bg-gray-100 border border-gray-300 text-gray-400"
+                            }`}>
+                              ⏳
+                            </div>
+                            <div className="flex-1 border-b border-gray-100 dark:border-gray-800 pb-2">
+                              <p style={{ color: "var(--text-primary)" }} className="font-bold">
+                                {config?.locale === "en" ? "Time Capsule Unlocking" : "موعد فتح كبسولة الزمن المشفرة ⏳"}
+                              </p>
+                              <p style={{ color: "var(--text-muted)" }} className="text-[10px] mt-0.5">
+                                {capsuleUnlock 
+                                  ? `${config?.locale === "en" ? "Unlocks on " : "سيتم فك التشفير والفتح في: "} ${capsuleUnlock.toLocaleDateString(config?.locale === "en" ? "en-US" : "ar-EG")}`
+                                  : (config?.locale === "en" ? "Locks automatically upon reconciliation." : "سيتم قفل الكبسولة وجدولتها فور إتمام الصلح.")}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Step 4: Anniversary Check-in */}
+                      {(() => {
+                        const completedRow = rows.find(r => r.current_section === "eternal-void" || r.last_action === "forgiven" || r.star_rating === 5);
+                        const reconciliationDate = completedRow?.updated_at ? new Date(completedRow.updated_at) : null;
+                        const nextAnniversary = reconciliationDate ? new Date(new Date(reconciliationDate).setFullYear(reconciliationDate.getFullYear() + 1)) : null;
+                        return (
+                          <div className="flex items-start gap-3">
+                            <div className={`h-6 w-6 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
+                              nextAnniversary 
+                                ? "bg-rose-500/10 border border-rose-500/40 text-rose-500" 
+                                : "bg-gray-100 border border-gray-300 text-gray-400"
+                            }`}>
+                              🎉
+                            </div>
+                            <div className="flex-1 pb-1">
+                              <p style={{ color: "var(--text-primary)" }} className="font-bold">
+                                {config?.locale === "en" ? "First Anniversary Email Trigger" : "الذكرى السنوية الأولى للصلح 🎁"}
+                              </p>
+                              <p style={{ color: "var(--text-muted)" }} className="text-[10px] mt-0.5">
+                                {nextAnniversary 
+                                  ? `${config?.locale === "en" ? "Yearly check-in on " : "البريد السنوي التلقائي مجدول في: "} ${nextAnniversary.toLocaleDateString(config?.locale === "en" ? "en-US" : "ar-EG")}`
+                                  : (config?.locale === "en" ? "Scheduled automatically for yearly customer retention." : "سيتم الجدولة السنوية فوراً بعد الصلح لزيادة الارتباط.")}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  
+                  {/* Calendar Badge */}
+                  <div className="mt-6 p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-900/10 border border-amber-500/15 text-center flex items-center justify-center gap-3">
+                    <span className="text-2xl">🗓️</span>
+                    <div className="text-start">
+                      <p className="text-xs font-bold text-amber-800 dark:text-amber-400">
+                        {config?.locale === "en" ? "Lifetime Link Active" : "حالة الرابط مدى الحياة: نشط دائمًا ✅"}
+                      </p>
+                      <p className="text-[10px] text-gray-500">
+                        {config?.locale === "en" ? "This page is guaranteed to stay live forever." : "نضمن بقاء رابط الاعتذار نشطًا للأبد دون إزالة أو أرشفة."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scratched Wishlist Card Module */}
+                <div style={T.card} className="rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
+                  <div>
+                    <h2 style={{ color: "var(--text-primary)" }} className="text-lg font-bold flex items-center gap-2 mb-2">
+                      <Gift size={20} style={{ color: "var(--accent)" }} />
+                      {config?.locale === "en" ? "Scratch Wishlist Coupons" : "قائمة كروت الهدايا المكشوفة (الرغبات)"}
+                    </h2>
+                    <p style={{ color: "var(--text-muted)" }} className="text-xs leading-relaxed mb-6">
+                      {config?.locale === "en" 
+                        ? "Coupons scratched and revealed by her during the experience. Fulfill them to make her happy!" 
+                        : "الكروت التي قامت بمسحها وكشفتها أثناء المرور بالخطوات. يمكنك تلبية هذه الرغبات لإسعادها!"}
+                    </p>
+
+                    {/* Scratched coupon items */}
+                    {(() => {
+                      const latestSession = rows[0];
+                      const ledger = latestSession?.details?.ledger || [];
+                      const wishlistCoupons = ledger
+                        .filter(item => item.event && (item.event.includes("امسحت كارت الهدية") || item.event.includes("revealed") || item.event.includes("Gift") || item.event.includes("كارت")))
+                        .map(item => {
+                          const match = item.event.match(/"([^"]+)"/);
+                          return match ? match[1] : item.event;
+                        });
+                      const uniqueWishlist = Array.from(new Set(wishlistCoupons));
+
+                      if (uniqueWishlist.length === 0) {
+                        return (
+                          <div className="text-center py-12 border-2 border-dashed border-gray-250 dark:border-gray-800 rounded-2xl flex flex-col items-center justify-center text-xs text-gray-400">
+                            <span className="text-3xl mb-2 animate-bounce">🎁</span>
+                            <p>{config?.locale === "en" ? "No gifts revealed yet..." : "لم تقم بكشف أي كروت هدايا بعد..."}</p>
+                            <p className="text-[10px] text-gray-500 mt-1">{config?.locale === "en" ? "Wait for her to scratch the cards in Stage 11." : "انتظر حتى تصل للمرحلة الـ 11 وتمسح الكروت."}</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                          {uniqueWishlist.map((coupon, idx) => (
+                            <div key={idx} className="p-3.5 bg-amber-800/5 dark:bg-amber-950/20 border-2 border-dashed border-amber-800/30 rounded-2xl flex items-center justify-between text-xs relative overflow-hidden">
+                              <div className="flex-1 pr-3">
+                                <p style={{ color: "var(--text-primary)" }} className="font-extrabold text-sm mb-1 leading-snug">
+                                  {coupon}
+                                </p>
+                                <span className="text-[9px] bg-green-500/10 text-green-600 dark:text-green-400 font-bold px-1.5 py-0.5 rounded">
+                                  {config?.locale === "en" ? "Ready to Claim 🎟️" : "جاهز للوفاء والمطالبة 🎟️"}
+                                </span>
+                              </div>
+                              <span className="text-xl opacity-60">🎫</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="text-[10px] text-gray-400 text-center mt-6">
+                    {config?.locale === "en" 
+                      ? "Keep this list handy to plan your dates and gifts!" 
+                      : "احرص على الإيفاء بهذه الكروت والوعود لتعزيز صلحكما المستمر!"}
+                  </div>
+                </div>
+
               </div>
             </motion.div>
           )}

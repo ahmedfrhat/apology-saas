@@ -143,13 +143,10 @@ async function ensureTable() {
       CREATE INDEX IF NOT EXISTS idx_apology_sites_slug ON apology_sites(slug)
     `;
     await sql`ALTER TABLE apology_sites ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT now()`;
+    await sql`ALTER TABLE apology_sites ADD COLUMN IF NOT EXISTS creator_email VARCHAR(255)`;
+    await sql`ALTER TABLE apology_sites ADD COLUMN IF NOT EXISTS reconciled_at TIMESTAMP`;
     
-    // Auto TTL cleanup: Delete sites older than 7 days
-    try {
-      await sql`DELETE FROM apology_sites WHERE created_at < NOW() - INTERVAL '7 days'`;
-    } catch(err) {
-      console.error("TTL cleanup failed", err);
-    }
+    // Lifetime Link Assurance: Sites remain active forever by default unless deleted by creator.
 
     // 2. Create live_tracking table
     await sql`
@@ -224,6 +221,38 @@ async function ensureTable() {
       )
     `;
 
+    // 7. Create anonymous_apologies table
+    await sql`
+      CREATE TABLE IF NOT EXISTS anonymous_apologies (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        content TEXT NOT NULL,
+        likes INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT now()
+      )
+    `;
+
+    // 8. Create apology_gallery_stories table
+    await sql`
+      CREATE TABLE IF NOT EXISTS apology_gallery_stories (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        title VARCHAR(255) NOT NULL,
+        story TEXT NOT NULL,
+        votes INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT now()
+      )
+    `;
+
+    // Seed apology_gallery_stories if empty
+    const galleryCount = await sql`SELECT COUNT(*) as count FROM apology_gallery_stories`;
+    if (parseInt(galleryCount[0]?.count || 0, 10) === 0) {
+      await sql`
+        INSERT INTO apology_gallery_stories (title, story, votes) VALUES
+        ('خناقة الشاورما المصيرية 🌯', 'صاحبتي زعلت مني عشان أكلت آخر قطمة في ساندوتش الشاورما بتاعي وبتاعها.. واعتبرت ده غدر عاطفي وعدم مشاركة وجدانية! 😂', 142),
+        ('خيانة في البلايستيشن 🎮', 'لعبت جيم فيفا مع صحابي وخسرت قصداً عشان أروح أكلمها.. بس هي عرفت إني خسرت قصداً واعتبرتني مستهتر ومش باخد الجيم بجدية! 🤣', 98),
+        ('جريمة عدم الرد السريع 📱', 'سبت التلفون 3 دقائق عشان أغسل وشي.. رجعت لقيت 14 مكالمة فائتة و20 رسالة بتبدأ بـ "إنت مبقتش تحبني" وتنتهي بـ "باي"! 💀❤️', 256)
+      `;
+    }
+
     dbInitialized = true;
   } catch (err) {
     console.error("Failed to create tables", err);
@@ -264,7 +293,7 @@ export async function POST(request, context, c) {
 
     const stripHtml = (str) => typeof str === "string" ? str.replace(/</g, "&lt;").replace(/>/g, "&gt;") : str;
 
-    let { slug, password, passwordHint, telegramChatId, boyName, girlName, petName, locale } = body || {};
+    let { slug, password, passwordHint, telegramChatId, boyName, girlName, petName, locale, creatorEmail } = body || {};
 
     slug = stripHtml(slug);
     password = stripHtml(password);
@@ -273,6 +302,7 @@ export async function POST(request, context, c) {
     boyName = stripHtml(boyName);
     girlName = stripHtml(girlName);
     petName = stripHtml(petName);
+    creatorEmail = stripHtml(creatorEmail || "");
 
     if (!slug || !password || !boyName || !girlName) {
       console.log("[sites/POST] 4. Missing fields validation failed.");
@@ -343,8 +373,8 @@ export async function POST(request, context, c) {
 
     console.log(`[sites/POST] 10. Before INSERT query for: ${slug}`);
     await safeSql`
-      INSERT INTO apology_sites (slug, edit_password, config)
-      VALUES (${slug}, ${hashedPassword}, ${configStr}::jsonb)
+      INSERT INTO apology_sites (slug, edit_password, config, creator_email)
+      VALUES (${slug}, ${hashedPassword}, ${configStr}::jsonb, ${creatorEmail || null})
     `;
     console.log(`[sites/POST] 11. After INSERT query. Success!`);
 

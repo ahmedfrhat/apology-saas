@@ -50,10 +50,14 @@ export function meta({ data }) {
   
   return [
     { name: "robots", content: "noindex, nofollow" },
-    { property: "og:title", content: `مفاجأة خاصة من ${boy} إلى ${girl} 🎁` },
-    { property: "og:description", content: "Safi.io - منصة المصالحة والاعتذار الذكية" },
+    { property: "og:title", content: "أنا آسف.. افتح الرابط لرؤية الرسالة المغلقة 🔒" },
+    { property: "og:description", content: `أرسل لك ${boy} رسالة اعتذار سرية وخاصة جداً.. اضغط لفتحها وتفعيل البصمة 🔑` },
     { property: "og:image", content: ogUrl },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "Safi.io" },
     { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: "أنا آسف.. افتح الرابط لرؤية الرسالة المغلقة 🔒" },
+    { name: "twitter:description", content: `أرسل لك ${boy} رسالة اعتذار سرية وخاصة جداً.. اضغط لفتحها وتفعيل البصمة 🔑` },
     { name: "twitter:image", content: ogUrl }
   ];
 }

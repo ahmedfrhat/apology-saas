@@ -213,6 +213,86 @@ export async function POST(request, context, c) {
 
       if (reachedEnd && !previouslyEnd) {
         triggerNotification(slug, "complete", session_id, {}, request).catch(err => console.error("Complete notification fail", err));
+        
+        // Retention automation: update reconciled_at and trigger Resend report
+        (async () => {
+          try {
+            const siteData = await sql`SELECT id, creator_email, reconciled_at, config FROM apology_sites WHERE id = ${siteId}`;
+            if (siteData.length > 0) {
+              const site = siteData[0];
+              if (!site.reconciled_at) {
+                await sql`UPDATE apology_sites SET reconciled_at = NOW() WHERE id = ${siteId}`;
+                
+                const resendApiKey = process.env.RESEND_API_KEY;
+                const creatorEmail = site.creator_email;
+                if (resendApiKey && creatorEmail) {
+                  const boyName = site.config?.boyName || "الزوج";
+                  const girlName = site.config?.girlName || "الزوجة";
+                  const starRatingStr = starRating !== null ? `${starRating} / 5 نجوم` : "5 / 5 نجوم";
+                  const hesitationSecondsStr = hesitationSeconds > 0 ? `${hesitationSeconds.toFixed(1)} ثانية` : "0 ثانية";
+                  const pleaTextStr = pleaText ? `"${pleaText}"` : "لا يوجد";
+                  const finalCommentStr = finalComment ? `"${finalComment}"` : "لا يوجد";
+
+                  const emailHtml = `
+                    <div style="font-family: sans-serif; direction: rtl; text-align: right; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e0d8; border-radius: 20px; background-color: #FCFBF7; color: #4A3E3D;">
+                      <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="font-size: 40px;">💝</span>
+                        <h1 style="color: #92400E; margin-top: 10px; font-size: 24px;">تم الصلح بنجاح! 🎉</h1>
+                        <p style="font-size: 14px; color: #8A7E7D;">مرحباً يا ${boyName}، شريكتك قد أتمت الخطوات الـ 12 بنجاح.</p>
+                      </div>
+
+                      <div style="background-color: #ffffff; padding: 20px; border-radius: 15px; border: 1px solid #1a1a1a10; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                        <h3 style="color: #B45309; margin-top: 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 8px;">📊 تقرير المصالحة والتحليلات لـ ${girlName}:</h3>
+                        <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                          <tr style="border-bottom: 1px solid #f9f9f9;">
+                            <td style="padding: 10px 0; color: #8A7E7D; width: 40%;">⭐ تقييم المحكمة النهائي:</td>
+                            <td style="padding: 10px 0; font-weight: bold; color: #1a1a1a;">${starRatingStr}</td>
+                          </tr>
+                          <tr style="border-bottom: 1px solid #f9f9f9;">
+                            <td style="padding: 10px 0; color: #8A7E7D;">⏳ إجمالي وقت التردد:</td>
+                            <td style="padding: 10px 0; font-weight: bold; color: #1a1a1a;">${hesitationSecondsStr}</td>
+                          </tr>
+                          <tr style="border-bottom: 1px solid #f9f9f9;">
+                            <td style="padding: 10px 0; color: #8A7E7D;">⚖️ مرافعة الدفاع في المحكمة:</td>
+                            <td style="padding: 10px 0; font-weight: bold; color: #1a1a1a;">${pleaTextStr}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 10px 0; color: #8A7E7D;">💬 التعليق والتقييم النهائي:</td>
+                            <td style="padding: 10px 0; font-weight: bold; color: #1a1a1a;">${finalCommentStr}</td>
+                          </tr>
+                        </table>
+                      </div>
+
+                      <div style="background-color: #E6F4EA; border: 1px solid #34A853; color: #137333; padding: 15px; border-radius: 10px; font-size: 12px; text-align: center; margin-bottom: 25px;">
+                        🔐 <b>تم حفظ هذه المناسبة السعيدة بنجاح!</b> سنرسل لك رسالة بريد إلكتروني تذكارية تلقائية في نفس هذا اليوم من العام القادم للاحتفال بالذكرى السنوية لمصالحتكما.
+                      </div>
+
+                      <div style="text-align: center; font-size: 11px; color: #8A7E7D; border-top: 1px solid #eee; padding-top: 15px;">
+                        <p>© 2026 Safi.io - جميع الحقوق محفوظة. تم إرسال هذه الرسالة لأنك أنشأت صفحة مصالحة على منصتنا.</p>
+                      </div>
+                    </div>
+                  `;
+
+                  await fetch("https://api.resend.com/emails", {
+                    method: "POST",
+                    headers: {
+                      "Authorization": `Bearer ${resendApiKey}`,
+                      "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                      from: "Safi.io <onboarding@resend.dev>",
+                      to: creatorEmail,
+                      subject: `🎉 تم الصلح بنجاح! تقرير المصالحة الكامل لـ ${girlName}`,
+                      html: emailHtml
+                    })
+                  });
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Reconciliation post-flow failed:", err);
+          }
+        })();
       }
       if (starRating !== null && starRating !== prevTracking.star_rating) {
         triggerNotification(slug, "rating", session_id, { starRating }, request).catch(err => console.error("Rating notification fail", err));
