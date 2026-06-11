@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "motion/react";
-import { Heart, Sparkles, AlertCircle, CheckCircle } from "lucide-react";
+import { Heart } from "lucide-react";
+import Footer from "@/components/Footer";
 
 const CARD =
   "bg-[#F4F3EF]/70 backdrop-blur-3xl border border-[#1A1A1A]/10 shadow-[0_30px_70px_rgba(0,0,0,0.4)] rounded-[2.5rem]";
@@ -76,15 +77,12 @@ export default function SaaSOnboardingPage() {
   );
 
   return (
-    <div
-      className="min-h-screen bg-[#FCFBF7] flex items-center justify-center px-5 py-12 font-sans antialiased text-[#4A3E3D]"
-      dir="rtl"
-    >
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.03]">
-        <div className="absolute top-[10%] left-[10%] text-9xl select-none">❤️</div>
-        <div className="absolute bottom-[10%] right-[10%] text-9xl select-none">❤️</div>
-      </div>
-
+    <div className="flex min-h-screen flex-col bg-[#FCFBF7] font-sans antialiased text-[#4A3E3D]" dir="rtl">
+      <div className="flex flex-1 items-center justify-center px-5 py-12 relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.03]">
+          <div className="absolute top-[10%] left-[10%] text-9xl select-none">❤️</div>
+          <div className="absolute bottom-[10%] right-[10%] text-9xl select-none">❤️</div>
+        </div>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -117,12 +115,18 @@ export default function SaaSOnboardingPage() {
               <input type="text" required value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="link" className="flex-1 p-2.5 outline-none" />
             </div>
             <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="كلمة المرور" className="w-full rounded-xl border p-2.5" />
-            <button type="submit" disabled={loading} className="w-full bg-amber-800 text-white py-3.5 rounded-xl">
+            <button type="submit" disabled={loading} className="w-full bg-amber-800 text-white py-3.5 rounded-xl font-bold transition-all hover:bg-amber-900 active:scale-95 shadow-sm">
               {loading ? "جاري البناء..." : "أنشئ المفاجأة الرومانسية 🚀"}
             </button>
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              <span role="img" aria-label="lock" className="opacity-80 ml-1">🔒</span>
+              بياناتكم مشفرة وتُستخدم فقط لإنشاء التجربة، ولا يتم تخزينها أو مشاركتها.
+            </p>
           </form>
         )}
       </motion.div>
+      </div>
+      <Footer />
     </div>
   );
 }

@@ -142,6 +142,9 @@ export default function AIJudgeCourtroom({ onNext }) {
               >
                 {t("قرأت الحكم، استمرار")} <Gavel size={16} />
               </button>
+              <p className="mt-4 text-[10px] text-gray-400 opacity-70">
+                ✨ تم توليد هذا الحكم بواسطة الذكاء الاصطناعي للترفيه والمصالحة الودية.
+              </p>
             </motion.div>
           </motion.div>
         ) : (

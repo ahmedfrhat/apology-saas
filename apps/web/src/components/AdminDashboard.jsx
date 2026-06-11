@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { motion } from "motion/react";
+import Footer from "@/components/Footer";
 
 const SECTION_LABELS = {
   loader: "شاشة التحميل",
@@ -1684,6 +1685,7 @@ export default function AdminDashboard() {
           </form>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

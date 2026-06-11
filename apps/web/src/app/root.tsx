@@ -33,6 +33,17 @@ import { Toaster, toast } from 'sonner';
 import { useDevServerHeartbeat } from '../__create/useDevServerHeartbeat';
 import '../__create/design-mode';
 import type { Route } from './+types/root';
+import CookieBanner from '@/components/CookieBanner';
+
+export const meta = () => {
+  return [
+    { title: "منصة المصالحة والاعتذار الذكية" },
+    { name: "description", content: "أرسل مفاجأة رومانسية واعتذاراً ذكياً لمن تحب بطريقة مبتكرة ومرحة." },
+    { property: "og:title", content: "منصة المصالحة والاعتذار الذكية" },
+    { property: "og:description", content: "أرسل مفاجأة رومانسية واعتذاراً ذكياً لمن تحب بطريقة مبتكرة ومرحة." },
+    { property: "og:type", content: "website" }
+  ];
+};
 
 export const links = () => [];
 
@@ -457,6 +468,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <ClientOnly loader={() => children} />
+        <CookieBanner />
         <Toaster position={toasterPosition} />
         <ScrollRestoration />
         <Scripts />
