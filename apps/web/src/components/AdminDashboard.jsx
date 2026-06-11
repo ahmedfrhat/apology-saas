@@ -25,6 +25,8 @@ import {
 import { useApp } from "@/context/AppContext";
 import { motion, AnimatePresence } from "motion/react";
 import Footer from "@/components/Footer";
+import Pusher from "pusher-js";
+
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -247,9 +249,13 @@ function JourneyMap({ currentSection, t }) {
 
 // ─── Premium Session Card ─────────────────────────────────────────────────────
 
-function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
+// ─── Premium Session Card ─────────────────────────────────────────────────────
+
+function PremiumSessionCard({ row, onBroadcast, onDelete, t, cursor, toggleFreeze, isTogglingFreeze, siteSlug }) {
   const [msg, setMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const [whisperMsg, setWhisperMsg] = useState("");
+  const [sendingWhisper, setSendingWhisper] = useState(false);
 
   const send = useCallback(async () => {
     if (!msg.trim()) return;
@@ -259,10 +265,64 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
     setSending(false);
   }, [msg, row.session_id, onBroadcast]);
 
+  const sendWhisper = useCallback(async () => {
+    if (!whisperMsg.trim()) return;
+    setSendingWhisper(true);
+    try {
+      const res = await fetch(`/api/realtime/${encodeURIComponent(siteSlug)}/trigger`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: row.session_id,
+          event: "stealth-message",
+          data: { message: whisperMsg.trim() }
+        })
+      });
+      if (res.ok) {
+        setWhisperMsg("");
+      } else {
+        alert("فشل إرسال الهمسة");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("حدث خطأ أثناء الإرسال");
+    } finally {
+      setSendingWhisper(false);
+    }
+  }, [whisperMsg, row.session_id, siteSlug]);
+
+  const handleExport = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(row, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `session_backup_${row.session_id.slice(0, 8)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   const battery = row.battery_level ?? 0;
   const isOnline = (Date.now() - new Date(row.updated_at).getTime()) < 15000;
   const timeStr = new Date(row.updated_at).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
   const isAtGate = row.current_section === "at_gate";
+  const isFrozen = !!row.is_frozen;
+
+  const stageDurations = row.details?.stage_durations || {};
+  const ledger = row.details?.ledger || [];
+  const sentiment = row.details?.sentiment ?? 50;
+
+  let moodEmoji = "😐";
+  let moodLabel = "محايد";
+  let moodColor = "#F59E0B";
+  if (sentiment <= 30) {
+    moodEmoji = "😡"; moodLabel = "غاضبة جداً"; moodColor = "#EF4444";
+  } else if (sentiment <= 50) {
+    moodEmoji = "😟"; moodLabel = "زعلانة"; moodColor = "#F97316";
+  } else if (sentiment <= 75) {
+    moodEmoji = "🙂"; moodLabel = "هدأت قليلاً"; moodColor = "#10B981";
+  } else {
+    moodEmoji = "😍"; moodLabel = "صالحة وسعيدة"; moodColor = "#EC4899";
+  }
 
   return (
     <motion.div
@@ -280,7 +340,7 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
           : "var(--shadow-card)",
         transition: "border-color 600ms ease",
       }}
-      className="rounded-2xl p-4 space-y-3"
+      className="rounded-2xl p-4 space-y-4"
     >
       {/* Header row */}
       <div className="flex items-center justify-between">
@@ -313,9 +373,88 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
         </div>
         <div className="flex items-center gap-3">
           <BatteryBar level={battery} />
-          <button onClick={() => onDelete(row.session_id)} className="text-gray-400 hover:text-red-500 transition-colors">
+          <button onClick={() => onDelete(row.session_id)} className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer">
             <Trash2 size={14} />
           </button>
+        </div>
+      </div>
+
+      {/* Emergency Freeze Toggle & Export Backup buttons */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => toggleFreeze(row.session_id, isFrozen)}
+          disabled={isTogglingFreeze}
+          style={{
+            background: isFrozen ? "rgba(239, 68, 68, 0.15)" : "var(--bg-surface)",
+            color: isFrozen ? "#EF4444" : "var(--text-secondary)",
+            border: isFrozen ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid var(--border-base)"
+          }}
+          className="flex-1 rounded-xl py-2 px-3 text-xs font-bold transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <span>{isFrozen ? "🔓 إلغاء التجميد" : "🔒 تجميد الموقع"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleExport}
+          style={{ background: "var(--bg-surface)", border: "1px solid var(--border-base)", color: "var(--text-secondary)" }}
+          className="rounded-xl py-2 px-3 text-xs font-bold transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <span>تصدير البيانات 📥</span>
+        </button>
+      </div>
+
+      {/* Live Cursor Simulator Canvas */}
+      <div className="space-y-1.5">
+        <FieldLabel>محاكاة الماوس (Live Cursor View)</FieldLabel>
+        <div className="relative w-full aspect-video bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden flex items-center justify-center">
+          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, #DFBA73 1px, transparent 1px)", backgroundSize: "16px 16px" }} />
+          {cursor ? (
+            <>
+              <motion.div
+                animate={{ left: `${cursor.x * 100}%`, top: `${cursor.y * 100}%` }}
+                transition={{ type: "spring", damping: 30, stiffness: 250 }}
+                className="absolute -ml-2 -mt-2 w-4.5 h-4.5 rounded-full bg-pink-500 border border-white flex items-center justify-center pointer-events-none"
+                style={{
+                  boxShadow: "0 0 12px #EC4899, 0 0 24px #EC4899",
+                }}
+              >
+                <span className="text-[6px] text-white">✨</span>
+              </motion.div>
+              <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded text-[9px] font-mono text-pink-400 font-bold border border-pink-500/20">
+                X: {Math.round(cursor.x * 100)}% | Y: {Math.round(cursor.y * 100)}%
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-xs text-neutral-500 font-medium">
+              📡 في انتظار حركة المؤشر...
+            </div>
+          )}
+          <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded text-[8px] text-amber-400 font-bold">
+            القسم: {getSectionStr(row.current_section)}
+          </div>
+        </div>
+      </div>
+
+      {/* Mood/Satisfaction Gauge */}
+      <div className="space-y-1">
+        <div className="flex justify-between items-center text-xs">
+          <FieldLabel>مؤشر المزاج والرضا</FieldLabel>
+          <span style={{ color: moodColor }} className="font-bold flex items-center gap-1">
+            {moodEmoji} {moodLabel} ({sentiment}%)
+          </span>
+        </div>
+        <div className="h-2 w-full bg-neutral-800 rounded-full overflow-hidden border border-neutral-800">
+          <div
+            style={{
+              width: `${sentiment}%`,
+              background: `linear-gradient(90deg, #EF4444 0%, ${moodColor} 100%)`,
+              boxShadow: `0 0 10px ${moodColor}`,
+              transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)"
+            }}
+            className="h-full rounded-full"
+          />
         </div>
       </div>
 
@@ -324,19 +463,76 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
 
       {/* Info grid */}
       <div className="grid grid-cols-2 gap-2">
-        <div style={T.base} className="rounded-xl px-3 py-2">
+        <div style={T.base} className="rounded-xl px-3 py-1.5">
           <p style={{ color: "var(--text-muted)", fontSize: "0.58rem" }} className="font-bold uppercase tracking-wider mb-0.5">{t("currentSectionLabel")}</p>
           <p style={{ color: "var(--text-primary)", fontSize: "0.78rem" }} className="font-bold truncate">{getSectionStr(row.current_section, t)}</p>
         </div>
-        <div style={T.base} className="rounded-xl px-3 py-2">
+        <div style={T.base} className="rounded-xl px-3 py-1.5">
           <p style={{ color: "var(--text-muted)", fontSize: "0.58rem" }} className="font-bold uppercase tracking-wider mb-0.5">{t("lastActionLabel")}</p>
           <p style={{ color: "#60A5FA", fontSize: "0.78rem" }} className="font-bold truncate">{getActionStr(row.last_action, t)}</p>
         </div>
       </div>
 
+      {/* Hesitation Heatmap */}
+      <div className="space-y-1">
+        <FieldLabel>الخريطة الزمنية للتردد (Hesitation Heatmap)</FieldLabel>
+        <div className="grid grid-cols-4 gap-1">
+          {JOURNEY_STAGES.map((stage) => {
+            const secs = stageDurations[stage.key] || 0;
+            let style = {};
+            if (secs > 0) {
+              if (secs <= 5) {
+                style = { background: "rgba(34, 197, 94, 0.12)", borderColor: "rgba(34, 197, 94, 0.3)", color: "#4ADE80" };
+              } else if (secs <= 15) {
+                style = { background: "rgba(249, 115, 22, 0.15)", borderColor: "rgba(249, 115, 22, 0.3)", color: "#FB923C" };
+              } else {
+                style = { 
+                  background: "rgba(239, 68, 68, 0.18)", 
+                  borderColor: "rgba(239, 68, 68, 0.4)", 
+                  color: "#F87171",
+                  boxShadow: "inset 0 0 10px rgba(239, 68, 68, 0.1)"
+                };
+              }
+            }
+            return (
+              <div
+                key={stage.key}
+                style={style}
+                className={`flex flex-col items-center justify-center p-1 rounded-lg border text-center transition-all ${
+                  secs === 0 ? "opacity-35" : ""
+                }`}
+              >
+                <span className="text-xs">{stage.icon}</span>
+                <span className="text-[8px] font-bold truncate w-full">{stage.label}</span>
+                <span className="text-[9px] font-mono font-bold mt-0.5">{secs}s</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Live Activity Ledger */}
+      <div className="space-y-1">
+        <FieldLabel>سجل النشاط المباشر (Activity Ledger)</FieldLabel>
+        <div style={{ background: "var(--bg-base)" }} className="rounded-xl border border-[var(--border-base)] max-h-32 overflow-y-auto p-2.5 space-y-1.5 scrollbar-hide text-[11px]">
+          {ledger.length === 0 ? (
+            <p className="text-center text-neutral-500 py-2 font-medium">لا توجد أحداث مسجلة بعد.</p>
+          ) : (
+            ledger.map((evt, idx) => (
+              <div key={idx} className="flex items-start gap-1.5 border-b border-[var(--border-base)]/30 pb-1 last:border-0 last:pb-0">
+                <span className="font-mono text-[var(--accent)] font-bold shrink-0">
+                  {new Date(evt.timestamp).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                </span>
+                <span className="font-semibold text-[var(--text-secondary)]">{evt.event}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       {/* Data panels */}
       {row.details?.quizChoices && (
-        <div style={{ background: "rgba(201,149,108,0.08)", border: "1px solid rgba(201,149,108,0.25)" }} className="rounded-xl p-3 text-xs space-y-1">
+        <div style={{ background: "rgba(201,149,108,0.08)", border: "1px solid rgba(201,149,108,0.25)" }} className="rounded-xl p-3 text-[11px] space-y-0.5">
           <span style={{ color: "var(--accent)" }} className="font-bold block">🎯 إجابات الاختبار:</span>
           {row.details.quizChoices.map((c, i) => (
             <span key={i} style={{ color: "var(--text-secondary)" }} className="block">· {c.q}: <strong>{c.answer}</strong></span>
@@ -344,29 +540,58 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
         </div>
       )}
       {row.hesitation_detected && (
-        <div style={{ background: "rgba(251,146,60,0.10)", border: "1px solid rgba(251,146,60,0.25)" }} className="rounded-xl p-3 flex items-center gap-2 text-xs font-medium" style2={{ color: "#FB923C" }}>
-          <AlertCircle size={14} className="text-orange-400 animate-pulse shrink-0" />
+        <div style={{ background: "rgba(251,146,60,0.10)", border: "1px solid rgba(251,146,60,0.25)" }} className="rounded-xl p-2.5 flex items-center gap-2 text-xs font-medium">
+          <AlertCircle size={13} className="text-orange-400 animate-pulse shrink-0" />
           <span style={{ color: "#FB923C" }}>ترددت لمدة {Math.round(row.hesitation_seconds)} ثانية!</span>
         </div>
       )}
       {row.plea_text && (
-        <div style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.22)" }} className="rounded-xl p-3">
-          <span className="text-indigo-400 text-xs font-bold flex items-center gap-1 mb-1.5">⚖️ دفاعها في المحكمة:</span>
-          <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium leading-relaxed">"{row.plea_text}"</p>
+        <div style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.22)" }} className="rounded-xl p-2.5">
+          <span className="text-indigo-400 text-[10px] font-bold flex items-center gap-1 mb-1">⚖️ دفاعها في المحكمة:</span>
+          <p style={{ color: "var(--text-primary)" }} className="text-xs font-medium leading-relaxed">"{row.plea_text}"</p>
         </div>
       )}
       {row.final_comment && (
-        <div style={{ background: "rgba(236,72,153,0.08)", border: "1px solid rgba(236,72,153,0.22)" }} className="rounded-xl p-3">
-          <span className="text-pink-400 text-xs font-bold flex items-center gap-1 mb-1.5">
+        <div style={{ background: "rgba(236,72,153,0.08)", border: "1px solid rgba(236,72,153,0.22)" }} className="rounded-xl p-2.5">
+          <span className="text-pink-400 text-[10px] font-bold flex items-center gap-1 mb-1">
             💌 تقييمها النهائي ({row.star_rating} ⭐):
           </span>
-          <p style={{ color: "var(--text-primary)" }} className="text-sm font-medium leading-relaxed">"{row.final_comment}"</p>
+          <p style={{ color: "var(--text-primary)" }} className="text-xs font-medium leading-relaxed">"{row.final_comment}"</p>
         </div>
       )}
 
-      {/* Broadcast bar */}
+      {/* Stealth Whisper Console */}
+      <div style={{ borderTop: "1px solid var(--border-base)", paddingTop: "0.5rem" }} className="space-y-1.5">
+        <FieldLabel>الهمس السري 🤫 (Stealth Live Whisper)</FieldLabel>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={whisperMsg}
+            onChange={(e) => setWhisperMsg(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") sendWhisper(); }}
+            placeholder="اكتب همسة سرية تظهر فوراً على شاشتها..."
+            style={{ ...T.input, fontSize: "0.75rem" }}
+            className="flex-1 rounded-xl px-3 py-2 font-medium outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+          />
+          <button
+            type="button"
+            disabled={!whisperMsg.trim() || sendingWhisper}
+            onClick={sendWhisper}
+            style={
+              whisperMsg.trim() && !sendingWhisper
+                ? T.accentGradient
+                : { background: "var(--bg-base)", color: "var(--text-muted)", border: "1px solid var(--border-base)" }
+            }
+            className="rounded-xl px-3 py-2 font-bold text-xs transition-all hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            {sendingWhisper ? <RefreshCw size={12} className="animate-spin" /> : <span>همس 🤫</span>}
+          </button>
+        </div>
+      </div>
+
+      {/* Standard Broadcast bar */}
       <div
-        style={{ borderTop: "1px solid var(--border-base)", paddingTop: "0.75rem" }}
+        style={{ borderTop: "1px solid var(--border-base)", paddingTop: "0.5rem" }}
         className="flex items-center gap-2"
       >
         <input
@@ -375,7 +600,7 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
           onChange={(e) => setMsg(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") send(); }}
           placeholder={t("broadcastPlaceholder")}
-          style={{ ...T.input, fontSize: "0.78rem" }}
+          style={{ ...T.input, fontSize: "0.75rem" }}
           className="flex-1 rounded-xl px-3 py-2 font-medium outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
         />
         <button
@@ -387,15 +612,16 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t }) {
               ? T.accentGradient
               : { background: "var(--bg-base)", color: "var(--text-muted)", border: "1px solid var(--border-base)" }
           }
-          className="rounded-xl px-3 py-2 font-bold text-xs transition-all hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+          className="rounded-xl px-3 py-2 font-bold text-xs transition-all hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 shrink-0 cursor-pointer"
         >
-          {sending ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
+          {sending ? <RefreshCw size={12} className="animate-spin" /> : <Send size={12} />}
           {sending ? t("sending") : t("sendBtn")}
         </button>
       </div>
     </motion.div>
   );
 }
+
 
 // ─── AI Generator ─────────────────────────────────────────────────────────────
 
@@ -572,6 +798,9 @@ export default function AdminDashboard() {
   const [saveStatus, setSaveStatus] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState("");
 
+  const [cursors, setCursors] = useState({});
+  const [isTogglingFreeze, setIsTogglingFreeze] = useState(false);
+
   // ── Copy Link ──
   const copyToClipboard = () => {
     const url = window.location.origin + "/" + siteSlug;
@@ -659,7 +888,6 @@ export default function AdminDashboard() {
         const currentIds = data.rows.map(r => r.session_id);
         const newSessions = currentIds.filter(id => !knownSessionsRef.current.has(id));
         if (newSessions.length > 0 && knownSessionsRef.current.size > 0) {
-          // Only notify if we already had a known state (don't notify on first load)
           new Notification("🚀 زيارة جديدة!", { body: "دخلت على اللينك حالا!" });
         }
         currentIds.forEach(id => knownSessionsRef.current.add(id));
@@ -673,16 +901,169 @@ export default function AdminDashboard() {
     }
   }, [siteSlug]);
 
+  // Reset cursors on siteSlug changes
   useEffect(() => {
-    // Request permission on mount
+    setCursors({});
+  }, [siteSlug]);
+
+  // Connect client-side to Pusher Channel & handle subscriptions for Dashboard
+  useEffect(() => {
+    if (!siteSlug) return;
+
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "mt1";
+
+    let pusherClient = null;
+    let channel = null;
+
+    if (pusherKey && pusherKey !== "mock-key") {
+      try {
+        pusherClient = new Pusher(pusherKey, {
+          cluster: pusherCluster,
+          forceTLS: true
+        });
+        channel = pusherClient.subscribe(`apology-${siteSlug}`);
+
+        channel.bind("tracking-update", (data) => {
+          if (data && data.row) {
+            setRows((prevRows) => {
+              const index = prevRows.findIndex(r => r.session_id === data.row.session_id);
+              if (index !== -1) {
+                const newRows = [...prevRows];
+                newRows[index] = data.row;
+                return newRows;
+              } else {
+                return [data.row, ...prevRows];
+              }
+            });
+          }
+        });
+
+        channel.bind("cursor-move", (data) => {
+          if (data && data.session_id) {
+            setCursors((prev) => ({
+              ...prev,
+              [data.session_id]: { x: data.x, y: data.y, lastActive: Date.now() }
+            }));
+          }
+        });
+
+        channel.bind("ledger-event", (data) => {
+          if (data && data.session_id && data.event) {
+            setRows((prevRows) => {
+              return prevRows.map((r) => {
+                if (r.session_id === data.session_id) {
+                  const currentDetails = r.details || {};
+                  const currentLedger = currentDetails.ledger || [];
+                  if (currentLedger.some(e => e.timestamp === data.event.timestamp && e.event === data.event.event)) {
+                    return r;
+                  }
+                  return {
+                    ...r,
+                    details: {
+                      ...currentDetails,
+                      ledger: [...currentLedger, data.event]
+                    }
+                  };
+                }
+                return r;
+              });
+            });
+          }
+        });
+
+        channel.bind("stealth-message", (data) => {
+          if (data && data.session_id && data.message) {
+            setRows((prevRows) => {
+              return prevRows.map((r) => {
+                if (r.session_id === data.session_id) {
+                  const currentDetails = r.details || {};
+                  const currentWhispers = currentDetails.whisperMessages || [];
+                  if (currentWhispers.includes(data.message)) return r;
+                  return {
+                    ...r,
+                    details: {
+                      ...currentDetails,
+                      whisperMessages: [...currentWhispers, data.message]
+                    }
+                  };
+                }
+                return r;
+              });
+            });
+          }
+        });
+
+        channel.bind("freeze", (data) => {
+          if (data && data.session_id) {
+            setRows((prevRows) =>
+              prevRows.map((r) => r.session_id === data.session_id ? { ...r, is_frozen: true } : r)
+            );
+          }
+        });
+
+        channel.bind("unfreeze", (data) => {
+          if (data && data.session_id) {
+            setRows((prevRows) =>
+              prevRows.map((r) => r.session_id === data.session_id ? { ...r, is_frozen: false } : r)
+            );
+          }
+        });
+
+      } catch (err) {
+        console.error("Dashboard Pusher Error:", err);
+      }
+    }
+
+    return () => {
+      if (channel && pusherClient) {
+        channel.unbind_all();
+        pusherClient.unsubscribe(`apology-${siteSlug}`);
+      }
+    };
+  }, [siteSlug]);
+
+  useEffect(() => {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
 
     load();
-    intervalRef.current = setInterval(load, 3000);
+
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    if (!pusherKey || pusherKey === "mock-key") {
+      intervalRef.current = setInterval(load, 2000);
+    } else {
+      intervalRef.current = setInterval(load, 10000);
+    }
+
     return () => clearInterval(intervalRef.current);
   }, [load]);
+
+  const toggleFreeze = useCallback(async (sessionId, currentFreezeState) => {
+    if (!siteSlug) return;
+    setIsTogglingFreeze(true);
+    try {
+      const res = await fetch(`/api/tracking/${encodeURIComponent(siteSlug)}/${encodeURIComponent(sessionId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_frozen: !currentFreezeState })
+      });
+      if (res.ok) {
+        setRows((prev) =>
+          prev.map((r) => r.session_id === sessionId ? { ...r, is_frozen: !currentFreezeState } : r)
+        );
+      } else {
+        alert("فشل تحديث حالة تجميد الموقع");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ أثناء الاتصال بالخادم");
+    } finally {
+      setIsTogglingFreeze(false);
+    }
+  }, [siteSlug]);
+
 
   const deleteSession = useCallback(async (sessionId) => {
     if (!window.confirm("هل أنت متأكد من حذف هذه الجلسة؟")) return;
@@ -1035,7 +1416,17 @@ export default function AdminDashboard() {
               {/* Cards grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {rows.map((row) => (
-                  <PremiumSessionCard key={row.session_id} row={row} onBroadcast={broadcast} onDelete={deleteSession} t={t} />
+                  <PremiumSessionCard
+                    key={row.session_id}
+                    row={row}
+                    onBroadcast={broadcast}
+                    onDelete={deleteSession}
+                    t={t}
+                    cursor={cursors[row.session_id]}
+                    toggleFreeze={toggleFreeze}
+                    isTogglingFreeze={isTogglingFreeze}
+                    siteSlug={siteSlug}
+                  />
                 ))}
               </div>
             </motion.div>

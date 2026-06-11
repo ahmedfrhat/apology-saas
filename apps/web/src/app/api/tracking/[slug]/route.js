@@ -38,12 +38,21 @@ async function triggerNotification(slug, eventType, sessionId, data = {}) {
   if (botToken && chatId) {
     try {
       const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      const replyMarkup = {
+        inline_keyboard: [
+          [
+            { text: "Freeze Link 🔒", callback_data: `freeze_${slug}_${sessionId}` },
+            { text: "Unfreeze Link 🔓", callback_data: `unfreeze_${slug}_${sessionId}` }
+          ]
+        ]
+      };
       await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chatId,
           text: message,
+          reply_markup: replyMarkup
         }),
       });
     } catch (err) {
@@ -65,6 +74,10 @@ export async function GET(request, context) {
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS star_rating INTEGER`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS final_comment TEXT`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS details JSONB`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS sticky_notes JSONB`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS courtroom_followup TEXT`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS time_capsule TEXT`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS is_frozen BOOLEAN DEFAULT false`;
     } catch (migErr) {
       // Ignore if it fails
     }
@@ -80,7 +93,7 @@ export async function GET(request, context) {
 
     // 2. Query tracking rows for this site including hesitation
     const rows = await sql`
-      SELECT id, session_id, current_section, battery_level, last_action, broadcast_msg, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, details, created_at, updated_at
+      SELECT id, session_id, current_section, battery_level, last_action, broadcast_msg, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, details, sticky_notes, courtroom_followup, time_capsule, is_frozen, created_at, updated_at
       FROM live_tracking
       WHERE site_id = ${siteId}
       ORDER BY updated_at DESC
@@ -118,6 +131,10 @@ export async function POST(request, context, c) {
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS star_rating INTEGER`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS final_comment TEXT`;
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS details JSONB`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS sticky_notes JSONB`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS courtroom_followup TEXT`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS time_capsule TEXT`;
+      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS is_frozen BOOLEAN DEFAULT false`;
     } catch (migErr) {
       // Ignore
     }
@@ -144,6 +161,10 @@ export async function POST(request, context, c) {
     const starRating = body.star_rating ?? null;
     const finalComment = body.final_comment ?? null;
     const details = body.details ?? null;
+    const stickyNotes = body.sticky_notes ?? null;
+    const courtroomFollowup = body.courtroom_followup ?? null;
+    const timeCapsule = body.time_capsule ?? null;
+    const isFrozen = body.is_frozen ?? false;
 
     // 2. Intercept for session initialization and completion alerts
     const existingTracking = await sql`
@@ -153,8 +174,8 @@ export async function POST(request, context, c) {
 
     // Upsert the tracking record
     const [row] = await sql`
-      INSERT INTO live_tracking (site_id, session_id, current_section, battery_level, last_action, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, details, updated_at)
-      VALUES (${siteId}, ${session_id}, ${currentSection}, ${batteryLevel}, ${lastAction}, ${hesitationDetected}, ${hesitationSeconds}, ${pleaText}, ${starRating}, ${finalComment}, ${details}, now())
+      INSERT INTO live_tracking (site_id, session_id, current_section, battery_level, last_action, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, details, sticky_notes, courtroom_followup, time_capsule, is_frozen, updated_at)
+      VALUES (${siteId}, ${session_id}, ${currentSection}, ${batteryLevel}, ${lastAction}, ${hesitationDetected}, ${hesitationSeconds}, ${pleaText}, ${starRating}, ${finalComment}, ${details}, ${stickyNotes}, ${courtroomFollowup}, ${timeCapsule}, ${isFrozen}, now())
       ON CONFLICT (session_id) DO UPDATE SET
         site_id = EXCLUDED.site_id,
         current_section = COALESCE(EXCLUDED.current_section, live_tracking.current_section),
@@ -166,6 +187,10 @@ export async function POST(request, context, c) {
         star_rating = COALESCE(EXCLUDED.star_rating, live_tracking.star_rating),
         final_comment = COALESCE(EXCLUDED.final_comment, live_tracking.final_comment),
         details = COALESCE(EXCLUDED.details, live_tracking.details),
+        sticky_notes = COALESCE(EXCLUDED.sticky_notes, live_tracking.sticky_notes),
+        courtroom_followup = COALESCE(EXCLUDED.courtroom_followup, live_tracking.courtroom_followup),
+        time_capsule = COALESCE(EXCLUDED.time_capsule, live_tracking.time_capsule),
+        is_frozen = EXCLUDED.is_frozen,
         updated_at = now()
       RETURNING *
     `;
@@ -198,6 +223,35 @@ export async function POST(request, context, c) {
       if (pleaText && pleaText !== prevTracking.plea_text) {
         triggerNotification(slug, "plea", session_id, { pleaText }).catch(err => console.error("Plea notification fail", err));
       }
+    }
+
+    // Broadcast real-time tracking update to Pusher
+    try {
+      const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+      const pusherAppId = process.env.PUSHER_APP_ID;
+      const pusherSecret = process.env.PUSHER_SECRET;
+      const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "mt1";
+      if (pusherAppId && pusherKey && pusherSecret) {
+        const PusherServer = (await import("pusher")).default;
+        const pusherInstance = new PusherServer({
+          appId: pusherAppId,
+          key: pusherKey,
+          secret: pusherSecret,
+          cluster: pusherCluster,
+          useTLS: true
+        });
+        await pusherInstance.trigger(`apology-${slug}`, "tracking-update", {
+          session_id,
+          row
+        });
+      } else {
+        console.log(`[MOCK REALTIME BROADCAST] [Channel: apology-${slug}] [Event: tracking-update]`, {
+          session_id,
+          row
+        });
+      }
+    } catch (realtimeErr) {
+      console.error("Failed to broadcast tracking-update event", realtimeErr);
     }
 
     return Response.json({ row });

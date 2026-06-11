@@ -24,7 +24,17 @@ export async function POST(request, context, c) {
         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
       ]);
     }
-    const { pleaText, girlName, boyName, angerLevel = 100, trapCount = 0 } = body || {};
+    const { 
+      pleaText, 
+      girlName, 
+      boyName, 
+      angerLevel = 100, 
+      trapCount = 0, 
+      step = 2, 
+      followupQuestion = "", 
+      followupResponse = "", 
+      memoConditions = "" 
+    } = body || {};
 
     if (!pleaText) {
       return Response.json({ error: "الرجاء إدخال نص الدفاع" }, { status: 400 });
@@ -45,6 +55,68 @@ export async function POST(request, context, c) {
       console.error("Failed to fetch site config", dbErr);
     }
 
+    // --- STEP 1: Ask follow-up question ---
+    if (Number(step) === 1) {
+      const promptAr = `You are an expert, witty Egyptian AI Judge in a romantic "Court of Apology".
+The user is the girlfriend (the plaintiff: ${girlName || "البنت"}). She has just submitted her specific grievance/complaint about the boyfriend (${boyName || "الولد"}).
+Her Grievance: "${pleaText}"
+
+You must address her DIRECTLY in the 2nd person feminine singular (مخاطب مؤنث مفرد - "إنتي", "حقك").
+Ask her a funny, sarcastic Egyptian follow-up question related to this grievance, prompting her for more details or asking her to prove his crime, or mock-asking how she tolerated this. Keep it short, wittiest possible, MAX 1-2 sentences. Emojis like (👀, 😂) are welcome.
+
+Strict Output Requirements:
+Output MUST be ONLY valid JSON matching this schema exactly (no markdown, no backticks, no trailing commas):
+{
+  "question": "..."
+}`;
+
+      const promptEn = `You are an expert, witty AI Judge in a romantic "Court of Apology".
+The user is the girlfriend (the plaintiff: ${girlName || "the girl"}). She has just submitted her specific grievance/complaint about the boyfriend (${boyName || "the boy"}).
+Her Grievance: "${pleaText}"
+
+Ask her a funny, sarcastic follow-up question related to this grievance. Keep it short and witty, MAX 1-2 sentences.
+Output MUST be ONLY valid JSON matching this schema exactly:
+{
+  "question": "..."
+}`;
+
+      const finalPrompt = config.locale === "en" ? promptEn : promptAr;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: finalPrompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.8
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (jsonText) {
+          try {
+            const parsed = JSON.parse(jsonText.replace(/```json/g, "").replace(/```/g, "").trim());
+            if (parsed && parsed.question) {
+              return Response.json(parsed);
+            }
+          } catch (e) {
+            console.error("Failed to parse Gemini Step 1 JSON", e);
+          }
+        }
+      }
+
+      return Response.json({
+        question: config.locale === "en" 
+          ? "Is it true he does this every single time, or is he just acting absent-minded? 👀" 
+          : "هل ده بيحصل معاكي كل مرة فعلاً ولا هو بيستهبل بس؟ 👀"
+      });
+    }
+
+    // --- STEP 2: Issue final verdict ---
     const petNameInstructionAr = config.petNameOverride 
       ? `You MUST use her specific pet name "${config.petNameOverride}" repeatedly when addressing her.` 
       : `Use natural, common Egyptian pet names like (يا بنتي، يا حبيبتي).`;
@@ -63,15 +135,17 @@ export async function POST(request, context, c) {
 
     const systemPromptAr = `You are an expert, witty Egyptian AI Judge in a romantic "Court of Apology".
 The user is the girlfriend (the plaintiff: ${girlName || "البنت"}). She has just submitted her specific grievance/complaint about the boyfriend (${boyName || "الولد"}).
-You must address her DIRECTLY in the 2nd person feminine singular (مخاطب مؤنث مفرد - "إنتي", "حقك", "زعلانة").
+Her Grievance: "${pleaText}"
+The Court's follow-up question: "${followupQuestion}"
+Her Response to the follow-up question: "${followupResponse}"
+The proposed sentencing conditions for the boyfriend (Defense Memo): "${memoConditions}"
 
-Her Grievance/Complaint:
-"${pleaText}"
+You must address her DIRECTLY in the 2nd person feminine singular (مخاطب مؤنث مفرد - "إنتي", "حقك", "زعلانة").
 
 Your job is to:
 1) Validate her feelings 100%.
 2) Roast the boyfriend mercilessly for committing this specific 'crime'.
-3) Issue a hilarious, strict verdict punishing the boyfriend.
+3) Issue a hilarious, strict verdict punishing the boyfriend based on the sentencing conditions she chose.
 
 Your absolute mandate:
 1. Strict Length Limit: Keep it short and punchy, MAX 3-4 short sentences. Do not write long paragraphs.
@@ -84,10 +158,12 @@ Strict Output Requirements:
 1. Output MUST be ONLY valid JSON matching this schema exactly (no markdown, no backticks, no trailing commas):
 {
   "title": "...", 
-  "details": "..."
+  "details": "...",
+  "sentiment": 75
 }
 2. "title" should be a short, dramatic headline like "حكم المحكمة النهائي لصالح [اسم البنت]".
-3. "details" should be your full speech DIRECTED AT HER. Highly fluent Egyptian Arabic.`;
+3. "details" should be your full speech DIRECTED AT HER. Highly fluent Egyptian Arabic.
+4. "sentiment" should be an integer from 0 to 100 evaluating her overall mood/satisfaction based on her complaint and responses (0 = furious/angry, 100 = happy/amused/reconciled).`;
 
     const petNameInstructionEn = config.petNameOverride 
       ? `You MUST use her specific pet name "${config.petNameOverride}" repeatedly when addressing her.` 
@@ -107,15 +183,17 @@ Strict Output Requirements:
 
     const systemPromptEn = `You are an expert, witty AI Judge in a romantic "Court of Apology".
 The user is the girlfriend (the plaintiff: ${girlName || "the girl"}). She has just submitted her specific grievance/complaint about the boyfriend (${boyName || "the boy"}).
-You must address her DIRECTLY in the 2nd person (e.g. "You", "Your").
+Her Grievance: "${pleaText}"
+The Court's follow-up question: "${followupQuestion}"
+Her Response to the follow-up question: "${followupResponse}"
+The proposed sentencing conditions for the boyfriend (Defense Memo): "${memoConditions}"
 
-Her Grievance/Complaint:
-"${pleaText}"
+You must address her DIRECTLY in the 2nd person (e.g. "You", "Your").
 
 Your job is to:
 1) Validate her feelings 100%.
 2) Roast the boyfriend mercilessly for committing this specific 'crime'.
-3) Issue a hilarious, strict verdict punishing the boyfriend.
+3) Issue a hilarious, strict verdict punishing the boyfriend based on the sentencing conditions she chose.
 
 Your absolute mandate:
 1. Strict Length Limit: Keep it short and punchy, MAX 3-4 short sentences. Do not write long paragraphs.
@@ -128,10 +206,12 @@ Strict Output Requirements:
 1. Output MUST be ONLY valid JSON matching this schema exactly (no markdown, no backticks, no trailing commas):
 {
   "title": "...", 
-  "details": "..."
+  "details": "...",
+  "sentiment": 75
 }
 2. "title" should be a short, dramatic headline like "Final Court Ruling in favor of [Girl's Name]".
-3. "details" should be your full speech DIRECTED AT HER. Highly fluent English.`;
+3. "details" should be your full speech DIRECTED AT HER. Highly fluent English.
+4. "sentiment" should be an integer from 0 to 100 evaluating her overall mood/satisfaction based on her complaint and responses (0 = furious/angry, 100 = happy/amused/reconciled).`;
 
     const finalSystemPrompt = config.locale === "en" ? systemPromptEn : systemPromptAr;
 
@@ -159,7 +239,11 @@ Strict Output Requirements:
           if (match) parsed = JSON.parse(match[0]);
         }
         if (parsed && parsed.title && parsed.details) {
-          return Response.json(parsed);
+          return Response.json({
+            title: parsed.title,
+            details: parsed.details,
+            sentiment: typeof parsed.sentiment === "number" ? parsed.sentiment : 50
+          });
         }
       }
     }

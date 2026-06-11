@@ -3,10 +3,12 @@ import { useParams } from "react-router";
 import { motion } from "motion/react";
 import { Lock, AlertCircle, Sparkles } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useApp } from "@/context/AppContext";
 
 export default function AuthGate({ children }) {
   const { slug } = useParams();
-  const { t, locale } = useLanguage();
+  const { t: trans, locale } = useLanguage();
+  const { isFrozen, logLedgerEvent, t = (s) => trans(s) } = useApp() || {};
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -71,9 +73,15 @@ export default function AuthGate({ children }) {
         sessionStorage.setItem(`unlocked_${slug}`, "true");
         sessionStorage.setItem(`auth_pwd_${slug}`, password);
         setUnlocked(true);
+        if (logLedgerEvent) {
+          logLedgerEvent("قامت بفك كلمة مرور البوابة بنجاح 🔓");
+        }
       } else {
         setError(data.error || "كلمة المرور غير صحيحة");
         if (data.hint) setHint(data.hint);
+        if (logLedgerEvent) {
+          logLedgerEvent(`أدخلت كلمة مرور خاطئة عند البوابة: "${password}" ❌`);
+        }
       }
     } catch (err) {
       setError("حدث خطأ أثناء الاتصال بالخادم");
@@ -81,6 +89,27 @@ export default function AuthGate({ children }) {
       setLoading(false);
     }
   };
+
+  if (isFrozen) {
+    return (
+      <div 
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-2xl"
+        dir={locale === "ar" ? "rtl" : "ltr"}
+      >
+        <div className="w-full max-w-sm rounded-[2.5rem] border border-[#DFBA73]/30 bg-black/40 backdrop-blur-xl p-8 text-center shadow-[0_30px_70px_rgba(223,186,115,0.2)]">
+          <div className="h-16 w-16 mx-auto rounded-full bg-red-950/20 border border-red-500/30 flex items-center justify-center text-red-500 animate-pulse mb-4">
+            <Lock size={28} />
+          </div>
+          <h2 className="text-lg font-bold text-white mb-2 select-none">
+            {t("تم تجميد الصفحة مؤقتاً 🔒")}
+          </h2>
+          <p className="text-xs text-gray-400 leading-relaxed select-none">
+            {t("قام المسؤول بتجميد هذا الرابط مؤقتاً لأسباب تتعلق بالأمان أو الصيانة. يرجى الانتظار لحين فك التجميد...")}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (unlocked) {
     return children;

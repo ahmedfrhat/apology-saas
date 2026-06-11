@@ -43,18 +43,30 @@ export default function PanicButton() {
               exit={{ scale: 0.85, y: 20, opacity: 0 }}
               transition={{ type: "spring", stiffness: 220, damping: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-sm rounded-[2.5rem] border border-[#1A1A1A]/10 bg-[#F4F3EF] p-8 text-center"
+              className="relative w-full max-w-md rounded-[2.5rem] border border-[#1A1A1A]/10 bg-[#F4F3EF] dark:bg-gray-800 p-6 text-center shadow-2xl"
             >
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="absolute end-4 top-4 rounded-full p-1 text-[#5A5955] hover:text-[#1A1A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73]"
+                className="absolute end-4 top-4 rounded-full p-1 text-[#5A5955] dark:text-gray-400 hover:text-[#1A1A1A] dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DFBA73] cursor-pointer"
               >
                 <X size={20} />
               </button>
-              <div className="mb-4 text-6xl">😱🤣</div>
-              <p className="text-lg font-semibold text-[#1A1A1A]">
-                {t("الزر ده مش شغال.. مفيش مهرب! 😂")}
+              
+              <div className="text-sm font-bold text-red-500 mb-2 uppercase tracking-wider">
+                🚨 {t("تنبيه طوارئ")} 🚨
+              </div>
+              
+              <div className="overflow-hidden rounded-2xl border border-red-500/20 mb-4 bg-black/5 dark:bg-black/25">
+                <img
+                  src="/emergency_meme.png"
+                  alt="Reconciliation Emergency Meme"
+                  className="w-full h-auto object-cover max-h-[300px] mx-auto"
+                />
+              </div>
+
+              <p className="text-base font-semibold text-[#1A1A1A] dark:text-white leading-relaxed">
+                {t("الزر ده مش شغال.. مفيش مهرب غير إنك تسامحي! 😂")}
               </p>
             </motion.div>
           </motion.div>

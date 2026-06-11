@@ -150,6 +150,7 @@ function Experience() {
 }
 
 import AuthGate from "@/components/AuthGate";
+import StealthChatWidget from "@/components/StealthChatWidget";
 
 export default function ExperiencePage() {
   return (
@@ -158,7 +159,9 @@ export default function ExperiencePage() {
         <Experience />
         <HiddenMultiSourcePlayer />
         <BroadcastToast />
+        <StealthChatWidget />
       </AuthGate>
     </AppProvider>
   );
 }
+

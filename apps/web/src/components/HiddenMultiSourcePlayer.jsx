@@ -58,18 +58,18 @@ const loadSoundCloudAPI = (callback) => {
 };
 
 export default function HiddenMultiSourcePlayer() {
-  const { config, registerPlayerCallbacks, audioPlaying } = useApp();
+  const { config, registerPlayerCallbacks, audioPlaying, currentTrackUrl } = useApp();
   
   // Get and parse audio URL with strict fallback to default public asset
   const parsed = useMemo(() => {
-    const rawAudioUrl = config?.audioUrl || config?.audio_url;
+    const rawAudioUrl = currentTrackUrl || config?.audioUrl || config?.audio_url;
     const hasCustomAudio = typeof rawAudioUrl === "string" && rawAudioUrl.trim() !== "";
     if (hasCustomAudio) {
       return parseAudioUrl(rawAudioUrl.trim());
     } else {
       return { type: "direct", url: "/bq-music.m4a" };
     }
-  }, [config?.audioUrl, config?.audio_url]);
+  }, [currentTrackUrl, config?.audioUrl, config?.audio_url]);
 
   const [playerReady, setPlayerReady] = useState(false);
   const playerReadyRef = useRef(false);

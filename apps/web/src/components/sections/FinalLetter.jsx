@@ -16,6 +16,8 @@ const BODY = [
   "أسف على كل لحظة زعل، وأوعدك إني دايماً هفضل جنبك وسندك. يا رب دايماً مع بعض، ويا رب دايماً مالية حياتي فرحة.",
 ];
 
+import VoiceNotePlayer from "@/components/VoiceNotePlayer";
+
 export default function FinalLetter({ onNext }) {
   const { updateState, config, t } = useApp();
   const [opened, setOpened] = useState(false);
@@ -46,6 +48,9 @@ export default function FinalLetter({ onNext }) {
     setOpened(true);
     grandConfetti(3500);
   }, []);
+
+  const voiceNoteUrl = config?.voiceNoteUrl || config?.voice_note_url;
+  const hasVoiceNote = voiceNoteUrl || config?.enableVoiceNote;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-5 py-16">
@@ -107,6 +112,12 @@ export default function FinalLetter({ onNext }) {
                   {para}
                 </motion.p>
               ))}
+
+              {hasVoiceNote && (
+                <motion.div variants={motionVariantsLetter.child} className="my-6">
+                  <VoiceNotePlayer url={voiceNoteUrl || "/default_voicenote.mp3"} />
+                </motion.div>
+              )}
 
               <motion.div
                 variants={motionVariantsLetter.child}

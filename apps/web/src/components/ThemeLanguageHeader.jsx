@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { useLanguage } from "../context/LanguageContext";
+import { useApp } from "@/context/AppContext";
 import { Sun, Moon, Globe, Flame } from "lucide-react";
 
 /**
@@ -14,6 +15,7 @@ export default function ThemeLanguageHeader() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { locale, setLocale } = useLanguage();
+  const { logLedgerEvent } = useApp() || {};
   const btnRef = useRef(null);
 
   useEffect(() => {
@@ -60,6 +62,10 @@ export default function ThemeLanguageHeader() {
       // Clean up previous classes and force the nextTheme class
       html.classList.remove("light", "dark", "candlelight");
       html.classList.add(nextTheme);
+      if (logLedgerEvent) {
+        let themeName = nextTheme === "candlelight" ? "وضع الشموع 🕯️" : nextTheme === "dark" ? "الوضع المظلم 🌙" : "الوضع المضيء ☀️";
+        logLedgerEvent(`غيرت مظهر الموقع إلى: ${themeName}`);
+      }
     }, 50);
 
     // Cleanup after animation
@@ -67,7 +73,7 @@ export default function ThemeLanguageHeader() {
       html.classList.remove("theme-transitioning");
       if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
     }, 600);
-  }, [setTheme]);
+  }, [setTheme, logLedgerEvent]);
 
   if (!mounted) return null;
 
@@ -130,7 +136,13 @@ export default function ThemeLanguageHeader() {
 
         {/* Language Toggle */}
         <button
-          onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
+          onClick={() => {
+            const nextLocale = locale === "ar" ? "en" : "ar";
+            setLocale(nextLocale);
+            if (logLedgerEvent) {
+              logLedgerEvent(`غيرت لغة الموقع إلى: ${nextLocale === "ar" ? "العربية 🇸🇦" : "الإنجليزية 🇬🇧"}`);
+            }
+          }}
           style={{
             color: "var(--text-secondary)",
             fontSize: "0.8rem",

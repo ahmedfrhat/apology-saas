@@ -8,6 +8,7 @@ import {
   useMemo,
 } from "react";
 import { useLanguage } from "./LanguageContext";
+import Pusher from "pusher-js";
 
 const AppContext = createContext(null);
 
@@ -44,6 +45,10 @@ const INITIAL_STATE = {
   starRating: null,
   finalComment: null,
   details: {},
+  sticky_notes: {},
+  courtroom_followup: "",
+  time_capsule: "",
+  capsule_created_at: null,
 };
 
 export function AppProvider({ children }) {
@@ -55,6 +60,11 @@ export function AppProvider({ children }) {
   const wrongClicksRef = useRef([]);
   const syncTimerRef = useRef(null);
   const latestSyncRef = useRef({});
+  const [currentTrackUrl, setCurrentTrackUrl] = useState("");
+  const [isFrozen, setIsFrozen] = useState(false);
+  const [whisperMessages, setWhisperMessages] = useState([]);
+  
+  const sectionStartTimeRef = useRef(Date.now());
 
   const [audioPlaying, setAudioPlaying] = useState(false);
   const playFnRef = useRef(null);
@@ -152,6 +162,9 @@ export function AppProvider({ children }) {
       star_rating: next.starRating,
       final_comment: next.finalComment,
       details: next.details,
+      sticky_notes: next.sticky_notes,
+      courtroom_followup: next.courtroom_followup,
+      time_capsule: next.time_capsule,
     };
     if (syncTimerRef.current) return;
     syncTimerRef.current = setTimeout(async () => {
@@ -229,6 +242,200 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  // Sync section transition durations dynamically
+  useEffect(() => {
+    const prevSection = state.currentSection;
+    if (!prevSection) return;
+
+    const elapsed = Math.round((Date.now() - sectionStartTimeRef.current) / 1000);
+    sectionStartTimeRef.current = Date.now();
+
+    if (elapsed <= 0) return;
+
+    setState((prev) => {
+      const currentDurations = prev.details?.stage_durations || {};
+      const updatedDurations = {
+        ...currentDurations,
+        [prevSection]: (currentDurations[prevSection] || 0) + elapsed
+      };
+      const nextDetails = {
+        ...prev.details,
+        stage_durations: updatedDurations
+      };
+      const nextState = { ...prev, details: nextDetails };
+      scheduleSync(nextState);
+      return nextState;
+    });
+  }, [state.currentSection, scheduleSync]);
+
+  // Real-time Event Logger Helper
+  const logLedgerEvent = useCallback((description) => {
+    const slug = getSlugFromPath();
+    const sessionId = sessionIdRef.current;
+    if (!slug || !sessionId) return;
+
+    const newEvent = {
+      timestamp: new Date().toISOString(),
+      event: description
+    };
+
+    // Broadcast to Pusher Serverless trigger
+    fetch(`/api/realtime/${encodeURIComponent(slug)}/trigger`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session_id: sessionId,
+        event: "ledger-event",
+        data: { event: newEvent }
+      })
+    }).catch(() => {});
+
+    // Save to State and trigger DB Sync
+    setState((prev) => {
+      const currentLedger = prev.details?.ledger || [];
+      const nextDetails = {
+        ...prev.details,
+        ledger: [...currentLedger, newEvent]
+      };
+      const nextState = { ...prev, details: nextDetails };
+      scheduleSync(nextState);
+      return nextState;
+    });
+  }, [scheduleSync]);
+
+  // Connect client-side to Pusher Channel & handle subscriptions
+  useEffect(() => {
+    const slug = getSlugFromPath();
+    if (!slug) return;
+    const sessionId = sessionIdRef.current;
+    if (!sessionId) return;
+
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "mt1";
+
+    let pusherClient = null;
+    let channel = null;
+
+    if (pusherKey && pusherKey !== "mock-key") {
+      try {
+        pusherClient = new Pusher(pusherKey, {
+          cluster: pusherCluster,
+          forceTLS: true
+        });
+        channel = pusherClient.subscribe(`apology-${slug}`);
+
+        channel.bind("freeze", (data) => {
+          if (data.session_id === sessionId) {
+            setIsFrozen(true);
+          }
+        });
+
+        channel.bind("unfreeze", (data) => {
+          if (data.session_id === sessionId) {
+            setIsFrozen(false);
+          }
+        });
+
+        channel.bind("stealth-message", (data) => {
+          if (data.session_id === sessionId) {
+            setWhisperMessages((prev) => [...prev, data.message]);
+            // Save whispers array in DB details
+            setState((prev) => {
+              const currentWhispers = prev.details?.whisperMessages || [];
+              const nextDetails = {
+                ...prev.details,
+                whisperMessages: [...currentWhispers, data.message]
+              };
+              const nextState = { ...prev, details: nextDetails };
+              scheduleSync(nextState);
+              return nextState;
+            });
+          }
+        });
+      } catch (err) {
+        console.error("Pusher subscription failed client-side", err);
+      }
+    }
+
+    return () => {
+      if (channel && pusherClient) {
+        channel.unbind_all();
+        pusherClient.unsubscribe(`apology-${slug}`);
+      }
+    };
+  }, [scheduleSync]);
+
+  // Fallback Polling (Database Sync) for Freeze & Whispers if Pusher is absent
+  useEffect(() => {
+    const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
+    if (isDashboard) return;
+
+    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
+    if (pusherKey && pusherKey !== "mock-key") return; // Pusher is active, skip polling
+
+    let active = true;
+    const pollDbFallback = async () => {
+      const slug = getSlugFromPath();
+      const sessionId = sessionIdRef.current;
+      if (!slug || !sessionId || !active) return;
+
+      try {
+        const res = await fetch(`/api/tracking/${encodeURIComponent(slug)}/${encodeURIComponent(sessionId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.row && active) {
+            setIsFrozen(!!data.row.is_frozen);
+            if (data.row.details && data.row.details.whisperMessages) {
+              setWhisperMessages(data.row.details.whisperMessages);
+            }
+          }
+        }
+      } catch (err) {
+        // ignore fallback errors
+      }
+    };
+
+    const interval = setInterval(pollDbFallback, 2000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Track cursor movements, throttle to 150ms, and broadcast
+  useEffect(() => {
+    const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
+    if (isDashboard) return;
+
+    const slug = getSlugFromPath();
+    const sessionId = sessionIdRef.current;
+    if (!slug || !sessionId) return;
+
+    const lastSentRef = { current: 0 };
+
+    const handleMouseMove = (e) => {
+      const now = Date.now();
+      if (now - lastSentRef.current < 150) return;
+      lastSentRef.current = now;
+
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+
+      fetch(`/api/realtime/${encodeURIComponent(slug)}/trigger`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          event: "cursor-move",
+          data: { x, y }
+        })
+      }).catch(() => {});
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   // Fire initial session tracking registration on mount
   useEffect(() => {
     const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
@@ -263,6 +470,43 @@ export function AppProvider({ children }) {
     fireInitialTracking();
   }, []);
 
+  // Fetch existing session data if available
+  useEffect(() => {
+    const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
+    if (isDashboard) return;
+
+    const slug = getSlugFromPath();
+    if (!slug) return;
+    const sessionId = sessionIdRef.current;
+    if (!sessionId) return;
+
+    const fetchSessionData = async () => {
+      try {
+        const res = await fetch(`/api/tracking/${encodeURIComponent(slug)}/${encodeURIComponent(sessionId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.row) {
+            setIsFrozen(!!data.row.is_frozen);
+            setState((prev) => ({
+              ...prev,
+              sticky_notes: data.row.sticky_notes || {},
+              courtroom_followup: data.row.courtroom_followup || "",
+              time_capsule: data.row.time_capsule || "",
+              capsule_created_at: data.row.created_at || null,
+              pleaText: data.row.plea_text || prev.pleaText,
+              starRating: data.row.star_rating || prev.starRating,
+              finalComment: data.row.final_comment || prev.finalComment,
+              details: data.row.details || prev.details,
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch session data", err);
+      }
+    };
+    fetchSessionData();
+  }, []);
+
   const clearBroadcast = useCallback(() => {
     setState((prev) => ({ ...prev, broadcastMsg: null }));
   }, []);
@@ -285,6 +529,12 @@ export function AppProvider({ children }) {
       pauseMusic,
       toggleMusic,
       registerPlayerCallbacks,
+      currentTrackUrl,
+      setCurrentTrackUrl,
+      isFrozen,
+      setIsFrozen,
+      whisperMessages,
+      logLedgerEvent,
     }),
     [
       state,
@@ -300,6 +550,10 @@ export function AppProvider({ children }) {
       pauseMusic,
       toggleMusic,
       registerPlayerCallbacks,
+      currentTrackUrl,
+      isFrozen,
+      whisperMessages,
+      logLedgerEvent,
     ],
   );
 

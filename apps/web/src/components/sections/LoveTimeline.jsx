@@ -15,9 +15,13 @@ const MOMENTS = [
 ];
 
 export default function LoveTimeline({ onNext }) {
-  const { updateState, config, t } = useApp();
+  const { updateState, config, t, sticky_notes } = useApp();
   const [currentPage, setCurrentPage] = useState(0);
   const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteText, setNoteText] = useState("");
+
+  const stickyNotesMap = sticky_notes || {};
 
   // Resolve timeline data
   let timelineData = config?.timeline;
@@ -34,6 +38,11 @@ export default function LoveTimeline({ onNext }) {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Sync modal state text when current page changes
+  useEffect(() => {
+    setNoteText(stickyNotesMap[currentPage] || "");
+  }, [currentPage, stickyNotesMap]);
 
   // Parallax 3D Tilt calculations
   const tiltX = useMotionValue(0);
@@ -79,10 +88,20 @@ export default function LoveTimeline({ onNext }) {
     }
   }, [currentPage]);
 
+  const saveStickyNote = () => {
+    triggerHaptic();
+    const nextNotes = {
+      ...stickyNotesMap,
+      [currentPage]: noteText
+    };
+    updateState({ sticky_notes: nextNotes });
+    setShowNoteModal(false);
+  };
+
   const currentItem = timelineData[currentPage];
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-5 py-12 flex flex-col items-center select-none">
+    <div className="mx-auto w-full max-w-4xl px-5 py-12 flex flex-col items-center select-none relative">
       <motion.h2 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -158,7 +177,13 @@ export default function LoveTimeline({ onNext }) {
                 <span className="text-xs font-bold font-mono tracking-widest text-[var(--accent)]">
                   {t("ذكرى رقم")} {currentPage + 1}
                 </span>
-                <Heart size={16} fill="var(--accent)" className="text-[var(--accent)]" />
+                <button
+                  type="button"
+                  onClick={() => setShowNoteModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border border-[#DFBA73]/30 bg-[#DFBA73]/15 text-[#855B1B] dark:text-[#E8C280] hover:bg-[#DFBA73]/25 cursor-pointer transition-all"
+                >
+                  📝 {stickyNotesMap[currentPage] ? t("تعديل تعليق") : t("ملاحظة صفراء")}
+                </button>
               </div>
 
               {/* Memory Paragraph */}
@@ -166,6 +191,12 @@ export default function LoveTimeline({ onNext }) {
                 <p className="text-base sm:text-lg font-medium leading-relaxed text-[#1A1A1A] dark:text-[#EDE8E0] text-center md:text-start">
                   {t(currentItem.text)}
                 </p>
+                {stickyNotesMap[currentPage] && (
+                  <div className="mt-4 p-3 bg-yellow-100/70 border-l-4 border-yellow-500 rounded-r-xl shadow-sm text-start font-handwritten">
+                    <p className="text-xs text-yellow-800 font-bold mb-0.5">📌 {t("تعليقك:")}</p>
+                    <p className="text-xs text-yellow-950 font-medium italic">{stickyNotesMap[currentPage]}</p>
+                  </div>
+                )}
               </div>
 
               {/* Page Number / Progress */}
@@ -232,6 +263,56 @@ export default function LoveTimeline({ onNext }) {
           </button>
         </motion.div>
       )}
+
+      {/* Sticky Note input modal */}
+      <AnimatePresence>
+        {showNoteModal && (
+          <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="w-full max-w-sm rounded-[2rem] border border-yellow-200/50 bg-[#FFFCE8] p-6 shadow-2xl relative text-start font-sans"
+            >
+              {/* Tape deco */}
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-28 h-6 bg-yellow-200/60 shadow-sm rotate-2 border border-yellow-300/30" />
+              
+              <h4 className="text-sm font-bold uppercase tracking-wider text-yellow-800 mb-3 mt-1 select-none">
+                📌 {t("إضافة ملاحظة على الذكرى")}
+              </h4>
+              <p className="text-[11px] text-yellow-700/80 mb-4 select-none">
+                {t("اكتبي تعليقك، إحساسك، أو أي عتاب على هذه اللحظة، وهيظهر دايماً مع الصورة!")}
+              </p>
+
+              <textarea
+                value={noteText}
+                onChange={(e) => setNoteText(e.target.value)}
+                placeholder={t("اكتبي ملاحظتك الصفراء هنا...")}
+                className="w-full h-24 p-3 rounded-xl border border-yellow-300/30 bg-white/70 text-xs font-semibold text-yellow-950 placeholder-yellow-600/40 outline-none focus:bg-white resize-none"
+                maxLength={200}
+              />
+
+              <div className="mt-4 flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowNoteModal(false)}
+                  className="rounded-xl px-4 py-2 text-xs font-semibold text-yellow-700 hover:bg-yellow-200/40 cursor-pointer"
+                >
+                  {t("إلغاء")}
+                </button>
+                <button
+                  type="button"
+                  onClick={saveStickyNote}
+                  className="rounded-xl bg-yellow-600 hover:bg-yellow-700 px-4 py-2 text-xs font-semibold text-white cursor-pointer shadow-sm"
+                >
+                  {t("حفظ وتعليق 📌")}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

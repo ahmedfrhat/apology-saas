@@ -30,7 +30,7 @@ const QUESTIONS = [
 ];
 
 export default function TriviaQuiz({ onNext }) {
-  const { updateState, state, config, t } = useApp();
+  const { updateState, state, config, t, logLedgerEvent } = useApp();
   const [index, setIndex] = useState(0);
   const [shake, setShake] = useState(false);
   const [trapMsg, setTrapMsg] = useState("");
@@ -69,6 +69,9 @@ export default function TriviaQuiz({ onNext }) {
 
   useEffect(() => {
     updateState({ currentSection: "trivia", lastAction: "trivia-quiz" });
+    if (logLedgerEvent) {
+      logLedgerEvent("دخلت شاشة اختبار الذاكرة 👀");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -83,9 +86,12 @@ export default function TriviaQuiz({ onNext }) {
     if (!isCorrectOption(opt)) {
       if (!firstWrongHoverTime.current) {
         firstWrongHoverTime.current = Date.now();
+        if (logLedgerEvent) {
+          logLedgerEvent(`ترددت وحركت الماوس فوق خيار خاطئ: "${opt}" 🤔`);
+        }
       }
     }
-  }, [isCorrectOption]);
+  }, [isCorrectOption, logLedgerEvent]);
 
     const handleAnswer = useCallback(
       (option) => {
@@ -107,6 +113,10 @@ export default function TriviaQuiz({ onNext }) {
             navigator.vibrate([100, 50, 100]); // double buzz for trap
           }
 
+          if (logLedgerEvent) {
+            logLedgerEvent(`وقعت في فخ سؤال الذاكرة واختارت: "${option}" 🪤`);
+          }
+
           setShake(true);
           setTrapMsg(currentQ.trap.msg);
           setTimeout(() => setShake(false), 500);
@@ -124,8 +134,12 @@ export default function TriviaQuiz({ onNext }) {
             navigator.vibrate([100, 50, 100]); // double buzz for wrong answer
           }
 
+          if (logLedgerEvent) {
+            logLedgerEvent(`أجابت بشكل خاطئ واختارت: "${option}" ❌`);
+          }
+
           setShake(true);
-          setTrapMsg(t("جرّبي تاني يا {girlNickname} 😅"));
+          setTrapMsg(t(config?.quizWrongMessage) || t("جرّبي تاني يا {girlNickname} 😅"));
           setTimeout(() => setShake(false), 500);
           return;
         }
@@ -147,6 +161,9 @@ export default function TriviaQuiz({ onNext }) {
       }
 
       setTrapMsg("");
+      if (logLedgerEvent) {
+        logLedgerEvent(`أجابت إجابة صحيحة واختارت: "${option}" ✅`);
+      }
       fireConfetti({
         particleCount: 70,
         spread: 80,
@@ -159,6 +176,9 @@ export default function TriviaQuiz({ onNext }) {
         setFinished(true);
         if (typeof navigator !== "undefined" && navigator.vibrate) {
           navigator.vibrate([100, 50, 150]); // premium success vibration
+        }
+        if (logLedgerEvent) {
+          logLedgerEvent("أكملت جميع أسئلة اختبار الذاكرة بنجاح! 🏆");
         }
         updateState({ batteryLevel: 60, lastAction: "trivia-done" });
         setTimeout(onNext, 2600);
