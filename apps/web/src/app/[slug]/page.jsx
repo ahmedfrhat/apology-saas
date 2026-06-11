@@ -28,28 +28,33 @@ import EternalVoidCanvas from "@/components/sections/EternalVoidCanvas";
 
 import sql from "@/app/api/utils/sql";
 
-export async function loader({ params }) {
+export async function loader({ request, params }) {
+  const origin = request?.url ? new URL(request.url).origin : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://safi.io");
   try {
     const result = await sql`SELECT config FROM apology_sites WHERE slug = ${params.slug}`;
     if (result && result.length > 0) {
       const { boyName, girlName } = result[0].config;
-      return { boyName, girlName };
+      return { boyName, girlName, origin };
     }
   } catch (err) {
     console.error("OG Loader Error:", err);
   }
-  return { boyName: "أنا", girlName: "أنتي" };
+  return { boyName: "أنا", girlName: "أنتي", origin };
 }
 
 export function meta({ data }) {
   const boy = data?.boyName || "أنا";
   const girl = data?.girlName || "أنتي";
+  const origin = data?.origin || "https://safi.io";
+  const ogUrl = `${origin}/api/og?boy=${encodeURIComponent(boy)}&girl=${encodeURIComponent(girl)}`;
+  
   return [
     { name: "robots", content: "noindex, nofollow" },
     { property: "og:title", content: `مفاجأة خاصة من ${boy} إلى ${girl} 🎁` },
     { property: "og:description", content: "Safi.io - منصة المصالحة والاعتذار الذكية" },
-    { property: "og:image", content: `/api/og?boy=${encodeURIComponent(boy)}&girl=${encodeURIComponent(girl)}` },
-    { name: "twitter:card", content: "summary_large_image" }
+    { property: "og:image", content: ogUrl },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:image", content: ogUrl }
   ];
 }
 
