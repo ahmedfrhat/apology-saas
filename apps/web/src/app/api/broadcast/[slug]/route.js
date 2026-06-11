@@ -2,18 +2,27 @@ import sql, { hasDb } from "@/app/api/utils/sql";
 
 // POST: Set a broadcast message targeting a session.
 // Body: { session_id, message }
-export async function POST(request, context) {
+export async function POST(request, context, c) {
   if (!hasDb()) return new Response(null, { status: 204 }); // مؤقتًا
   try {
-    const { slug } = context.params;
+    // Await params safely
+    const params = await context.params;
+    const slug = params.slug;
+    
     let body;
     try {
-      body = await Promise.race([
-        request.json(),
-        new Promise((_, r) => setTimeout(() => r(new Error("Timeout")), 3000))
-      ]);
+      const nodeReq = c?.env?.incoming || {};
+      if (nodeReq.body) {
+        body = typeof nodeReq.body === "string" ? JSON.parse(nodeReq.body) : nodeReq.body;
+      } else {
+        body = await Promise.race([
+          request.json(),
+          new Promise((_, r) => setTimeout(() => r(new Error("Timeout parsing body")), 3000))
+        ]);
+      }
     } catch(err) {
-      return Response.json({ error: "Body parse timeout" }, { status: 400 });
+      console.error("[broadcast/[slug]/POST] Detailed Body Parse Error:", err);
+      return Response.json({ error: "Body parse failed", details: err.message }, { status: 400 });
     }
     const { session_id, message } = body;
 
@@ -54,7 +63,8 @@ export async function POST(request, context) {
 export async function GET(request, context) {
   if (!hasDb()) return new Response(null, { status: 204 }); // مؤقتًا
   try {
-    const { slug } = context.params;
+    const params = await context.params;
+    const slug = params.slug;
     const url = new URL(request.url);
     const sessionId = url.searchParams.get("session_id");
 
