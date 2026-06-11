@@ -130,6 +130,7 @@ let dbInitialized = false;
 async function ensureTable() {
   if (dbInitialized) return;
   try {
+    // 1. Create apology_sites table
     await sql`
       CREATE TABLE IF NOT EXISTS apology_sites (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -149,6 +150,8 @@ async function ensureTable() {
     } catch(err) {
       console.error("TTL cleanup failed", err);
     }
+
+    // 2. Create live_tracking table
     await sql`
       CREATE TABLE IF NOT EXISTS live_tracking (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -162,8 +165,65 @@ async function ensureTable() {
         updated_at TIMESTAMP DEFAULT now()
       )
     `;
+    // Explicit database Index on session_id column in live_tracking
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_live_tracking_session_id ON live_tracking(session_id)
+    `;
     await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_detected BOOLEAN DEFAULT false`;
     await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_seconds FLOAT DEFAULT 0`;
+
+    // 3. Create apology_projects shadow table & index on slug
+    await sql`
+      CREATE TABLE IF NOT EXISTS apology_projects (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        slug VARCHAR(100) UNIQUE NOT NULL,
+        config JSONB,
+        created_at TIMESTAMP DEFAULT now()
+      )
+    `;
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_apology_projects_slug ON apology_projects(slug)
+    `;
+
+    // 4. Create recipient_interactions shadow table & index on kvow_session_id
+    await sql`
+      CREATE TABLE IF NOT EXISTS recipient_interactions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        kvow_session_id VARCHAR(100) UNIQUE NOT NULL,
+        site_id UUID,
+        created_at TIMESTAMP DEFAULT now()
+      )
+    `;
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_recipient_interactions_kvow_session_id ON recipient_interactions(kvow_session_id)
+    `;
+
+    // 5. Create users shadow table & index on username
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        username VARCHAR(100) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT now()
+      )
+    `;
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)
+    `;
+
+    // 6. Create telegram_queue table
+    await sql`
+      CREATE TABLE IF NOT EXISTS telegram_queue (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        slug VARCHAR(100) NOT NULL,
+        event_type VARCHAR(50) NOT NULL,
+        session_id VARCHAR(100) NOT NULL,
+        payload JSONB,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT now()
+      )
+    `;
+
     dbInitialized = true;
   } catch (err) {
     console.error("Failed to create tables", err);
@@ -180,6 +240,7 @@ function getGirlNickname(name) {
 export async function POST(request, context, c) {
   try {
     console.log("[sites/POST] 1. Starting request processing...");
+    await ensureTable();
 
     // 1. Wrap Body Parsing Safely with a fallback timeout
     let body;

@@ -14,6 +14,7 @@ export default function AuthGate({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hint, setHint] = useState(null);
+  const [lockoutTime, setLockoutTime] = useState(0);
   
   // Check session storage first
   useEffect(() => {
@@ -22,6 +23,37 @@ export default function AuthGate({ children }) {
       setUnlocked(true);
     }
   }, [slug]);
+
+  // Check brute-force lockout on load/slug change
+  useEffect(() => {
+    const lockoutKey = `lockout_${slug}`;
+    const storedLockout = localStorage.getItem(lockoutKey);
+    if (storedLockout) {
+      const remainingTime = Math.ceil((parseInt(storedLockout) + 300000 - Date.now()) / 1000);
+      if (remainingTime > 0) {
+        setLockoutTime(remainingTime);
+      } else {
+        localStorage.removeItem(lockoutKey);
+      }
+    }
+  }, [slug]);
+
+  // Lockout countdown timer
+  useEffect(() => {
+    if (lockoutTime <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutTime((prev) => {
+        if (prev <= 1) {
+          localStorage.removeItem(`lockout_${slug}`);
+          localStorage.removeItem(`attempts_${slug}`);
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutTime, slug]);
 
   // Broadcast "at_gate" status
   useEffect(() => {
@@ -37,10 +69,11 @@ export default function AuthGate({ children }) {
 
     const broadcastGateStatus = async () => {
       try {
-        await fetch(`/api/tracking/${slug}`, {
+        await fetch(`/api/t-logs`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            slug,
             session_id: sessionId,
             current_section: "at_gate",
             battery_level: 0,
@@ -60,6 +93,7 @@ export default function AuthGate({ children }) {
   const handleUnlock = async (e) => {
     e.preventDefault();
     if (!password) return;
+    if (lockoutTime > 0) return;
     setLoading(true);
     setError(null);
     try {
@@ -72,15 +106,30 @@ export default function AuthGate({ children }) {
       if (res.ok && data.success) {
         sessionStorage.setItem(`unlocked_${slug}`, "true");
         sessionStorage.setItem(`auth_pwd_${slug}`, password);
+        localStorage.removeItem(`attempts_${slug}`);
+        localStorage.removeItem(`lockout_${slug}`);
         setUnlocked(true);
         if (logLedgerEvent) {
           logLedgerEvent("قامت بفك كلمة مرور البوابة بنجاح 🔓");
         }
       } else {
-        setError(data.error || "كلمة المرور غير صحيحة");
-        if (data.hint) setHint(data.hint);
-        if (logLedgerEvent) {
-          logLedgerEvent(`أدخلت كلمة مرور خاطئة عند البوابة: "${password}" ❌`);
+        const attemptsKey = `attempts_${slug}`;
+        const attempts = parseInt(localStorage.getItem(attemptsKey) || "0") + 1;
+        localStorage.setItem(attemptsKey, attempts.toString());
+        
+        if (attempts >= 5) {
+          localStorage.setItem(`lockout_${slug}`, Date.now().toString());
+          setLockoutTime(300);
+          setError("تم قفل البوابة مؤقتاً بسبب 5 محاولات خاطئة متتالية. جرب ثانية بعد 5 دقائق.");
+          if (logLedgerEvent) {
+            logLedgerEvent("تم حظر الجلسة مؤقتاً بسبب محاولات دخول خاطئة متكررة 🚨");
+          }
+        } else {
+          setError((data.error || "كلمة المرور غير صحيحة") + ` (المحاولات المتبقية: ${5 - attempts})`);
+          if (data.hint) setHint(data.hint);
+          if (logLedgerEvent) {
+            logLedgerEvent(`أدخلت كلمة مرور خاطئة عند البوابة: "${password}" ❌`);
+          }
         }
       }
     } catch (err) {
@@ -161,17 +210,22 @@ export default function AuthGate({ children }) {
             type="password"
             autoFocus
             required
+            disabled={lockoutTime > 0}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder={locale === "en" ? "Password..." : "كلمة المرور..."}
+            placeholder={lockoutTime > 0 ? (locale === "en" ? `Locked out for ${lockoutTime}s` : `مغلق مؤقتاً لـ ${lockoutTime} ثانية`) : (locale === "en" ? "Password..." : "كلمة المرور...")}
             className="w-full text-center tracking-widest font-mono text-lg rounded-xl border border-[#1A1A1A]/20 dark:border-gray-600 bg-white/50 dark:bg-gray-900/50 p-3.5 outline-none transition-all focus:bg-white dark:focus:bg-gray-900 focus:border-[#1A1A1A] dark:focus:border-amber-500 dark:text-white"
           />
           <button
             type="submit"
-            disabled={loading || !password}
+            disabled={loading || !password || lockoutTime > 0}
             className="w-full bg-[#1A1A1A] dark:bg-amber-800 text-white py-3.5 rounded-xl font-bold text-sm transition-all hover:bg-black dark:hover:bg-amber-900 active:scale-95 disabled:opacity-50"
           >
-            {loading ? (locale === "en" ? "Verifying..." : "جاري التحقق...") : (locale === "en" ? "Unlock" : "دخول")}
+            {lockoutTime > 0 
+              ? (locale === "en" ? `Try again in ${lockoutTime}s` : `المحاولة بعد ${lockoutTime} ثانية 🔒`)
+              : loading 
+                ? (locale === "en" ? "Verifying..." : "جاري التحقق...") 
+                : (locale === "en" ? "Unlock" : "دخول")}
           </button>
         </form>
       </motion.div>

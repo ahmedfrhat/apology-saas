@@ -1,6 +1,8 @@
 import sql from "@/app/api/utils/sql";
 import bcrypt from "bcryptjs";
 
+export const runtime = "edge";
+
 export async function POST(request, context, c) {
   try {
     const { slug } = context.params;

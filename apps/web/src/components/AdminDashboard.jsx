@@ -1178,14 +1178,37 @@ export default function AdminDashboard() {
         canvas.width = width; canvas.height = height;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-        setFormData((prev) => {
-          const next = { ...prev };
-          const nextTimeline = [...(next.timeline || [])];
-          if (nextTimeline[index]) nextTimeline[index] = { ...nextTimeline[index], image: dataUrl };
-          next.timeline = nextTimeline;
-          return next;
-        });
+        
+        // Compress canvas snapshot to WebP blob
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          try {
+            // Request pre-signed R2 upload URL
+            const res = await fetch(`/api/sites/${siteSlug}/r2-presigned?filename=${encodeURIComponent(file.name)}&contentType=image/webp`);
+            if (!res.ok) throw new Error("Failed to obtain pre-signed URL");
+            const data = await res.json();
+
+            // Direct-to-R2 upload using the pre-signed URL
+            const uploadRes = await fetch(data.uploadUrl, {
+              method: "PUT",
+              headers: { "Content-Type": "image/webp" },
+              body: blob
+            });
+            if (!uploadRes.ok) throw new Error("Direct-to-R2 upload failed");
+
+            // Save the reverse-proxied asset path in formData config
+            setFormData((prev) => {
+              const next = { ...prev };
+              const nextTimeline = [...(next.timeline || [])];
+              if (nextTimeline[index]) nextTimeline[index] = { ...nextTimeline[index], image: data.assetUrl };
+              next.timeline = nextTimeline;
+              return next;
+            });
+          } catch (err) {
+            console.error("Direct R2 upload error:", err);
+            alert("حدث خطأ أثناء رفع الصورة إلى السحابة ❌");
+          }
+        }, "image/webp", 0.8);
       };
       img.src = event.target.result;
     };

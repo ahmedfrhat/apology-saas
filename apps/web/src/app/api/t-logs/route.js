@@ -45,56 +45,8 @@ async function triggerNotification(slug, eventType, sessionId, data = {}, reques
   }
 }
 
-// GET: List active tracking rows for a specific tenant site slug
-export async function GET(request, context) {
-  try {
-    const { slug } = context.params;
-
-    // Run migration safely to ensure tracking columns exist
-    try {
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_detected BOOLEAN DEFAULT false`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS hesitation_seconds FLOAT DEFAULT 0`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS plea_text TEXT`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS star_rating INTEGER`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS final_comment TEXT`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS details JSONB`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS sticky_notes JSONB`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS courtroom_followup TEXT`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS time_capsule TEXT`;
-      await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS is_frozen BOOLEAN DEFAULT false`;
-    } catch (migErr) {
-      // Ignore if it fails
-    }
-
-    // 1. Look up site id by slug
-    const siteRows = await sql`
-      SELECT id FROM apology_sites WHERE slug = ${slug}
-    `;
-    if (siteRows.length === 0) {
-      return Response.json({ error: "الموقع غير موجود" }, { status: 404 });
-    }
-    const siteId = siteRows[0].id;
-
-    // 2. Query tracking rows for this site including hesitation
-    const rows = await sql`
-      SELECT id, session_id, current_section, battery_level, last_action, broadcast_msg, hesitation_detected, hesitation_seconds, plea_text, star_rating, final_comment, details, sticky_notes, courtroom_followup, time_capsule, is_frozen, created_at, updated_at
-      FROM live_tracking
-      WHERE site_id = ${siteId}
-      ORDER BY updated_at DESC
-      LIMIT 100
-    `;
-
-    return Response.json({ rows });
-  } catch (error) {
-    console.error("[tracking/[slug]/GET] error", error);
-    return Response.json({ error: "Failed to list tracking sessions" }, { status: 500 });
-  }
-}
-
-// POST: Upsert a live tracking row for a specific session linked to a tenant site slug
 export async function POST(request, context, c) {
   try {
-    const { slug } = context.params;
     let body;
     const nodeReq = c?.env?.incoming || {};
     if (nodeReq.body) {
@@ -105,7 +57,16 @@ export async function POST(request, context, c) {
         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
       ]);
     }
-    const { session_id } = body;
+    
+    const { slug, session_id } = body || {};
+
+    if (!slug) {
+      return Response.json({ error: "slug is required" }, { status: 400 });
+    }
+
+    if (!session_id) {
+      return Response.json({ error: "session_id is required" }, { status: 400 });
+    }
 
     // Run migration safely to ensure tracking columns exist
     try {
@@ -121,10 +82,6 @@ export async function POST(request, context, c) {
       await sql`ALTER TABLE live_tracking ADD COLUMN IF NOT EXISTS is_frozen BOOLEAN DEFAULT false`;
     } catch (migErr) {
       // Ignore
-    }
-
-    if (!session_id) {
-      return Response.json({ error: "session_id is required" }, { status: 400 });
     }
 
     // 1. Look up site id by slug
@@ -145,7 +102,7 @@ export async function POST(request, context, c) {
     const starRating = body.star_rating ?? null;
     const finalComment = typeof body.final_comment === "string" ? DOMPurify.sanitize(body.final_comment) : (body.final_comment ?? null);
     const details = body.details ?? null;
-    
+
     let stickyNotes = body.sticky_notes ?? null;
     if (stickyNotes && typeof stickyNotes === "object") {
       const sanitized = {};
@@ -158,7 +115,7 @@ export async function POST(request, context, c) {
       }
       stickyNotes = sanitized;
     }
-    
+
     const courtroomFollowup = typeof body.courtroom_followup === "string" ? DOMPurify.sanitize(body.courtroom_followup) : (body.courtroom_followup ?? null);
     const timeCapsule = typeof body.time_capsule === "string" ? DOMPurify.sanitize(body.time_capsule) : (body.time_capsule ?? null);
     const isFrozen = body.is_frozen ?? false;
@@ -204,7 +161,7 @@ export async function POST(request, context, c) {
       const prevSection = prevTracking.current_section;
       const reachedEnd = currentSection === "eternal-void" || lastAction === "forgiven";
       const previouslyEnd = prevSection === "eternal-void" || prevSection === "forgiven";
-      
+
       if (currentSection === "at_gate" && prevSection !== "at_gate") {
         triggerNotification(slug, "at_gate", session_id, {}, request).catch(err => console.error("Gate notification fail", err));
       } else if (currentSection !== "at_gate" && prevSection === "at_gate") {
@@ -253,7 +210,7 @@ export async function POST(request, context, c) {
 
     return Response.json({ row });
   } catch (error) {
-    console.error("[tracking/[slug]/POST] error", error);
+    console.error("[t-logs/POST] error", error);
     return Response.json({ error: "Failed to update tracking" }, { status: 500 });
   }
 }

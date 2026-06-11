@@ -174,10 +174,11 @@ export function AppProvider({ children }) {
       const slug = getSlugFromPath();
       if (!slug) return;
       try {
-        await fetch(`/api/tracking/${encodeURIComponent(slug)}`, {
+        await fetch(`/api/t-logs`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            slug: slug,
             session_id: sessionId,
             ...latestSyncRef.current,
           }),
@@ -448,10 +449,11 @@ export function AppProvider({ children }) {
 
     const fireInitialTracking = async () => {
       try {
-        await fetch(`/api/tracking/${encodeURIComponent(slug)}`, {
+        await fetch(`/api/t-logs`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            slug: slug,
             session_id: sessionId,
             current_section: state.currentSection || "loader",
             battery_level: state.batteryLevel || 0,

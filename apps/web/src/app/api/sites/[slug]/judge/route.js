@@ -1,5 +1,8 @@
 import sql from "@/app/api/utils/sql";
 import { enforceRateLimit } from "@/app/api/utils/ratelimit";
+import DOMPurify from "isomorphic-dompurify";
+
+export const runtime = "edge";
 
 const fallbacks = [
   "السيستم هنج من كتر ما أنتِ معاكي حق! المحكمة بتحكم إنك التوب والباقي كنتلوب، وهو غلطان من ساسه لراسه! 💅",
@@ -24,7 +27,7 @@ export async function POST(request, context, c) {
         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
       ]);
     }
-    const { 
+    let { 
       pleaText, 
       girlName, 
       boyName, 
@@ -35,6 +38,11 @@ export async function POST(request, context, c) {
       followupResponse = "", 
       memoConditions = "" 
     } = body || {};
+
+    pleaText = DOMPurify.sanitize(pleaText || "");
+    followupQuestion = DOMPurify.sanitize(followupQuestion || "");
+    followupResponse = DOMPurify.sanitize(followupResponse || "");
+    memoConditions = DOMPurify.sanitize(memoConditions || "");
 
     if (!pleaText) {
       return Response.json({ error: "الرجاء إدخال نص الدفاع" }, { status: 400 });

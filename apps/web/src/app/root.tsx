@@ -38,6 +38,16 @@ import { Analytics } from '@vercel/analytics/react';
 import { ThemeProvider } from 'next-themes';
 import { LanguageProvider } from '@/context/LanguageContext';
 import ThemeLanguageHeader from '@/components/ThemeLanguageHeader';
+import * as Sentry from "@sentry/react";
+
+const sentryDsn = "https://e5f450c329365d7b2917068d49f28a8e@o4511545971900416.ingest.de.sentry.io/4511545984942160";
+
+if (typeof window !== "undefined") {
+  Sentry.init({
+    dsn: sentryDsn,
+    tracesSampleRate: 1.0,
+  });
+}
 
 export const meta = () => {
  return [
@@ -252,9 +262,10 @@ class ErrorBoundaryWrapper extends Component<ErrorBoundaryProps, ErrorBoundarySt
  return { hasError: true, error };
  }
 
- componentDidCatch(error: unknown, info: unknown) {
- console.error(error, info);
- }
+  componentDidCatch(error: unknown, info: any) {
+    console.error(error, info);
+    Sentry.captureException(error, { extra: { info } });
+  }
 
  render() {
  if (this.state.hasError) {
