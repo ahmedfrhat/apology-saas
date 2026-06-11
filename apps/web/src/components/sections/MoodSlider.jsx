@@ -96,7 +96,7 @@ export default function MoodSlider({ onNext }) {
           {stage.emoji}
         </motion.div>
 
-        <p className="mb-8 min-h-[3.5em] text-lg font-semibold leading-relaxed text-[#1A1A1A]">
+        <p className="mb-8 min-h-[3.5em] text-lg font-semibold leading-relaxed" style={{ color: "#1A1A1A" }}>
           {stage.text}
         </p>
 
@@ -109,7 +109,7 @@ export default function MoodSlider({ onNext }) {
           className="manar-range w-full"
           aria-label={t("مزاج منار")}
         />
-        <div className="mt-2 flex justify-between text-xs font-medium text-[#5A5955]">
+        <div className="mt-2 flex justify-between text-xs font-medium" style={{ color: "#5A5955" }}>
           <span>{t("زعلانة 😡")}</span>
           <span>{t("صافي 🥰")}</span>
         </div>

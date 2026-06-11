@@ -12,7 +12,7 @@ import { Sun, Moon, Globe, Flame } from "lucide-react";
  */
 export default function ThemeLanguageHeader() {
   const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const { locale, setLocale } = useLanguage();
   const btnRef = useRef(null);
 
@@ -41,15 +41,25 @@ export default function ThemeLanguageHeader() {
     ripple.className = "theme-ripple";
     document.body.appendChild(ripple);
 
+    // Read the active theme from the DOM classList
+    const isCandlelight = html.classList.contains("candlelight");
+    const isDark = html.classList.contains("dark");
+
+    let nextTheme = "light";
+    if (isCandlelight) {
+      nextTheme = "light";
+    } else if (isDark) {
+      nextTheme = "candlelight";
+    } else {
+      nextTheme = "dark";
+    }
+
     // Perform the actual theme change slightly delayed for ripple start
     setTimeout(() => {
-      if (theme === "light") {
-        setTheme("dark");
-      } else if (theme === "dark") {
-        setTheme("candlelight");
-      } else {
-        setTheme("light");
-      }
+      setTheme(nextTheme);
+      // Clean up previous classes and force the nextTheme class
+      html.classList.remove("light", "dark", "candlelight");
+      html.classList.add(nextTheme);
     }, 50);
 
     // Cleanup after animation
@@ -57,11 +67,12 @@ export default function ThemeLanguageHeader() {
       html.classList.remove("theme-transitioning");
       if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
     }, 600);
-  }, [theme, setTheme]);
+  }, [setTheme]);
 
   if (!mounted) return null;
 
-  const isDark = theme === "dark";
+  const currentTheme = theme === "system" ? resolvedTheme : theme;
+  const isDark = currentTheme === "dark" || currentTheme === "candlelight";
 
   return (
     <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 flex items-center justify-end gap-3 pointer-events-none">
@@ -96,17 +107,17 @@ export default function ThemeLanguageHeader() {
           }}
           className="p-2 rounded-full"
           aria-label={
-            theme === "light"
+            currentTheme === "light"
               ? "Switch to Dark Mode"
-              : theme === "dark"
+              : currentTheme === "dark"
               ? "Switch to Candlelight Mode"
               : "Switch to Light Mode"
           }
         >
           <div style={{ transition: "transform 400ms cubic-bezier(0.34,1.56,0.64,1), opacity 300ms ease" }}>
-            {theme === "candlelight" ? (
+            {currentTheme === "candlelight" ? (
               <Flame size={18} className="text-amber-500" style={{ filter: "drop-shadow(0 0 6px rgba(245,158,11,0.6))" }} />
-            ) : theme === "dark" ? (
+            ) : currentTheme === "dark" ? (
               <Moon size={18} className="text-[var(--accent-2)]" style={{ filter: "drop-shadow(0 0 6px rgba(223,186,115,0.6))" }} />
             ) : (
               <Sun size={18} />

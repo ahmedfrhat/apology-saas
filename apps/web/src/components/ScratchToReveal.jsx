@@ -43,16 +43,27 @@ export default function ScratchToReveal({ src, alt, className = "" }) {
     canvas.width = rect.width;
     canvas.height = rect.height;
 
+    // Resolve CSS variables dynamically since canvas doesn't parse var()
+    const getCssVariable = (name, fallback) => {
+      if (typeof window === "undefined") return fallback;
+      const val = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      return val || fallback;
+    };
+
+    const bgSurface2 = getCssVariable("--bg-surface-2", "#F4F0E8");
+    const textMuted = getCssVariable("--text-muted", "#9C8E7E");
+    const textPrimary = getCssVariable("--text-primary", "#1A1510");
+
     // Draw scratchable overlay (premium warm smoke gradient)
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    gradient.addColorStop(0, "var(--bg-surface-2)");
-    gradient.addColorStop(1, "var(--text-muted)");
+    gradient.addColorStop(0, bgSurface2);
+    gradient.addColorStop(1, textMuted);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw text instruction
     ctx.font = "bold 14px 'Cairo', sans-serif";
-    ctx.fillStyle = "var(--text-primary)";
+    ctx.fillStyle = textPrimary;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("امسحي الصورة لتتذكري 💭", canvas.width / 2, canvas.height / 2);

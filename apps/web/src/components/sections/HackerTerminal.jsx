@@ -21,9 +21,9 @@ const DEFAULT_LINES = [
 
 function lineColor(line) {
   if (line.startsWith("[ERROR]") || line.startsWith("[WARNING]"))
-    return "#EF4444";
-  if (line.startsWith("[SUCCESS]")) return "#DFBA73";
-  return "#5A5955";
+    return "rgb(239, 68, 68)";
+  if (line.startsWith("[SUCCESS]")) return "var(--accent-2)";
+  return "var(--text-secondary)";
 }
 
 export default function HackerTerminal({ onNext }) {

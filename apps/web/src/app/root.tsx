@@ -506,7 +506,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body style={{ background: "var(--gradient-bg)", backgroundAttachment: "fixed", color: "var(--text-primary)", minHeight: "100vh" }}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "candlelight"]}>
           <LanguageProvider>
             <ThemeLanguageHeader />
             <div className="flex flex-col min-h-screen">

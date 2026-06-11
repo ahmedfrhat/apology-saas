@@ -27,10 +27,10 @@ export default function AuthGate({ children }) {
     const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
     if (isDashboard) return;
 
-    let sessionId = sessionStorage.getItem("safi_session_id");
+    let sessionId = sessionStorage.getItem("manar_session_id");
     if (!sessionId) {
-      sessionId = Math.random().toString(36).substring(2, 15);
-      sessionStorage.setItem("safi_session_id", sessionId);
+      sessionId = `manar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      sessionStorage.setItem("manar_session_id", sessionId);
     }
 
     const broadcastGateStatus = async () => {
