@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build/client",
   "functions": {
-    "api/index.js": {
+    "build/server/index.js": {
       "includeFiles": "build/server/**"
     }
   },
@@ -36,6 +36,6 @@
   ],
   "rewrites": [
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/(.*)", "destination": "/api/index" }
+    { "source": "/(.*)", "destination": "/build/server/index" }
   ]
 }
