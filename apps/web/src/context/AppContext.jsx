@@ -14,10 +14,10 @@ const AppContext = createContext(null);
 // Persistent per-visit session id (kept in sessionStorage).
 function getSessionId() {
   if (typeof window === "undefined") return "ssr";
-  let id = window.sessionStorage.getItem("manar_session_id");
+  let id = window.sessionStorage.getItem("kvow_session_id");
   if (!id) {
-    id = `manar-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    window.sessionStorage.setItem("manar_session_id", id);
+    id = `kvow-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    window.sessionStorage.setItem("kvow_session_id", id);
   }
   return id;
 }
