@@ -8,4 +8,109 @@
   input, textarea, select, button {
     @apply outline-none focus:outline-none;
   }
+
+  /* Global smooth transition for theme switching without lag */
+  *, ::before, ::after {
+    transition-property: color, background-color, border-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 400ms;
+  }
+}
+
+/* =========================================
+   CLEAN, NON-ANNOYING DARK MODE GLOBALS
+========================================= */
+
+.dark body {
+  background-color: #121212 !important;
+  color: #E0E0E0 !important;
+}
+
+/* Map Light Backgrounds to Soft Dark Panels */
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-\[\#F4F3EF\],
+.dark .bg-\[\#F8F9FA\] {
+  background-color: #1E1E1E !important;
+  color: #E0E0E0 !important;
+}
+
+/* Map Light Borders to Soft Dark Borders */
+.dark .border-gray-200,
+.dark .border-gray-100,
+.dark .border-\[\#E5E0D8\] {
+  border-color: #2A2A2A !important;
+}
+
+/* Map Dark Text to Light Text */
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-\[\#1A1A1A\],
+.dark .text-slate-900,
+.dark .text-black {
+  color: #FFFFFF !important;
+}
+
+/* Map Medium Text to Soft Light Text (Not faded) */
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-\[\#5A5955\] {
+  color: #B0B0B0 !important;
+}
+
+/* Inputs & Textareas in Dark Mode */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: #121212 !important;
+  color: #FFFFFF !important;
+  border-color: #333333 !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #555555 !important;
+  background-color: #1A1A1A !important;
+}
+
+/* Fix specific colors in Admin Dashboard that might clash */
+.dark .bg-indigo-50 {
+  background-color: rgba(67, 56, 202, 0.15) !important;
+  border-color: rgba(67, 56, 202, 0.3) !important;
+}
+.dark .text-indigo-800, .dark .text-indigo-900 {
+  color: #818CF8 !important;
+}
+
+.dark .bg-pink-50 {
+  background-color: rgba(190, 24, 93, 0.15) !important;
+  border-color: rgba(190, 24, 93, 0.3) !important;
+}
+.dark .text-pink-800, .dark .text-pink-900 {
+  color: #F472B6 !important;
+}
+
+.dark .bg-orange-50 {
+  background-color: rgba(194, 65, 12, 0.15) !important;
+  border-color: rgba(194, 65, 12, 0.3) !important;
+}
+.dark .text-orange-700, .dark .text-orange-800 {
+  color: #FB923C !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(29, 78, 216, 0.15) !important;
+  border-color: rgba(29, 78, 216, 0.3) !important;
+}
+.dark .text-blue-700, .dark .text-blue-800 {
+  color: #60A5FA !important;
+}
+
+.dark .bg-green-50 {
+  background-color: rgba(21, 128, 61, 0.15) !important;
+  border-color: rgba(21, 128, 61, 0.3) !important;
+}
+.dark .text-green-700, .dark .text-green-800 {
+  color: #4ADE80 !important;
 }
