@@ -9,38 +9,38 @@
    Executed flawlessly for ultimate contrast, zero mistakes, and futuristic feel.
  ============================================= */
 
-/* 1. PURE PRISTINE LIGHT MODE (Solar) — White & High Contrast */
+/* 1. PURE PRISTINE LIGHT MODE (Solar) — 100% True Pure White & High Contrast */
 :root, .light {
   --bg-base:         #FFFFFF;
-  --bg-surface:      #F8F9FA;
-  --bg-surface-2:    #F1F3F5;
-  --bg-card:         rgba(255, 255, 255, 0.92);
-  --border-base:     rgba(0, 0, 0, 0.12);
+  --bg-surface:      #FFFFFF;
+  --bg-surface-2:    #F8F9FA;
+  --bg-card:         rgba(255, 255, 255, 0.95);
+  --border-base:     rgba(0, 0, 0, 0.1);
   --text-primary:    #000000;
-  --text-secondary:  #2D3748;
-  --text-muted:      #718096;
+  --text-secondary:  #1A1A1A;
+  --text-muted:      #5A5A5A;
   --accent:          #B45309;
   --accent-2:        #D97706;
-  --accent-glow:     rgba(180, 83, 9, 0.15);
-  --shadow-card:     0 20px 60px rgba(0, 0, 0, 0.08);
-  --gradient-bg:     linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 50%, #FFFFFF 100%);
+  --accent-glow:     rgba(180, 83, 9, 0.12);
+  --shadow-card:     0 20px 60px rgba(0, 0, 0, 0.06);
+  --gradient-bg:     #FFFFFF;
 
   /* Master Pure White overrides */
   --bg-white-override: #FFFFFF;
-  --bg-white-80-override: rgba(255, 255, 255, 0.85);
-  --bg-white-95-override: rgba(255, 255, 255, 0.95);
-  --bg-white-50-override: rgba(255, 255, 255, 0.50);
-  --bg-f8f9fa-override: #F8F9FA;
+  --bg-white-80-override: rgba(255, 255, 255, 0.90);
+  --bg-white-95-override: rgba(255, 255, 255, 0.98);
+  --bg-white-50-override: rgba(255, 255, 255, 0.70);
+  --bg-f8f9fa-override: #FFFFFF;
   --bg-f4f3ef-override: #FFFFFF;
-  --bg-f4f3ef-60-override: rgba(255, 255, 255, 0.70);
-  --bg-f4f3ef-95-override: rgba(255, 255, 255, 0.95);
-  --bg-gray-50-override: #F8F9FA;
-  --bg-gray-50-50-override: rgba(248, 249, 250, 0.50);
-  --bg-gray-100-override: #F1F3F5;
-  --bg-gray-200-override: #E2E8F0;
+  --bg-f4f3ef-60-override: #FFFFFF;
+  --bg-f4f3ef-95-override: #FFFFFF;
+  --bg-gray-50-override: #FFFFFF;
+  --bg-gray-50-50-override: #FFFFFF;
+  --bg-gray-100-override: #F8F9FA;
+  --bg-gray-200-override: #EEEEEE;
   --text-1a1a1a-override: #000000;
-  --text-5a5955-override: #2D3748;
-  --text-8a7e72-override: #718096;
+  --text-5a5955-override: #1A1A1A;
+  --text-8a7e72-override: #5A5A5A;
 }
 
 /* 2. PURE OLED DARK MODE (Midnight) — Absolute Deep Black & Bright Legible Text */
@@ -48,7 +48,7 @@
   --bg-base:         #000000;
   --bg-surface:      #0A0A0A;
   --bg-surface-2:    #141414;
-  --bg-card:         rgba(15, 15, 15, 0.92);
+  --bg-card:         rgba(15, 15, 15, 0.95);
   --border-base:     rgba(255, 255, 255, 0.16);
   --text-primary:    #FFFFFF;
   --text-secondary:  #E2E8F0;
@@ -57,7 +57,7 @@
   --accent-2:        #DFBA73;
   --accent-glow:     rgba(245, 158, 11, 0.25);
   --shadow-card:     0 20px 60px rgba(0, 0, 0, 0.75);
-  --gradient-bg:     linear-gradient(135deg, #000000 0%, #0A0A0A 50%, #000000 100%);
+  --gradient-bg:     #000000;
 
   /* Master Pure Black overrides */
   --bg-white-override: #0A0A0A;
@@ -146,6 +146,7 @@ html.theme-transitioning *::after {
 @layer base {
   html, body {
     background: var(--gradient-bg) !important;
+    background-color: var(--bg-base) !important;
     color: var(--text-primary) !important;
     font-family: 'Inter', 'Cairo', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -204,12 +205,14 @@ html.theme-transitioning *::after {
   & .text-\[\#5A5955\]         { color: var(--text-secondary) !important; }
 }
 
-/* Tri-Theme Light Legibility Overrides */
+/* Master Tri-Theme Light Legibility & Pure White Overrides */
 .light {
   & .bg-gray-950             { background-color: var(--bg-base) !important; }
   & .bg-gray-900             { background-color: var(--bg-surface) !important; }
   & .bg-gray-850             { background-color: var(--bg-surface-2) !important; }
   & .bg-gray-800             { background-color: var(--bg-surface-2) !important; }
+  & .bg-\[\#FCFBF7\]         { background-color: var(--bg-base) !important; }
+  & .bg-\[\#F4F3EF\]\/90     { background-color: var(--bg-card) !important; }
   & .text-white              { color: var(--text-primary) !important; }
   & .text-gray-100           { color: var(--text-primary) !important; }
   & .text-gray-200           { color: var(--text-secondary) !important; }
