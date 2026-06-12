@@ -176,7 +176,7 @@ export default function EternalVoidCanvas() {
 
   return (
     <div
-      className="fixed inset-0 z-[140] flex flex-col items-center justify-start overflow-y-auto px-6 py-12"
+      className="relative w-full min-h-[100dvh] z-[140] flex flex-col items-center justify-start overflow-y-auto px-6 py-12"
       style={{ background: "#050505" }}
     >
       {hearts.map((h) => (

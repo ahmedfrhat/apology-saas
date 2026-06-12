@@ -61,7 +61,8 @@ export async function DELETE(request, context) {
 export async function PATCH(request, context) {
   try {
     const { slug, session_id } = context.params;
-    const { is_frozen } = await request.json();
+    const body = await request.json();
+    const { is_frozen, details } = body;
 
     if (!session_id) {
       return Response.json({ error: "session_id is required" }, { status: 400 });
@@ -73,10 +74,22 @@ export async function PATCH(request, context) {
     }
     const siteId = siteRows[0].id;
 
+    // Build the dynamic update query
+    let updateQuery;
+    if (is_frozen !== undefined && details !== undefined) {
+      updateQuery = sql`SET is_frozen = ${!!is_frozen}, details = ${details}, updated_at = now()`;
+    } else if (is_frozen !== undefined) {
+      updateQuery = sql`SET is_frozen = ${!!is_frozen}, updated_at = now()`;
+    } else if (details !== undefined) {
+      updateQuery = sql`SET details = ${details}, updated_at = now()`;
+    } else {
+      return Response.json({ success: true, message: "No updates provided" });
+    }
+
     // Update DB
     const [row] = await sql`
       UPDATE live_tracking
-      SET is_frozen = ${!!is_frozen}, updated_at = now()
+      ${updateQuery}
       WHERE site_id = ${siteId} AND session_id = ${session_id}
       RETURNING *
     `;

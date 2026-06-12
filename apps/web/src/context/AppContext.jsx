@@ -169,6 +169,10 @@ export function AppProvider({ children }) {
     if (syncTimerRef.current) return;
     syncTimerRef.current = setTimeout(async () => {
       syncTimerRef.current = null;
+      
+      const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
+      if (isDashboard) return;
+
       const sessionId = sessionIdRef.current;
       if (!sessionId) return;
       const slug = getSlugFromPath();
@@ -274,6 +278,9 @@ export function AppProvider({ children }) {
     const slug = getSlugFromPath();
     const sessionId = sessionIdRef.current;
     if (!slug || !sessionId) return;
+
+    const isDashboard = typeof window !== "undefined" && window.location.pathname.includes("/dashboard");
+    if (isDashboard) return;
 
     const newEvent = {
       timestamp: new Date().toISOString(),
@@ -416,7 +423,7 @@ export function AppProvider({ children }) {
 
     const handleMouseMove = (e) => {
       const now = Date.now();
-      if (now - lastSentRef.current < 150) return;
+      if (now - lastSentRef.current < 1000) return;
       lastSentRef.current = now;
 
       const x = e.clientX / window.innerWidth;
@@ -436,7 +443,7 @@ export function AppProvider({ children }) {
     const handleTouch = (e) => {
       if (!e.touches || !e.touches[0]) return;
       const now = Date.now();
-      if (now - lastSentRef.current < 150) return;
+      if (now - lastSentRef.current < 1000) return;
       lastSentRef.current = now;
 
       const touch = e.touches[0];

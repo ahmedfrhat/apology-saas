@@ -279,6 +279,20 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t, cursor, toggleFreez
           data: { message: whisperMsg.trim() }
         })
       });
+
+      // Explicitly save the whisper to the DB for the polling fallback
+      const currentWhispers = row.details?.whisperMessages || [];
+      const updatedDetails = {
+        ...row.details,
+        whisperMessages: [...currentWhispers, whisperMsg.trim()]
+      };
+      
+      await fetch(`/api/tracking/${encodeURIComponent(siteSlug)}/${encodeURIComponent(row.session_id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ details: updatedDetails })
+      });
+
       if (res.ok) {
         setWhisperMsg("");
       } else {
@@ -290,7 +304,7 @@ function PremiumSessionCard({ row, onBroadcast, onDelete, t, cursor, toggleFreez
     } finally {
       setSendingWhisper(false);
     }
-  }, [whisperMsg, row.session_id, siteSlug]);
+  }, [whisperMsg, row.session_id, siteSlug, row.details]);
 
   const handleExport = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(row, null, 2));
@@ -1915,9 +1929,16 @@ export default function AdminDashboard() {
                     {activeSection === "court" && (
                       <div className="space-y-5">
                         <div style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="rounded-2xl p-5 space-y-4">
-                          <SectionHeading icon={Gavel}>الحكم الافتراضي للمحكمة</SectionHeading>
-                          <FormField label="عنوان الحكم"><TokenInput value={formData.judgeText.title} onChange={(e) => updateField("judgeText.title", e.target.value)} /></FormField>
-                          <FormField label="تفاصيل الحكم"><TokenInput rows={3} value={formData.judgeText.details} onChange={(e) => updateField("judgeText.details", e.target.value)} /></FormField>
+                          <SectionHeading icon={Gavel}>إعدادات القاضي (الذكاء الاصطناعي)</SectionHeading>
+                          <FormField label="السؤال الذي يطرحه القاضي">
+                            <TokenInput 
+                              rows={2} 
+                              placeholder="هل ده بيحصل معاكي كل مرة فعلاً ولا هو بيستهبل بس؟ 👀"
+                              value={formData.judgeText.title} 
+                              onChange={(e) => updateField("judgeText.title", e.target.value)} 
+                            />
+                          </FormField>
+                          <p className="text-[10px] text-neutral-500 font-medium">القاضي سيصدر حكمه تلقائياً بالذكاء الاصطناعي بناءً على مرافعتها وإجابتها على هذا السؤال.</p>
                         </div>
                         <div style={{ border: "1px solid var(--border-base)", background: "var(--bg-surface)" }} className="rounded-2xl p-5 space-y-4">
                           <SectionHeading icon={Sparkles} accent>ردود تقييم النجوم</SectionHeading>

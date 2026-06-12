@@ -70,7 +70,7 @@ export default function AIJudgeCourtroom({ onNext }) {
     setSlam(true);
     setTimeout(() => setSlam(false), 500);
 
-    let followupQ = t("هل ده بيحصل معاكي كل مرة فعلاً ولا هو بيستهبل بس؟ 👀");
+    let followupQ = config?.judgeText?.title || t("هل ده بيحصل معاكي كل مرة فعلاً ولا هو بيستهبل بس؟ 👀");
     if (siteSlug) {
       try {
         const res = await fetch(`/api/sites/${encodeURIComponent(siteSlug)}/judge`, {
