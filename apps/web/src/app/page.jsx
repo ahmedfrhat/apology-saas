@@ -1,33 +1,19 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Heart, X, Sparkles, Gift, Flame, Trophy, ThumbsUp, Eye, Compass, 
+  Heart, X, Sparkles, Gift, Flame, Trophy, Compass, 
   Calendar, ArrowRight, User, Lock, BookOpen, Activity, ArrowLeft, Play, CheckCircle2
 } from "lucide-react";
 import Footer from "@/components/Footer";
+import CinematicStoryDemoModal from "@/components/CinematicStoryDemoModal";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAdBlockDetect } from "@/hooks/useAdBlockDetect";
 
 const CARD =
-  "bg-white/90 dark:bg-gray-900/90 backdrop-blur-3xl border border-gray-200/80 dark:border-gray-800 shadow-2xl rounded-[2.5rem] transition-colors";
+  "bg-[#F4F3EF]/90 dark:bg-gray-900/90 backdrop-blur-3xl border border-gray-200 dark:border-gray-800 shadow-2xl rounded-[2.5rem] transition-colors";
 
 const TAB_BTN =
-  "px-5 py-3 rounded-full text-xs sm:text-sm font-extrabold transition-all flex items-center gap-2 cursor-pointer select-none";
-
-const DEMO_STEPS = [
-  { id: 1, nameKey: "1. بوابة العبور 🔒", descKey: "فتح القفل السري بالرقم السري المشفر وتجنب محاولات التطفل.", mockKey: "🔒 أدخل الرقم السري لفك التشفير: ••••••" },
-  { id: 2, nameKey: "2. فحص البصمة 👣", descKey: "تأكيد الهوية البيومترية الحقيقية للمصالحة عبر ماسح البصمات التفاعلي.", mockKey: "👣 اضغط بإصبعك لتفعيل ماسح البصمة... [تم التطابق!]" },
-  { id: 3, nameKey: "3. بروتوكول البدء ⚡", descKey: "تحميل ذكريات الحب وملفات المحاكاة وتثبيت الحماية الكاملة.", mockKey: "$ Initializing Protocol... Memory Blocks Loaded 100%!" },
-  { id: 4, nameKey: "4. تيرمينال الذاكرة 🖥️", descKey: "استعراض مسار المشاعر واسترجاع السجلات وقاعدة بيانات السعادة.", mockKey: "> Loading signals... Love levels at 99.9% 💖" },
-  { id: 5, nameKey: "5. شريط الذكريات 📅", descKey: "رحلة تفاعلية للمحطات واللحظات التي لا يمكن نسيانها.", mockKey: "📅 14 فبراير: أول يوم تقابلنا فيه تحت المطر 🌧️" },
-  { id: 6, nameKey: "6. فخاخ الأسئلة 🧠", descKey: "مسابقات فكاهية وذكية بفخاخ ساخرة لكشف الإجابات الملتوية!", mockKey: "❓ س: مين أكتر حد بيعصبني؟ ج: انتي (Trap Alert! 😂)" },
-  { id: 7, nameKey: "7. سؤال المصير ⚠️", descKey: "القرار الحاسم والسؤال الأصعب في لحظة الصدق.", mockKey: "⚠️ هل تقبلين الاعتذار والبدء من جديد بالحب والعهود؟" },
-  { id: 8, nameKey: "8. مؤشر الروقان 🎚️", descKey: "التحكم في مستويات الزعل وسحب المؤشر حتى الوصول لـ 100% روقان.", mockKey: "🎚️ سحب المؤشر: [ Zizo's Mood: 100% Happy 🥰 ]" },
-  { id: 9, nameKey: "9. كاشف الابتسامة 📷", descKey: "تشغيل الكاميرا والتحقق من الابتسامة الحقيقية عبر الذكاء الاصطناعي.", mockKey: "📷 جاري فحص الابتسامة... تم رصد ضحكة لطيفة! 🌟" },
-  { id: 10, nameKey: "10. محكمة الحب ⚖️", descKey: "تقديم المرافعة النهائية للقاضي الآلي والحصول على الحكم لصالحها!", mockKey: "⚖️ القاضي: حكمنا لصالح الملكة وتغريم الزوج خروجة فخمة 🏛️" },
-  { id: 11, nameKey: "11. رسالة الاعتذار ✉️", descKey: "رسالة من القلب تحمل الاعتذار الصادق والوعد بالبقاء للأبد.", mockKey: "✉️ إلى ملكتي الغالية: أسف على كل لحظة زعل.. بحبك ❤️" },
-  { id: 12, nameKey: "12. كبسولة الزمن وصك الصلح 📜", descKey: "كتابة رسالة للمستقبل وتحميل وثيقة صلح رسمية معتمدة بصيغة PDF.", mockKey: "📜 مبروك! صك الصلح جاهز للتحميل والكبسولة مغلقة 🔐" }
-];
+  "px-5 py-3 rounded-full text-xs sm:text-sm font-black transition-all flex items-center gap-2 cursor-pointer select-none";
 
 const ZODIAC_GIFTS = {
   Aries: ["خروجة مغامرة (كارتينج أو تسلق) 🧗", "عطر فخم ومميز 🌟", "بوكس شيكولاته حار ولذيذ 🍫"],
@@ -76,7 +62,7 @@ export default function SaaSOnboardingPage() {
   const adBlockDetected = useAdBlockDetect();
   const [hideAdBanner, setHideAdBanner] = useState(false);
   
-  // Premium Active View Switcher
+  // Premium Tri-Theme Active View Switcher
   // Options: "wall" | "stories" | "gifts" | "create" | "blog"
   const [activeTab, setActiveTab] = useState("wall");
   
@@ -106,10 +92,8 @@ export default function SaaSOnboardingPage() {
   // Counter & Stats
   const [globalCount, setGlobalCount] = useState(1489);
 
-  // Revamped Cinematic Demo state
-  const [showDemo, setShowDemo] = useState(false);
-  const [demoStepIndex, setDemoStepIndex] = useState(0);
-  const [demoAutoplay, setDemoAutoplay] = useState(false);
+  // Overhauled Relatable WhatsApp Interactive Cinematic Story Hook
+  const [showRelatableDemo, setShowRelatableDemo] = useState(false);
 
   // Anonymous Apology Wall state
   const [apologies, setApologies] = useState([]);
@@ -155,26 +139,8 @@ export default function SaaSOnboardingPage() {
       .catch(() => {});
   }, []);
 
-  // Revamped 10-Second Auto-advancing Demo logic
-  useEffect(() => {
-    if (!showDemo || !demoAutoplay) return;
-    const interval = setInterval(() => {
-      setDemoStepIndex((prev) => {
-        if (prev < DEMO_STEPS.length - 1) {
-          return prev + 1;
-        } else {
-          setDemoAutoplay(false);
-          return prev;
-        }
-      });
-    }, 900);
-    return () => clearInterval(interval);
-  }, [showDemo, demoAutoplay]);
-
-  const handleStartDemo = () => {
-    setDemoStepIndex(0);
-    setShowDemo(true);
-    setDemoAutoplay(true);
+  const handleStartRelatableDemo = () => {
+    setShowRelatableDemo(true);
   };
 
   // Submit login verify
@@ -349,8 +315,8 @@ export default function SaaSOnboardingPage() {
         )}
       </AnimatePresence>
 
-      {/* Premium Elegant Cinematic Top Header */}
-      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-4 z-40 relative border-b border-gray-200/80 dark:border-gray-800/80 bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl transition-colors">
+      {/* Premium Elegant Tri-Theme Top Header */}
+      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-4 z-40 relative border-b border-gray-200 dark:border-gray-800 shadow-sm bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl transition-colors">
         
         {/* Logo */}
         <button
@@ -363,8 +329,8 @@ export default function SaaSOnboardingPage() {
           <span className="tracking-tight font-mono text-lg sm:text-xl">Safi.io</span>
         </button>
         
-        {/* Revamped Main Navigation Switcher Tabs (Flawless Premium De-cluttered structure) */}
-        <nav className="flex items-center gap-1 sm:gap-2 bg-gray-100/90 dark:bg-gray-900/90 p-1.5 rounded-full border border-gray-200/80 dark:border-gray-800 shadow-inner overflow-x-auto max-w-full font-mono transition-colors">
+        {/* Revamped Main Navigation Switcher Tabs */}
+        <nav className="flex items-center gap-1 sm:gap-2 bg-gray-100 dark:bg-gray-900 p-1.5 rounded-full border border-gray-200 dark:border-gray-800 shadow-inner overflow-x-auto max-w-full font-mono transition-colors">
           <button
             onClick={() => setActiveTab("wall")}
             className={`${TAB_BTN} ${
@@ -429,8 +395,8 @@ export default function SaaSOnboardingPage() {
         {/* Action Header Controls */}
         <div className="flex items-center gap-2 sm:gap-3 ml-auto sm:ml-0 font-mono">
           <button
-            onClick={handleStartDemo}
-            className="px-4 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all bg-amber-800/10 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm border border-amber-800/20"
+            onClick={handleStartRelatableDemo}
+            className="px-4.5 py-2.5 rounded-full text-xs sm:text-sm font-extrabold transition-all bg-amber-800/10 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5 shadow-sm border border-amber-800/20"
           >
             <Play size={14} className="fill-amber-800 dark:fill-amber-300" />
             <span>{t("demoBtn")}</span>
@@ -438,7 +404,7 @@ export default function SaaSOnboardingPage() {
           
           <button
             onClick={() => setShowLoginModal(true)}
-            className="px-5 py-2.5 rounded-full text-xs sm:text-sm font-black transition-all bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-amber-800 dark:hover:bg-amber-400 hover:scale-105 active:scale-95 shadow-lg cursor-pointer flex items-center gap-1.5"
+            className="px-6 py-2.5 rounded-full text-xs sm:text-sm font-black transition-all bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-amber-800 dark:hover:bg-amber-400 hover:scale-105 active:scale-95 shadow-lg cursor-pointer flex items-center gap-1.5"
           >
             <Lock size={14} />
             <span>{t("loginBtn")}</span>
@@ -446,8 +412,8 @@ export default function SaaSOnboardingPage() {
         </div>
       </header>
 
-      {/* Live Global Counter Block */}
-      <div className="w-full text-center py-3 bg-gradient-to-r from-amber-800/10 via-amber-700/15 to-amber-800/10 dark:from-amber-950/40 dark:via-amber-900/60 dark:to-amber-950/40 border-b border-amber-800/20 flex flex-wrap items-center justify-center gap-2 select-none relative z-10 shadow-sm transition-colors">
+      {/* Live Global Stats Block */}
+      <div className="w-full text-center py-3.5 bg-gradient-to-r from-amber-800/10 via-amber-700/15 to-amber-800/10 dark:from-amber-950/40 dark:via-amber-900/60 dark:to-amber-950/40 border-b border-amber-800/20 flex flex-wrap items-center justify-center gap-2 select-none relative z-10 shadow-sm transition-colors">
         <Flame size={18} className="text-amber-700 dark:text-amber-400 animate-pulse" />
         <span className="text-xs sm:text-sm font-extrabold text-[#8B5A2B] dark:text-amber-200 tracking-wide font-mono">
           {t("statsTitle")}
@@ -461,7 +427,7 @@ export default function SaaSOnboardingPage() {
           {globalCount}
         </motion.span>
         <span className="text-[11px] text-green-700 dark:text-green-400 font-black bg-green-100 dark:bg-green-950/70 px-3 py-1 rounded-full animate-pulse flex items-center gap-1.5 border border-green-300 dark:border-green-800 me-2 sm:me-0">
-          <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-green-600 dark:bg-green-400 animate-ping" />
+          <span className="w-2.5 h-2.5 rounded-full bg-green-600 dark:bg-green-400 animate-ping" />
           <span>{t("liveBadge")}</span>
         </span>
       </div>
@@ -488,7 +454,7 @@ export default function SaaSOnboardingPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 mb-3 shadow-sm">
                   <Compass size={32} />
                 </div>
-                <h2 className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
                   {t("wallTitle")}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xl mx-auto mt-2 leading-relaxed font-medium">
@@ -509,12 +475,12 @@ export default function SaaSOnboardingPage() {
                       key={apology.id}
                       initial={{ opacity: 0, scale: 0.98 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="p-5 bg-white/90 dark:bg-gray-800/80 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow text-xs sm:text-sm leading-relaxed flex flex-col justify-between space-y-2 font-medium"
+                      className="p-5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow text-xs sm:text-sm leading-relaxed flex flex-col justify-between space-y-2 font-medium"
                     >
                       <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap font-sans">
                         {apology.content}
                       </p>
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100 dark:border-gray-700/80 text-[10px] sm:text-xs text-gray-400 font-mono">
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100 dark:border-gray-700 text-[10px] sm:text-xs text-gray-400 font-mono">
                         <span className="flex items-center gap-1.5 font-black text-indigo-600 dark:text-indigo-400">
                           <Lock size={12} />
                           <span>Anonymous Entity Sanctuary</span>
@@ -593,7 +559,7 @@ export default function SaaSOnboardingPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-600 dark:text-amber-400 mb-3 shadow-sm">
                   <Trophy size={32} />
                 </div>
-                <h2 className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
                   {t("storiesTitle")}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xl mx-auto mt-2 leading-relaxed font-medium">
@@ -605,29 +571,29 @@ export default function SaaSOnboardingPage() {
                 {stories.map((story, index) => {
                   const voted = votingIds.has(story.id);
                   let badge = null;
-                  if (index === 0) badge = <span className="absolute top-4 left-4 px-3.5 py-1 bg-amber-500 text-white font-black text-xs rounded-full shadow-md flex items-center gap-1">🥇 1st Place</span>;
-                  else if (index === 1) badge = <span className="absolute top-4 left-4 px-3.5 py-1 bg-slate-400 text-white font-black text-xs rounded-full shadow-md flex items-center gap-1">🥈 2nd Place</span>;
-                  else if (index === 2) badge = <span className="absolute top-4 left-4 px-3.5 py-1 bg-amber-700 text-white font-black text-xs rounded-full shadow-md flex items-center gap-1">🥉 3rd Place</span>;
+                  if (index === 0) badge = <span className="absolute top-4 left-4 px-3.5 py-1 bg-amber-500 text-white font-black text-xs rounded-full shadow-md flex items-center gap-1 font-mono">🥇 1st Place</span>;
+                  else if (index === 1) badge = <span className="absolute top-4 left-4 px-3.5 py-1 bg-slate-400 text-white font-black text-xs rounded-full shadow-md flex items-center gap-1 font-mono">🥈 2nd Place</span>;
+                  else if (index === 2) badge = <span className="absolute top-4 left-4 px-3.5 py-1 bg-amber-700 text-white font-black text-xs rounded-full shadow-md flex items-center gap-1 font-mono">🥉 3rd Place</span>;
 
                   return (
                     <motion.div 
                       key={story.id} 
                       whileHover={{ y: -4 }}
                       transition={{ duration: 0.2 }}
-                      className="p-8 bg-white dark:bg-gray-800/90 border border-amber-200/50 dark:border-gray-700/80 rounded-3xl flex flex-col justify-between gap-5 shadow-lg hover:shadow-2xl transition-all relative overflow-hidden group font-medium"
+                      className="p-8 bg-white dark:bg-gray-800 border border-amber-200 dark:border-gray-700 rounded-3xl flex flex-col justify-between gap-5 shadow-lg hover:shadow-2xl transition-all relative overflow-hidden group font-medium"
                     >
                       {badge}
                       
                       <div className="pt-3">
-                        <h4 className="text-base sm:text-lg font-black text-amber-900 dark:text-amber-300 mb-3 pr-24">
+                        <h4 className="text-base sm:text-lg font-black text-amber-900 dark:text-amber-300 mb-3 pr-24 font-sans">
                           {story.title}
                         </h4>
-                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed font-sans">
                           {story.story}
                         </p>
                       </div>
                       
-                      <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700/80 pt-4 mt-3">
+                      <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-4 mt-3">
                         <span className="text-[11px] text-gray-400 font-mono font-bold">
                           Anonymous Entity • {new Date(story.created_at).toLocaleDateString(locale === "en" ? "en-US" : "ar-EG")}
                         </span>
@@ -635,7 +601,7 @@ export default function SaaSOnboardingPage() {
                         <button 
                           onClick={() => handleUpvoteStory(story.id)}
                           disabled={voted}
-                          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black transition-all cursor-pointer ${
+                          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black transition-all cursor-pointer font-mono ${
                             voted 
                               ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30 scale-105" 
                               : "bg-amber-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-rose-50 hover:text-rose-600 border border-amber-200/60 dark:border-gray-600"
@@ -650,7 +616,7 @@ export default function SaaSOnboardingPage() {
                 })}
               </div>
 
-              {/* Submit story banner */}
+              {/* Relatable WhatsApp hook prompt banner */}
               <div className="mt-12 p-8 rounded-3xl bg-gradient-to-r from-amber-800 to-[#B45309] text-white flex flex-wrap items-center justify-between gap-6 shadow-2xl">
                 <div className="max-w-xl">
                   <h3 className="text-xl font-black tracking-tight">{t("storiesPromptTitle")}</h3>
@@ -660,7 +626,7 @@ export default function SaaSOnboardingPage() {
                 </div>
                 <button
                   onClick={() => setActiveTab("create")}
-                  className="px-8 py-4 bg-white text-amber-900 rounded-full font-black text-xs sm:text-sm hover:scale-105 active:scale-95 transition-transform cursor-pointer shadow-xl flex items-center gap-2"
+                  className="px-8 py-4 bg-white text-amber-900 rounded-full font-black text-xs sm:text-sm hover:scale-105 active:scale-95 transition-transform cursor-pointer shadow-xl flex items-center gap-2 font-mono"
                 >
                   <span>Instigate Link 🪄</span>
                   <ArrowRight size={16} />
@@ -687,7 +653,7 @@ export default function SaaSOnboardingPage() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 mb-3 shadow-sm">
                   <Gift size={32} />
                 </div>
-                <h2 className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
                   {t("giftsTitle")}
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-xl mx-auto mt-2 leading-relaxed font-medium">
@@ -695,19 +661,19 @@ export default function SaaSOnboardingPage() {
                 </p>
               </div>
               
-              <form onSubmit={handleGenerateGift} className="bg-white/80 dark:bg-gray-800/80 p-8 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-lg space-y-6 relative z-10">
+              <form onSubmit={handleGenerateGift} className="bg-white p-8 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-lg space-y-6 relative z-10">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   
                   {/* Age */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black text-gray-800 dark:text-gray-200 flex items-center gap-1.5">
+                  <div className="space-y-2 font-mono">
+                    <label className="block text-xs font-black text-gray-800 dark:text-gray-200 flex items-center gap-1.5 font-sans">
                       <User size={16} className="text-rose-600" />
                       <span>{t("giftsAgeLabel")}</span>
                     </label>
                     <select 
                       value={partnerAge} 
                       onChange={(e) => setPartnerAge(e.target.value)}
-                      className="w-full bg-[#FCFBF7] dark:bg-gray-900 p-4.5 rounded-2xl border border-gray-300 dark:border-gray-600 text-sm font-black outline-none focus:border-rose-600 dark:text-white shadow-inner cursor-pointer"
+                      className="w-full bg-gray-50 dark:bg-gray-900 p-4.5 rounded-2xl border border-gray-300 dark:border-gray-600 text-sm font-black outline-none focus:border-rose-600 dark:text-white shadow-inner cursor-pointer font-sans"
                     >
                       <option value="18-22">{locale === "en" ? "18 - 22 Years (Fun & Passion) 🌟" : "من 18 إلى 22 سنة (مرح وشغف) 🌟"}</option>
                       <option value="23-28">{locale === "en" ? "23 - 28 Years (Ambition & Exploration) 🚀" : "من 23 إلى 28 سنة (طموح واستكشاف) 🚀"}</option>
@@ -717,15 +683,15 @@ export default function SaaSOnboardingPage() {
                   </div>
 
                   {/* Zodiac */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black text-gray-800 dark:text-gray-200 flex items-center gap-1.5 font-mono">
+                  <div className="space-y-2 font-mono">
+                    <label className="block text-xs font-black text-gray-800 dark:text-gray-200 flex items-center gap-1.5 font-sans">
                       <Sparkles size={16} className="text-amber-500" />
                       <span>{t("giftsZodiacLabel")}</span>
                     </label>
                     <select 
                       value={partnerZodiac} 
                       onChange={(e) => setPartnerZodiac(e.target.value)}
-                      className="w-full bg-[#FCFBF7] dark:bg-gray-900 p-4.5 rounded-2xl border border-gray-300 dark:border-gray-600 text-sm font-black outline-none focus:border-rose-600 dark:text-white shadow-inner cursor-pointer"
+                      className="w-full bg-gray-50 dark:bg-gray-900 p-4.5 rounded-2xl border border-gray-300 dark:border-gray-600 text-sm font-black outline-none focus:border-rose-600 dark:text-white shadow-inner cursor-pointer font-sans"
                     >
                       <option value="Aries">{locale === "en" ? "Aries ♈" : "الحمل - Aries (مغامرة وحماس) ♈"}</option>
                       <option value="Taurus">{locale === "en" ? "Taurus ♉" : "الثور - Taurus (فخامة وراحة) ♉"}</option>
@@ -746,7 +712,7 @@ export default function SaaSOnboardingPage() {
                 
                 <button 
                   type="submit" 
-                  className="w-full bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white text-base font-black py-4.5 rounded-2xl transition-all shadow-xl shadow-rose-600/30 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white text-base font-black py-4.5 rounded-2xl transition-all shadow-xl shadow-rose-600/30 active:scale-95 cursor-pointer flex items-center justify-center gap-2 font-mono"
                 >
                   <Sparkles size={20} className="animate-spin" />
                   <span>{t("giftsGenerateBtn")}</span>
@@ -759,9 +725,9 @@ export default function SaaSOnboardingPage() {
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="mt-8 p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-rose-500/10 via-amber-500/10 to-rose-500/10 dark:from-rose-950/40 dark:via-gray-800 dark:to-rose-950/40 border-2 border-rose-500/30 dark:border-rose-500/20 shadow-2xl text-sm text-gray-900 dark:text-gray-100 space-y-5 relative z-10"
+                    className="mt-8 p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-rose-500/10 via-amber-500/10 to-rose-500/10 dark:from-rose-950/40 dark:via-gray-800 dark:to-rose-950/40 border-2 border-rose-500/30 dark:border-rose-500/20 shadow-2xl text-sm space-y-5 relative z-10 font-sans"
                   >
-                    <div className="flex items-center gap-2.5 text-rose-700 dark:text-rose-400 font-black text-lg sm:text-xl border-b border-rose-200 dark:border-rose-900/50 pb-4 font-mono">
+                    <div className="flex items-center gap-2.5 text-rose-700 dark:text-rose-400 font-black text-lg sm:text-xl border-b border-rose-200 dark:border-gray-800 pb-4 font-mono">
                       <Gift size={26} className="animate-bounce" />
                       <span>{t("giftsSuggestedTitle")} {partnerZodiac}:</span>
                     </div>
@@ -770,7 +736,7 @@ export default function SaaSOnboardingPage() {
                       {generatedGifts.items.map((gift, index) => (
                         <li 
                           key={index} 
-                          className="p-5 rounded-2xl bg-white dark:bg-gray-850 font-black border border-rose-100 dark:border-gray-700 text-xs sm:text-sm flex items-center gap-3 shadow-md"
+                          className="p-5 rounded-2xl bg-white font-black border border-rose-100 dark:border-gray-700 text-xs sm:text-sm flex items-center gap-3 shadow-md"
                         >
                           <CheckCircle2 size={20} className="text-rose-600 flex-shrink-0" />
                           <span>{gift}</span>
@@ -778,7 +744,7 @@ export default function SaaSOnboardingPage() {
                       ))}
                     </ul>
 
-                    <div className="mt-6 p-5 rounded-2xl bg-amber-500/15 dark:bg-amber-500/20 border border-amber-500/30 text-amber-900 dark:text-amber-200 font-bold text-xs sm:text-sm flex items-center gap-3 shadow-sm">
+                    <div className="mt-6 p-5 rounded-2xl bg-amber-500/15 border border-amber-500/30 font-bold text-xs sm:text-sm flex items-center gap-3 shadow-sm font-mono">
                       <Sparkles size={24} className="text-amber-600 dark:text-amber-400 flex-shrink-0 animate-spin" />
                       <span>{generatedGifts.tips}</span>
                     </div>
@@ -786,7 +752,7 @@ export default function SaaSOnboardingPage() {
                     <div className="text-center pt-6">
                       <button
                         onClick={() => setActiveTab("create")}
-                        className="px-10 py-4 bg-rose-600 hover:bg-rose-700 text-white rounded-full font-black text-xs sm:text-sm transition-all shadow-xl active:scale-95 cursor-pointer inline-flex items-center gap-2"
+                        className="px-10 py-4 bg-rose-600 hover:bg-rose-700 text-white rounded-full font-black text-xs sm:text-sm transition-all shadow-xl active:scale-95 cursor-pointer inline-flex items-center gap-2 font-mono"
                       >
                         <span>{t("giftsCallToAction")}</span>
                         <ArrowLeft size={18} />
@@ -808,7 +774,7 @@ export default function SaaSOnboardingPage() {
               transition={{ duration: 0.3 }}
               className="w-full max-w-xl mx-auto"
             >
-              <div className={`${CARD} p-8 sm:p-12 relative overflow-hidden shadow-2xl`}>
+              <div className={`${CARD} p-8 sm:p-12 relative overflow-hidden shadow-2xl font-sans`}>
                 
                 <div className="text-center mb-8">
                   <motion.div
@@ -818,10 +784,10 @@ export default function SaaSOnboardingPage() {
                   >
                     <Heart size={32} fill="currentColor" />
                   </motion.div>
-                  <h1 className="text-2xl sm:text-4xl font-black text-[#1A1A1A] dark:text-white tracking-tight">
+                  <h1 className="text-2xl sm:text-4xl font-black tracking-tight">
                     {locale === "en" ? "Apology SaaS Portal 💝" : "منصّة المصالحة والاعتذار 💝"}
                   </h1>
-                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 font-medium">
+                  <p className="text-xs sm:text-sm mt-2 font-medium">
                     {t("landingSubtitle")}
                   </p>
                 </div>
@@ -835,16 +801,16 @@ export default function SaaSOnboardingPage() {
                     <div className="w-20 h-20 bg-green-100 dark:bg-green-950 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto shadow-xl">
                       <CheckCircle2 size={48} />
                     </div>
-                    <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white">{t("magicLinkReady")}</h3>
-                    <div className="p-4.5 bg-gray-100 dark:bg-gray-800 rounded-2xl font-mono text-amber-800 dark:text-amber-400 font-extrabold select-all text-sm sm:text-base border border-gray-200 dark:border-gray-700 shadow-inner">
+                    <h3 className="text-xl sm:text-2xl font-black">{t("magicLinkReady")}</h3>
+                    <div className="p-4.5 bg-gray-100 dark:bg-gray-800 rounded-2xl font-mono text-amber-800 dark:text-amber-400 font-extrabold select-all text-sm sm:text-base border border-gray-200 shadow-inner">
                       {origin}{slug}
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Connecting to active radar operations room...</p>
+                    <p className="text-xs font-medium">Connecting to active radar operations room...</p>
                   </motion.div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-5">
                     {error && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 rounded-2xl text-xs sm:text-sm font-black border border-red-200 dark:border-red-800 flex items-center gap-2 shadow-md">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 bg-red-50 text-red-700 rounded-2xl text-xs sm:text-sm font-black border border-red-200 flex items-center gap-2 shadow-md">
                         <X size={20} className="flex-shrink-0" />
                         <span>{error}</span>
                       </motion.div>
@@ -853,26 +819,26 @@ export default function SaaSOnboardingPage() {
                     {/* Names */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1">{t("boyNameLabel")}</label>
-                        <input type="text" required value={boyName} onChange={(e) => setBoyName(e.target.value)} placeholder={t("boyNamePlaceholder")} className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 dark:text-white shadow-inner" />
+                        <label className="block text-xs font-black mb-1">{t("boyNameLabel")}</label>
+                        <input type="text" required value={boyName} onChange={(e) => setBoyName(e.target.value)} placeholder={t("boyNamePlaceholder")} className="w-full rounded-2xl border border-gray-300 bg-white p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 shadow-inner" />
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1">{t("girlNameLabel")}</label>
-                        <input type="text" required value={girlName} onChange={(e) => setGirlName(e.target.value)} placeholder={t("girlNamePlaceholder")} className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 dark:text-white shadow-inner" />
+                        <label className="block text-xs font-black mb-1">{t("girlNameLabel")}</label>
+                        <input type="text" required value={girlName} onChange={(e) => setGirlName(e.target.value)} placeholder={t("girlNamePlaceholder")} className="w-full rounded-2xl border border-gray-300 bg-white p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 shadow-inner" />
                       </div>
                     </div>
                     
                     {/* Nickname */}
                     <div>
-                      <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1">{t("petNameLabel")}</label>
-                      <input type="text" value={petName} onChange={(e) => setPetName(e.target.value)} placeholder={t("petNamePlaceholder")} className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 dark:text-white shadow-inner" />
+                      <label className="block text-xs font-black mb-1">{t("petNameLabel")}</label>
+                      <input type="text" value={petName} onChange={(e) => setPetName(e.target.value)} placeholder={t("petNamePlaceholder")} className="w-full rounded-2xl border border-gray-300 bg-white p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 shadow-inner" />
                     </div>
                     
                     {/* Dynamic Custom Link */}
                     <div>
-                      <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1 font-mono">{t("customSlugLabel")}</label>
-                      <div className="flex items-center rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden shadow-inner" dir="ltr">
-                        <span className="px-4 bg-gray-100 dark:bg-gray-900 text-gray-500 text-xs sm:text-sm font-mono py-4 font-extrabold border-r border-gray-200 dark:border-gray-700">
+                      <label className="block text-xs font-black mb-1 font-mono">{t("customSlugLabel")}</label>
+                      <div className="flex items-center rounded-2xl border border-gray-300 bg-white overflow-hidden shadow-inner font-mono" dir="ltr">
+                        <span className="px-4 bg-gray-100 text-gray-500 text-xs sm:text-sm py-4 font-extrabold border-r border-gray-200">
                           {isMounted ? origin : "loading..."}
                         </span>
                         <input 
@@ -881,44 +847,44 @@ export default function SaaSOnboardingPage() {
                           value={slug} 
                           onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} 
                           placeholder={t("customSlugPlaceholder")} 
-                          className="flex-1 p-4 bg-transparent text-xs sm:text-sm font-bold font-mono outline-none dark:text-white text-amber-900" 
+                          className="flex-1 p-4 bg-transparent text-xs sm:text-sm font-bold outline-none text-amber-900" 
                         />
                       </div>
                     </div>
                     
                     {/* Email for Reports */}
                     <div>
-                      <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1">{t("creatorEmailLabel")}</label>
+                      <label className="block text-xs font-black mb-1">{t("creatorEmailLabel")}</label>
                       <input 
                         type="email" 
                         value={creatorEmail} 
                         onChange={(e) => setCreatorEmail(e.target.value)} 
                         placeholder={t("creatorEmailPlaceholder")} 
-                        className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-xs sm:text-sm font-bold outline-none focus:border-[#B45309] dark:text-white shadow-inner" 
+                        className="w-full rounded-2xl border border-gray-300 bg-white p-4 text-xs sm:text-sm font-bold outline-none focus:border-[#B45309] shadow-inner font-mono" 
                       />
                     </div>
 
                     {/* Security Passwords */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1">{t("pwdLabel")}</label>
-                        <input type="password" required minLength={4} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("pwdPlaceholder")} className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 dark:text-white shadow-inner" />
+                        <label className="block text-xs font-black mb-1">{t("pwdLabel")}</label>
+                        <input type="password" required minLength={4} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("pwdPlaceholder")} className="w-full rounded-2xl border border-gray-300 bg-white p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 shadow-inner" />
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1">{t("pwdHintLabel")}</label>
-                        <input type="text" value={passwordHint} onChange={(e) => setPasswordHint(e.target.value)} placeholder={t("pwdHintPlaceholder")} className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 dark:text-white shadow-inner" />
+                        <label className="block text-xs font-black mb-1">{t("pwdHintLabel")}</label>
+                        <input type="text" value={passwordHint} onChange={(e) => setPasswordHint(e.target.value)} placeholder={t("pwdHintPlaceholder")} className="w-full rounded-2xl border border-gray-300 bg-white p-4 text-xs sm:text-sm font-bold outline-none focus:border-amber-800 shadow-inner" />
                       </div>
                     </div>
 
                     {/* Telegram Block */}
-                    <div className="border border-gray-300 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 overflow-hidden shadow-sm">
+                    <div className="border border-gray-300 rounded-2xl bg-white overflow-hidden shadow-sm font-mono">
                       <button 
                         type="button" 
                         onClick={() => setShowTelegram(!showTelegram)}
-                        className="w-full flex items-center justify-between p-4 text-xs sm:text-sm font-black text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-850 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        className="w-full flex items-center justify-between p-4 text-xs sm:text-sm font-black bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                       >
-                        <span className="flex items-center gap-2 font-mono">
-                          <Activity size={18} className="text-blue-600 dark:text-blue-400" />
+                        <span className="flex items-center gap-2">
+                          <Activity size={18} className="text-blue-600" />
                           <span>{t("telegramOptional")}</span>
                         </span>
                         <span className="text-gray-400 font-extrabold">{showTelegram ? "▲" : "▼"}</span>
@@ -929,15 +895,15 @@ export default function SaaSOnboardingPage() {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="p-5 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 space-y-4"
+                            className="p-5 bg-white border-t border-gray-200 space-y-4 font-sans"
                           >
-                            <div className="bg-blue-50 dark:bg-blue-950/50 p-4 rounded-2xl border border-blue-200 dark:border-blue-800 text-xs sm:text-sm space-y-2 text-blue-950 dark:text-blue-200 font-medium">
-                              <p className="font-black text-sm sm:text-base mb-1 flex items-center gap-1.5">
+                            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-200 text-xs sm:text-sm space-y-2 text-blue-950 font-medium">
+                              <p className="font-black text-sm sm:text-base mb-1 flex items-center gap-1.5 font-mono">
                                 <CheckCircle2 size={16} className="text-blue-600" />
                                 <span>{t("telegramSetup")}</span>
                               </p>
-                              <ol className="list-decimal list-inside space-y-1.5">
-                                <li>{t("telegramStep1")}: <a href="https://t.me/apology_saas_2026_bot" target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 font-black hover:underline">@apology_saas_2026_bot</a></li>
+                              <ol className="list-decimal list-inside space-y-1.5 font-sans">
+                                <li>{t("telegramStep1")}: <a href="https://t.me/apology_saas_2026_bot" target="_blank" rel="noreferrer" className="text-blue-600 font-black hover:underline font-mono font-bold">@apology_saas_2026_bot</a></li>
                                 <li>{t("telegramStep2")}</li>
                                 <li>{t("telegramStep3")}</li>
                               </ol>
@@ -947,7 +913,7 @@ export default function SaaSOnboardingPage() {
                               value={telegramChatId} 
                               onChange={(e) => setTelegramChatId(e.target.value)} 
                               placeholder={t("telegramChatIdPlaceholder")} 
-                              className="w-full rounded-2xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-4 text-xs sm:text-sm font-mono font-bold outline-none focus:border-blue-600 dark:text-white shadow-inner"
+                              className="w-full rounded-2xl border border-gray-300 bg-gray-50 p-4 text-xs sm:text-sm font-mono font-bold outline-none focus:border-blue-600 shadow-inner"
                             />
                           </motion.div>
                         )}
@@ -955,7 +921,7 @@ export default function SaaSOnboardingPage() {
                     </div>
                     
                     {/* Submit Btn */}
-                    <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-amber-800 via-[#B45309] to-amber-800 text-white py-4.5 rounded-2xl font-black text-base sm:text-lg transition-all hover:opacity-90 active:scale-95 shadow-2xl shadow-amber-800/30 cursor-pointer flex items-center justify-center gap-2 mt-2">
+                    <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-amber-800 via-[#B45309] to-amber-800 text-white py-4.5 rounded-2xl font-black text-base sm:text-lg transition-all hover:opacity-90 active:scale-95 shadow-2xl shadow-amber-800/30 cursor-pointer flex items-center justify-center gap-2 mt-2 font-mono">
                       {loading ? (
                         <>
                           <Sparkles size={22} className="animate-spin" />
@@ -969,12 +935,12 @@ export default function SaaSOnboardingPage() {
                       )}
                     </button>
                     
-                    <div className="pt-3 text-center space-y-1.5 select-none">
-                      <p className="text-xs font-black text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1.5 font-mono">
-                        <Lock size={13} className="text-amber-800 dark:text-amber-500" />
+                    <div className="pt-3 text-center space-y-1.5 select-none font-mono">
+                      <p className="text-xs font-black flex items-center justify-center gap-1.5">
+                        <Lock size={13} className="text-amber-800" />
                         <span>{t("trustText")}</span>
                       </p>
-                      <p className="text-[11px] font-black text-green-700 dark:text-green-400">
+                      <p className="text-[11px] font-black text-green-700 font-sans">
                         {t("privacyNote")}
                       </p>
                     </div>
@@ -998,51 +964,51 @@ export default function SaaSOnboardingPage() {
                 <BookOpen size={200} />
               </div>
 
-              <div className="text-center mb-10 relative z-10">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-400 mb-3 shadow-sm">
+              <div className="text-center mb-10 relative z-10 font-sans">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 border border-amber-300 text-amber-800 mb-3 shadow-sm">
                   <BookOpen size={32} />
                 </div>
-                <h2 className="text-2xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                <h2 className="text-2xl sm:text-4xl font-black tracking-tight">
                   {t("blogTitle")}
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 max-w-xl mx-auto mt-2 leading-relaxed font-medium">
+                <p className="text-xs sm:text-sm mt-2 leading-relaxed font-medium">
                   {t("blogSubtitle")}
                 </p>
               </div>
 
-              <div className="space-y-6 relative z-10">
+              <div className="space-y-6 relative z-10 font-sans font-medium">
                 {BLOG_POSTS_MOCK.map((post) => (
                   <article 
                     key={post.slug}
-                    className="p-8 bg-white dark:bg-gray-800/90 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4 font-medium"
+                    className="p-8 bg-white rounded-3xl border border-gray-200 shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4"
                   >
                     <div>
-                      <div className="flex flex-wrap items-center gap-2.5 text-xs text-gray-400 dark:text-gray-400 mb-3 font-mono font-black">
-                        <span className="flex items-center gap-1 bg-amber-50 dark:bg-gray-900 text-amber-800 dark:text-amber-400 px-3 py-1 rounded-lg">
+                      <div className="flex flex-wrap items-center gap-2.5 text-xs mb-3 font-mono font-black">
+                        <span className="flex items-center gap-1 bg-amber-50 text-amber-800 px-3 py-1 rounded-lg">
                           <Calendar size={14} />
                           {post.date}
                         </span>
                         <span>•</span>
                         <span>{post.readTime}</span>
                         <span>•</span>
-                        <span className="text-gray-700 dark:text-gray-300">{post.author}</span>
+                        <span>{post.author}</span>
                       </div>
                       
-                      <h3 className="text-lg sm:text-2xl font-black text-gray-900 dark:text-white mb-3 hover:text-[#B45309] dark:hover:text-amber-400 transition-colors">
+                      <h3 className="text-lg sm:text-2xl font-black mb-3 hover:text-[#B45309] transition-colors">
                         <a href={`/blog/${post.slug}`} className="hover:underline">
                           {t(post.titleKey)}
                         </a>
                       </h3>
                       
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-medium">
+                      <p className="text-xs sm:text-sm leading-relaxed font-medium">
                         {t(post.descriptionKey)}
                       </p>
                     </div>
                     
-                    <div className="flex items-center justify-end pt-4 border-t border-gray-100 dark:border-gray-700/80">
+                    <div className="flex items-center justify-end pt-4 border-t border-gray-100">
                       <a 
                         href={`/blog/${post.slug}`}
-                        className="text-xs sm:text-sm font-black text-white bg-amber-800 hover:bg-amber-900 dark:bg-amber-500 dark:text-gray-950 dark:hover:bg-amber-400 active:scale-95 px-6 py-3 rounded-full flex items-center gap-2 transition-all shadow-md cursor-pointer font-mono"
+                        className="text-xs sm:text-sm font-black text-white bg-amber-800 hover:bg-amber-900 active:scale-95 px-6 py-3 rounded-full flex items-center gap-2 transition-all shadow-md cursor-pointer font-mono"
                       >
                         <span>{t("blogReadMore")}</span>
                         <ArrowLeft size={16} />
@@ -1057,112 +1023,14 @@ export default function SaaSOnboardingPage() {
         </AnimatePresence>
       </main>
 
-      {/* REVAMPED 10-SECOND CINEMATIC AUTO-ADVANCING DEMO MODAL */}
-      <AnimatePresence>
-        {showDemo && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 select-none">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => { setShowDemo(false); setDemoAutoplay(false); }}
-              className="absolute inset-0 bg-black/80 backdrop-blur-xl"
-            />
+      {/* Relatable WhatsApp Story Hook Demo Modal */}
+      <CinematicStoryDemoModal
+        isOpen={showRelatableDemo}
+        onClose={() => setShowRelatableDemo(false)}
+        onStartCreate={() => setActiveTab("create")}
+      />
 
-            {/* Modal Card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-gray-900 border border-gray-800 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col relative z-10 text-white font-sans"
-            >
-              {/* Header */}
-              <div className="p-6 bg-gray-850 border-b border-gray-800 flex items-center justify-between font-mono">
-                <div className="flex items-center gap-2.5">
-                  <Sparkles size={22} className="text-amber-400 animate-spin" />
-                  <h3 className="font-black text-base sm:text-lg tracking-tight">{t("demoModalTitle")}</h3>
-                </div>
-                <button
-                  onClick={() => { setShowDemo(false); setDemoAutoplay(false); }}
-                  className="w-9 h-9 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-800 h-2.5 relative overflow-hidden">
-                <motion.div 
-                  className="bg-gradient-to-r from-amber-500 via-rose-500 to-[#B45309] h-full"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${((demoStepIndex + 1) / DEMO_STEPS.length) * 100}%` }}
-                  transition={{ duration: 0.3 }}
-                />
-              </div>
-
-              {/* Step Display Area */}
-              <div className="p-8 sm:p-14 flex flex-col items-center justify-center min-h-[340px] text-center relative overflow-hidden">
-                
-                <div className="absolute inset-0 opacity-5 pointer-events-none flex items-center justify-center text-9xl font-black font-mono">
-                  {DEMO_STEPS[demoStepIndex].id}
-                </div>
-
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={demoStepIndex}
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-4 max-w-md w-full relative z-10"
-                  >
-                    <span className="px-4.5 py-2 rounded-full bg-amber-500/20 text-amber-300 font-mono font-black text-xs sm:text-sm border border-amber-500/30 inline-block shadow-sm">
-                      {t("demoStationBadge")} {DEMO_STEPS[demoStepIndex].id} {t("demoOf")} {DEMO_STEPS.length}
-                    </span>
-
-                    <h4 className="text-2xl sm:text-3xl font-black tracking-tight text-white font-mono">
-                      {t(DEMO_STEPS[demoStepIndex].nameKey)}
-                    </h4>
-
-                    <p className="text-xs sm:text-sm text-gray-300 leading-relaxed font-medium">
-                      {t(DEMO_STEPS[demoStepIndex].descKey)}
-                    </p>
-
-                    {/* Mock Simulation Terminal Card */}
-                    <div className="p-4.5 rounded-2xl bg-gray-950 border border-gray-800 font-mono text-xs sm:text-sm text-green-400 font-black shadow-inner text-end" dir="rtl">
-                      {t(DEMO_STEPS[demoStepIndex].mockKey)}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
-
-              </div>
-
-              {/* Modal Footer Controls */}
-              <div className="p-6 bg-gray-850 border-t border-gray-800 flex flex-wrap items-center justify-between gap-4 font-mono">
-                <span className="text-xs sm:text-sm text-gray-400 font-black">
-                  {t("demoRunningText")}
-                </span>
-
-                <button
-                  onClick={() => {
-                    setShowDemo(false);
-                    setDemoAutoplay(false);
-                    setActiveTab("create");
-                  }}
-                  className="px-8 py-3.5 bg-gradient-to-r from-amber-500 to-[#B45309] text-white rounded-full font-black text-xs sm:text-sm hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-lg flex items-center gap-2"
-                >
-                  <span>{t("demoLaunchCta")}</span>
-                  <ArrowLeft size={16} />
-                </button>
-              </div>
-
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Premium Elegant Tri-Theme Tri-Mode Login Modal */}
+      {/* Tri-Theme Tri-Mode Login Modal */}
       <AnimatePresence>
         {showLoginModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-5 select-none font-sans">
@@ -1180,37 +1048,37 @@ export default function SaaSOnboardingPage() {
               initial={{ scale: 0.9, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 20, opacity: 0 }}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 w-full max-w-md rounded-[2.5rem] p-8 sm:p-12 shadow-2xl relative z-10 space-y-6 text-gray-900 dark:text-gray-100"
+              className="bg-white border border-gray-200 w-full max-w-md rounded-[2.5rem] p-8 sm:p-12 shadow-2xl relative z-10 space-y-6"
             >
-              <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4 font-mono">
-                <div className="flex items-center gap-2.5">
-                  <Lock size={22} className="text-amber-800 dark:text-amber-400" />
-                  <h3 className="text-lg sm:text-xl font-black tracking-tight">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4 font-mono">
+                <div className="flex items-center gap-2.5 font-bold font-mono text-black">
+                  <Lock size={22} className="text-amber-800" />
+                  <h3 className="text-lg sm:text-xl font-black tracking-tight text-black">
                     {t("loginModalTitle")}
                   </h3>
                 </div>
                 <button
                   onClick={() => setShowLoginModal(false)}
-                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 cursor-pointer"
+                  className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 cursor-pointer"
                 >
                   <X size={20} />
                 </button>
               </div>
               
-              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+              <p className="text-xs sm:text-sm font-medium leading-relaxed font-sans text-gray-600">
                 {t("loginModalSubtitle")}
               </p>
 
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 {loginError && (
-                  <div className="p-4 bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 rounded-2xl text-xs font-black border border-red-200 dark:border-red-800 text-center shadow-sm">
+                  <div className="p-4 bg-red-50 text-red-700 rounded-2xl text-xs font-black border border-red-200 text-center shadow-sm">
                     {loginError}
                   </div>
                 )}
                 
-                <div>
-                  <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1.5">{t("loginSlugLabel")}</label>
-                  <div className="flex items-center rounded-2xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 text-xs sm:text-sm font-mono font-bold shadow-inner" dir="ltr">
+                <div className="font-mono">
+                  <label className="block text-xs font-black mb-1.5 font-sans text-black">{t("loginSlugLabel")}</label>
+                  <div className="flex items-center rounded-2xl border border-gray-300 bg-gray-50 p-3 text-xs sm:text-sm font-mono font-bold shadow-inner" dir="ltr">
                     <span className="text-gray-400 me-1">{origin}</span>
                     <input
                       type="text"
@@ -1218,27 +1086,27 @@ export default function SaaSOnboardingPage() {
                       value={loginSlug}
                       onChange={(e) => setLoginSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                       placeholder="ahmed-mariam"
-                      className="flex-1 bg-transparent outline-none dark:text-white text-amber-900 font-black font-mono"
+                      className="flex-1 bg-transparent outline-none text-amber-900 font-black font-mono"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-1.5">{t("loginPwdLabel")}</label>
+                <div className="font-sans">
+                  <label className="block text-xs font-black mb-1.5 font-sans text-black">{t("loginPwdLabel")}</label>
                   <input
                     type="password"
                     required
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 text-xs sm:text-sm font-black outline-none focus:border-amber-800 dark:text-white shadow-inner"
+                    className="w-full rounded-2xl border border-gray-300 bg-white p-4 text-xs sm:text-sm font-black outline-none focus:border-amber-800 shadow-inner font-sans text-black"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loginLoading}
-                  className="w-full bg-gradient-to-r from-amber-800 via-[#B45309] to-amber-800 text-white py-4.5 rounded-2xl font-black text-base sm:text-lg transition-all hover:opacity-90 active:scale-95 shadow-xl shadow-amber-800/25 cursor-pointer mt-4 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-amber-800 via-[#B45309] to-amber-800 text-white py-4.5 rounded-2xl font-black text-base sm:text-lg transition-all hover:opacity-90 active:scale-95 shadow-xl shadow-amber-800/25 cursor-pointer mt-4 flex items-center justify-center gap-2 font-mono"
                 >
                   {loginLoading ? (
                     <>
