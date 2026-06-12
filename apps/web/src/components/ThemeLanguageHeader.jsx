@@ -5,16 +5,16 @@ import AppContext from "@/context/AppContext";
 import { Sun, Moon, Globe, Flame } from "lucide-react";
 
 /**
- * ThemeLanguageHeader — Premium floating controls
+ * ThemeLanguageHeader — Premium tri-theme floating controls
  * Features:
- *  - Cinematic ripple transition when toggling theme
- *  - Glassmorphism pill using CSS design tokens
- *  - Smooth icon swap animation
+ *  - Tri-theme pills showing exactly what premium mode is active
+ *  - Fully bilingual instant localization toggle
+ *  - Absolute premium glassmorphism styling
  */
 export default function ThemeLanguageHeader() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme, resolvedTheme } = useTheme();
-  const { locale, setLocale } = useLanguage();
+  const { locale, setLocale, t } = useLanguage();
   const appContext = useContext(AppContext);
   const { logLedgerEvent } = appContext || {};
   const btnRef = useRef(null);
@@ -23,28 +23,8 @@ export default function ThemeLanguageHeader() {
     setMounted(true);
   }, []);
 
-  const handleThemeToggle = useCallback((e) => {
+  const handleThemeToggle = useCallback(() => {
     const html = document.documentElement;
-    const button = e.currentTarget;
-    const rect = button.getBoundingClientRect();
-
-    // Calculate click position as percentage
-    const x = ((rect.left + rect.width / 2) / window.innerWidth) * 100;
-    const y = ((rect.top + rect.height / 2) / window.innerHeight) * 100;
-
-    // Set ripple origin CSS vars
-    html.style.setProperty("--ripple-x", `${x}%`);
-    html.style.setProperty("--ripple-y", `${y}%`);
-
-    // Add transition class  
-    html.classList.add("theme-transitioning");
-
-    // Inject ripple element
-    const ripple = document.createElement("div");
-    ripple.className = "theme-ripple";
-    document.body.appendChild(ripple);
-
-    // Read the active theme from the DOM classList
     const isCandlelight = html.classList.contains("candlelight");
     const isDark = html.classList.contains("dark");
 
@@ -57,85 +37,61 @@ export default function ThemeLanguageHeader() {
       nextTheme = "dark";
     }
 
-    // Perform the actual theme change slightly delayed for ripple start
-    setTimeout(() => {
-      setTheme(nextTheme);
-      // Clean up previous classes and force the nextTheme class
-      html.classList.remove("light", "dark", "candlelight");
-      html.classList.add(nextTheme);
-      if (logLedgerEvent) {
-        let themeName = nextTheme === "candlelight" ? "وضع الشموع 🕯️" : nextTheme === "dark" ? "الوضع المظلم 🌙" : "الوضع المضيء ☀️";
-        logLedgerEvent(`غيرت مظهر الموقع إلى: ${themeName}`);
-      }
-    }, 50);
+    setTheme(nextTheme);
+    html.classList.remove("light", "dark", "candlelight");
+    html.classList.add(nextTheme);
 
-    // Cleanup after animation
-    setTimeout(() => {
-      html.classList.remove("theme-transitioning");
-      if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
-    }, 600);
+    if (logLedgerEvent) {
+      let themeName = nextTheme === "candlelight" ? "وضع الشموع 🕯️" : nextTheme === "dark" ? "الوضع المظلم 🌙" : "الوضع المضيء ☀️";
+      logLedgerEvent(`غيرت مظهر الموقع إلى: ${themeName}`);
+    }
   }, [setTheme, logLedgerEvent]);
 
   if (!mounted) return null;
 
   const currentTheme = theme === "system" ? resolvedTheme : theme;
-  const isDark = currentTheme === "dark" || currentTheme === "candlelight";
 
   return (
-    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 flex items-center justify-end gap-3 pointer-events-none">
-      {/* Glassmorphism pill using CSS vars */}
+    <div className="fixed top-4 right-4 left-4 sm:left-auto z-50 flex items-center justify-end gap-3 pointer-events-none select-none">
+      {/* Flawless Glassmorphic Box */}
       <div
-        style={{
-          background: "var(--bg-card)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          border: "1px solid var(--border-base)",
-          boxShadow: "var(--shadow-card)",
-        }}
-        className="flex items-center gap-1 p-1.5 rounded-full pointer-events-auto"
+        className="flex items-center gap-2 p-1.5 rounded-full pointer-events-auto bg-white/80 dark:bg-gray-900/80 backdrop-blur-2xl border border-gray-200/80 dark:border-gray-800 shadow-xl"
       >
-        {/* Theme Toggle */}
+        {/* Flawless Tri-Theme Switcher Pill */}
         <button
           ref={btnRef}
           onClick={handleThemeToggle}
-          style={{
-            color: "var(--text-secondary)",
-            transition: "background-color 200ms ease, color 200ms ease, transform 200ms ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--bg-surface-2)";
-            e.currentTarget.style.color = "var(--accent)";
-            e.currentTarget.style.transform = "scale(1.1)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "var(--text-secondary)";
-            e.currentTarget.style.transform = "scale(1)";
-          }}
-          className="p-2 rounded-full"
-          aria-label={
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all bg-gray-100/80 dark:bg-gray-800/80 text-gray-800 dark:text-gray-200 hover:scale-105 active:scale-95 shadow-inner cursor-pointer"
+          title={
             currentTheme === "light"
-              ? "Switch to Dark Mode"
+              ? "Switch to Midnight Mode"
               : currentTheme === "dark"
               ? "Switch to Candlelight Mode"
-              : "Switch to Light Mode"
+              : "Switch to Solar Mode"
           }
         >
-          <div style={{ transition: "transform 400ms cubic-bezier(0.34,1.56,0.64,1), opacity 300ms ease" }}>
-            {currentTheme === "candlelight" ? (
-              <Flame size={18} className="text-amber-500" style={{ filter: "drop-shadow(0 0 6px rgba(245,158,11,0.6))" }} />
-            ) : currentTheme === "dark" ? (
-              <Moon size={18} className="text-[var(--accent-2)]" style={{ filter: "drop-shadow(0 0 6px rgba(223,186,115,0.6))" }} />
-            ) : (
-              <Sun size={18} />
-            )}
-          </div>
+          {currentTheme === "candlelight" ? (
+            <>
+              <Flame size={15} className="text-amber-500 animate-pulse" style={{ filter: "drop-shadow(0 0 6px rgba(245,158,11,0.6))" }} />
+              <span className="font-bold font-mono tracking-tight">{t("themeCandle")}</span>
+            </>
+          ) : currentTheme === "dark" ? (
+            <>
+              <Moon size={15} className="text-[#DFBA73]" style={{ filter: "drop-shadow(0 0 6px rgba(223,186,115,0.6))" }} />
+              <span className="font-bold font-mono tracking-tight">{t("themeDark")}</span>
+            </>
+          ) : (
+            <>
+              <Sun size={15} className="text-amber-600 animate-spin" />
+              <span className="font-bold font-mono tracking-tight">{t("themeLight")}</span>
+            </>
+          )}
         </button>
 
-        {/* Divider */}
-        <div style={{ width: 1, height: 20, background: "var(--border-base)" }} />
+        {/* Vertical Separator */}
+        <div className="w-[1px] h-4 bg-gray-200 dark:bg-gray-800" />
 
-        {/* Language Toggle */}
+        {/* Language Switcher Pill */}
         <button
           onClick={() => {
             const nextLocale = locale === "ar" ? "en" : "ar";
@@ -144,24 +100,10 @@ export default function ThemeLanguageHeader() {
               logLedgerEvent(`غيرت لغة الموقع إلى: ${nextLocale === "ar" ? "العربية 🇸🇦" : "الإنجليزية 🇬🇧"}`);
             }
           }}
-          style={{
-            color: "var(--text-secondary)",
-            fontSize: "0.8rem",
-            fontWeight: 700,
-            transition: "background-color 200ms ease, color 200ms ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "var(--bg-surface-2)";
-            e.currentTarget.style.color = "var(--accent)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "var(--text-secondary)";
-          }}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-full"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all bg-amber-800/10 dark:bg-amber-900/30 text-amber-900 dark:text-amber-300 hover:scale-105 active:scale-95 cursor-pointer font-mono"
         >
-          <Globe size={14} />
-          {locale === "ar" ? "EN" : "AR"}
+          <Globe size={14} className="text-amber-800 dark:text-amber-400" />
+          <span>{locale === "ar" ? "EN" : "AR"}</span>
         </button>
       </div>
     </div>
