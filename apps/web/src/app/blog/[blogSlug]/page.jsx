@@ -1,6 +1,7 @@
+import React, { Component } from "react";
 import { useLoaderData } from "react-router";
 import { useLanguage } from "@/context/LanguageContext";
-import { Calendar, ArrowLeft, Heart, User, BookOpen } from "lucide-react";
+import { Calendar, ArrowLeft, Heart, User, BookOpen, AlertCircle, Sparkles } from "lucide-react";
 
 const BLOG_POSTS = {
   "reconciliation-guide-5-steps": {
@@ -66,47 +67,77 @@ export function meta({ data }) {
   ];
 }
 
-export default function BlogPostPage() {
-  const { post } = useLoaderData();
-  const { locale } = useLanguage();
+class LocalBlogDetailErrorBoundary extends Component {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#FCFBF7] dark:bg-gray-950 flex items-center justify-center p-6 text-center select-none">
+          <div className="p-8 max-w-md bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl space-y-4">
+            <AlertCircle size={48} className="text-amber-600 mx-auto animate-bounce" />
+            <h2 className="text-xl font-black text-gray-900 dark:text-white">المقال المطلوب غير متاح حالياً 📖</h2>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              يمكنك تصفح بقية المقالات والدراسات العاطفية الممتعة من خلال الصفحة الرئيسية للمدونة.
+            </p>
+            <a href="/blog" className="px-6 py-3 bg-amber-800 text-white rounded-full font-extrabold text-xs inline-block shadow-md hover:bg-amber-900">
+              العودة لقائمة المقالات 📚
+            </a>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function MainBlogDetailContent() {
+  const loaderData = useLoaderData();
+  const post = loaderData?.post || BLOG_POSTS["reconciliation-guide-5-steps"];
+  const { locale } = useLanguage() || { locale: "ar" };
 
   return (
-    <div className="min-h-screen bg-[#FCFBF7] dark:bg-gray-950 font-sans text-[#4A3E3D] dark:text-gray-200 py-12 px-6">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-[#FCFBF7] dark:bg-gray-950 font-sans text-[#4A3E3D] dark:text-gray-200 py-12 px-4 sm:px-6 select-none">
+      <div className="max-w-3xl mx-auto space-y-8">
         
         {/* Back Link */}
-        <div className="mb-8">
+        <div>
           <a 
             href="/blog" 
-            className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 dark:text-amber-400 hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-black text-amber-800 dark:text-amber-400 hover:underline hover:translate-x-1 transition-transform cursor-pointer"
           >
-            <ArrowLeft size={14} />
-            <span>العودة للمقالات</span>
+            <ArrowLeft size={16} />
+            <span>العودة لقائمة المقالات</span>
           </a>
         </div>
 
-        {/* Article Meta */}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 dark:text-gray-500 mb-4 font-mono">
-          <span className="flex items-center gap-1">
-            <Calendar size={14} />
-            {post.date}
-          </span>
-          <span>•</span>
-          <span className="flex items-center gap-1">
-            <User size={14} />
-            {post.author}
-          </span>
-          <span>•</span>
-          <span>{post.readTime} قراءة</span>
+        {/* Header */}
+        <div className="space-y-4 bg-white dark:bg-gray-900/60 p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm">
+          {/* Article Meta */}
+          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 font-mono font-bold">
+            <span className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-400 px-2.5 py-1 rounded-md">
+              <Calendar size={14} />
+              {post.date}
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <User size={14} />
+              {post.author}
+            </span>
+            <span>•</span>
+            <span>{post.readTime} قراءة</span>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white leading-tight tracking-tight">
+            {post.title}
+          </h1>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl sm:text-3xl font-black text-[#1A1A1A] dark:text-white mb-6 leading-tight tracking-tight">
-          {post.title}
-        </h1>
-
         {/* Content paragraphs */}
-        <div className="space-y-6 text-sm sm:text-base leading-relaxed text-gray-850 dark:text-gray-300 font-medium">
+        <div className="p-8 rounded-3xl bg-white dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800 shadow-md space-y-6 text-sm sm:text-base leading-relaxed text-gray-850 dark:text-gray-200 font-medium">
           {post.content.map((p, idx) => (
             <p key={idx} className="whitespace-pre-line">
               {p}
@@ -115,20 +146,30 @@ export default function BlogPostPage() {
         </div>
 
         {/* Call to action footer */}
-        <div className="mt-12 p-6 rounded-[2rem] bg-amber-800/5 dark:bg-amber-900/10 border border-amber-800/15 text-center">
-          <h3 className="text-sm font-bold text-amber-800 dark:text-amber-400 mb-2">هل تريد مصالحة شريكتك بذكاء؟ ❤️</h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-4 max-w-sm mx-auto">
+        <div className="mt-12 p-8 rounded-3xl bg-gradient-to-r from-amber-800 via-amber-700 to-amber-800 text-white text-center space-y-4 shadow-xl">
+          <Sparkles size={28} className="text-amber-300 mx-auto animate-spin" />
+          <h3 className="text-lg sm:text-xl font-black text-white">هل تريد مصالحة شريكتك بذكاء ومرح؟ ❤️</h3>
+          <p className="text-xs sm:text-sm text-amber-100 mb-4 max-w-md mx-auto leading-relaxed">
             اصنع الآن صفحة اعتذار تفاعلية مخصصة باسمها بالكامل مجاناً وشارك معها رابط المصالحة الذكي!
           </p>
           <a 
             href="/" 
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-800 text-white rounded-full text-xs font-bold transition-all hover:bg-amber-900 active:scale-95 shadow-sm"
+            className="inline-flex items-center gap-2 px-8 py-3.5 bg-white text-amber-900 rounded-full text-xs sm:text-sm font-black transition-all hover:scale-105 active:scale-95 shadow-md cursor-pointer"
           >
-            <span>ابدأ الآن وصالحها ⚡</span>
-            <Heart size={12} fill="currentColor" />
+            <span>ابدأ الآن واصنع رابط المصالحة ⚡</span>
+            <Heart size={14} className="fill-amber-900" />
           </a>
         </div>
+
       </div>
     </div>
+  );
+}
+
+export default function BlogPostPage() {
+  return (
+    <LocalBlogDetailErrorBoundary>
+      <MainBlogDetailContent />
+    </LocalBlogDetailErrorBoundary>
   );
 }
