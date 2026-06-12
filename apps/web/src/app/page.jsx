@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import CinematicStoryDemoModal from "@/components/CinematicStoryDemoModal";
-import CinematicVideoIntro from "@/components/CinematicVideoIntro";
+import InteractiveCinematicStoryReel from "@/components/InteractiveCinematicStoryReel";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAdBlockDetect } from "@/hooks/useAdBlockDetect";
 
@@ -63,8 +63,8 @@ export default function SaaSOnboardingPage() {
   const adBlockDetected = useAdBlockDetect();
   const [hideAdBanner, setHideAdBanner] = useState(false);
   
-  // Enterprise Authentic MP4 Video Documentary Intro state
-  const [showRealVideoIntro, setShowRealVideoIntro] = useState(false);
+  // Enterprise Interactive 60 FPS Visual Graphic Narrative Reel Hook state
+  const [showInteractiveReel, setShowInteractiveReel] = useState(false);
 
   // Premium Tri-Theme Active View Switcher
   // Options: "wall" | "stories" | "gifts" | "create" | "blog"
@@ -114,16 +114,16 @@ export default function SaaSOnboardingPage() {
   const [stories, setStories] = useState([]);
   const [votingIds, setVotingIds] = useState(new Set());
 
-  // Hydrate global stats, real video check, and content
+  // Hydrate global stats, real visual reel check, and content
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== "undefined") {
       setOrigin(window.location.host + "/");
     }
 
-    // Check if authentic video intro was already watched or skipped
-    if (localStorage.getItem("safi_real_video_watched") !== "true") {
-      setShowRealVideoIntro(true);
+    // Check if authentic interactive graphic reel was already watched or skipped
+    if (localStorage.getItem("safi_interactive_reel_watched") !== "true") {
+      setShowInteractiveReel(true);
     }
 
     fetch("/api/stats")
@@ -152,9 +152,9 @@ export default function SaaSOnboardingPage() {
     setShowRelatableDemo(true);
   };
 
-  const handleReplayRealVideoIntro = () => {
-    localStorage.removeItem("safi_real_video_watched");
-    setShowRealVideoIntro(true);
+  const handleReplayInteractiveReel = () => {
+    localStorage.removeItem("safi_interactive_reel_watched");
+    setShowInteractiveReel(true);
   };
 
   // Submit login verify
@@ -305,18 +305,17 @@ export default function SaaSOnboardingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[#FCFBF7] dark:bg-gray-950 font-sans antialiased text-gray-900 dark:text-gray-100 relative transition-colors">
       
-      {/* Dynamic Master Authentic Real Video Intro Hook */}
+      {/* Dynamic Graphic Live Interactive Reel Narrative Hook Overlay */}
       <AnimatePresence>
-        {showRealVideoIntro && (
-          <CinematicVideoIntro 
-            videoSrc="/documentary.mp4"
-            onFinishIntro={() => setShowRealVideoIntro(false)} 
+        {showInteractiveReel && (
+          <InteractiveCinematicStoryReel 
+            onFinishReel={() => setShowInteractiveReel(false)} 
           />
         )}
       </AnimatePresence>
 
-      {/* Main Beautiful Gate Transition Triggered after Video Intro finishes */}
-      {!showRealVideoIntro && (
+      {/* Main Beautiful Gate Transition Triggered after Graphic Reel finishes */}
+      {!showInteractiveReel && (
         <motion.div
           key="master-portal"
           initial={{ opacity: 0, scale: 0.98, y: 15 }}
@@ -351,7 +350,7 @@ export default function SaaSOnboardingPage() {
           {/* Premium Elegant Tri-Theme Top Header */}
           <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-wrap items-center justify-between gap-4 z-40 relative border-b border-gray-200 dark:border-gray-800 shadow-sm bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl transition-colors font-sans">
             
-            {/* Logo & Quick Replay Real Video Intro */}
+            {/* Logo & Quick Replay Graphic Relatable Reel Intro */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setActiveTab("wall")}
@@ -364,12 +363,12 @@ export default function SaaSOnboardingPage() {
               </button>
 
               <button
-                onClick={handleReplayRealVideoIntro}
+                onClick={handleReplayInteractiveReel}
                 className="px-3.5 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 font-extrabold text-xs active:scale-95 transition-transform flex items-center gap-1.5 cursor-pointer border border-rose-200 dark:border-rose-900 shadow-sm font-mono"
-                title={locale === "en" ? "Replay Cinematic Reel Intro" : "إعادة مشاهدة الفيديو التوثيقي 🎬"}
+                title={locale === "en" ? "Replay Interactive Highly Gamified Visual Graphic Reel" : "إعادة المحاكاة التفاعلية الحية 🎬"}
               >
                 <RotateCcw size={13} className="animate-spin" />
-                <span>{locale === "en" ? "Video Intro" : "فيديو المقدمة"}</span>
+                <span>{locale === "en" ? "Graphic Reel" : "محاكاة القصة"}</span>
               </button>
             </div>
             
@@ -660,7 +659,7 @@ export default function SaaSOnboardingPage() {
                     })}
                   </div>
 
-                  {/* Royal Story Pitch Intro prompt banner */}
+                  {/* Royal Gamified Relatable Hook Starter prompt banner */}
                   <div className="mt-12 p-8 rounded-3xl bg-gradient-to-r from-amber-800 to-[#B45309] text-white flex flex-wrap items-center justify-between gap-6 shadow-2xl font-sans">
                     <div className="max-w-xl">
                       <h3 className="text-xl font-black tracking-tight font-sans">{t("storiesPromptTitle")}</h3>
@@ -780,7 +779,7 @@ export default function SaaSOnboardingPage() {
                           {generatedGifts.items.map((gift, index) => (
                             <li 
                               key={index} 
-                              className="p-5 rounded-2xl bg-white dark:bg-gray-850 font-black border border-rose-100 dark:border-gray-700 text-xs sm:text-sm flex items-center gap-3 shadow-md font-sans"
+                              className="p-5 rounded-2xl bg-white font-black border border-rose-100 dark:border-gray-700 text-xs sm:text-sm flex items-center gap-3 shadow-md font-sans"
                             >
                               <CheckCircle2 size={20} className="text-rose-600 flex-shrink-0" />
                               <span>{gift}</span>
@@ -788,7 +787,7 @@ export default function SaaSOnboardingPage() {
                           ))}
                         </ul>
 
-                        <div className="mt-6 p-5 rounded-2xl bg-amber-500/15 border border-amber-500/30 font-bold text-xs sm:text-sm flex items-center gap-3 shadow-sm font-sans">
+                        <div className="mt-6 p-5 rounded-2xl bg-amber-500/15 border border-amber-500/30 font-bold text-xs sm:text-sm flex items-center gap-3 shadow-sm font-mono">
                           <Sparkles size={24} className="text-amber-600 dark:text-amber-400 flex-shrink-0 animate-spin" />
                           <span>{generatedGifts.tips}</span>
                         </div>
@@ -1024,7 +1023,7 @@ export default function SaaSOnboardingPage() {
                     {BLOG_POSTS_MOCK.map((post) => (
                       <article 
                         key={post.slug}
-                        className="p-8 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4 font-sans"
+                        className="p-8 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4"
                       >
                         <div>
                           <div className="flex flex-wrap items-center gap-2.5 text-xs mb-3 font-mono font-black text-gray-500 dark:text-gray-400">
@@ -1076,7 +1075,7 @@ export default function SaaSOnboardingPage() {
         onStartCreate={() => setActiveTab("create")}
       />
 
-      {/* Tri-Theme Tri-Mode Login Operations Room Modal */}
+      {/* Tri-Theme Tri-Mode Login Radar Control Room Modal */}
       <AnimatePresence>
         {showLoginModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-5 select-none font-sans">
