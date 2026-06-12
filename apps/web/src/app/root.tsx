@@ -38,6 +38,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { ThemeProvider } from 'next-themes';
 import { LanguageProvider } from '@/context/LanguageContext';
 import ThemeLanguageHeader from '@/components/ThemeLanguageHeader';
+import InteractiveCandlesOverlay from '@/components/InteractiveCandlesOverlay';
 import * as Sentry from "@sentry/react";
 
 const sentryDsn = "https://e5f450c329365d7b2917068d49f28a8e@o4511545971900416.ingest.de.sentry.io/4511545984942160";
@@ -553,23 +554,11 @@ export function Layout({ children }: { children: ReactNode }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem themes={["light", "dark", "candlelight"]}>
           <LanguageProvider>
             <ThemeLanguageHeader />
+            <InteractiveCandlesOverlay />
             <div className="flex flex-col min-h-screen">
               <div className="flex-1">
                 <ClientOnly loader={() => children} />
               </div>
-              <footer
-                style={{
-                  background: "var(--bg-surface)",
-                  color: "var(--text-muted)",
-                  borderTop: "1px solid var(--border-base)",
-                  fontSize: "0.75rem",
-                  textAlign: "center",
-                  padding: "1rem",
-                  zIndex: 50,
-                }}
-              >
-                © 2026 جميع الحقوق محفوظة لشركة Safi.io التقنية. المنصة محمية بموجب قوانين الملكية الفكرية.
-              </footer>
             </div>
             <CookieBanner />
             <Analytics />
